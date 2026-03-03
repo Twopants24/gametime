@@ -323,12 +323,18 @@ h1 {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.22s ease;
-  z-index: 0;
+  z-index: 5;
 }
 
 .fx span {
   position: absolute;
-  font-size: 1.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.35rem;
+  border: 2px solid #1e1e24;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 8px;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
   animation: fx-float 1.4s ease-in-out infinite alternate;
 }
@@ -341,7 +347,7 @@ h1 {
 .character-card:focus-within .fx,
 .character-card:active .fx,
 .character-card.is-glow .fx {
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .fx-multi span { font-size: 1.4rem; }
