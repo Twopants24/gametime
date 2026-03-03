@@ -334,7 +334,7 @@ h1 {
 .character-card.char-bird:focus-within,
 .character-card.char-bird:active,
 .character-card.char-bird.is-glow {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(177, 90, 255, 0.86), 0 22px 50px rgba(125, 69, 210, 0.75);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(255, 106, 64, 0.92), 0 22px 50px rgba(218, 72, 34, 0.78);
 }
 
 .character-card.char-jaxon:hover,
@@ -380,8 +380,8 @@ h1 {
 }
 
 .character-card.char-bird {
-  --char-glow: rgba(177, 90, 255, 0.88);
-  --char-tint: rgba(177, 90, 255, 0.07);
+  --char-glow: rgba(255, 106, 64, 0.94);
+  --char-tint: rgba(255, 106, 64, 0.1);
 }
 
 .character-card.char-jaxon {
