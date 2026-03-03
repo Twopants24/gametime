@@ -272,6 +272,16 @@ h1 {
   transform: translateY(-6px);
 }
 
+.character-card.is-swapping .char-photo,
+.character-card.is-swapping h3,
+.character-card.is-swapping .cx-line,
+.character-card.is-swapping .tap-note,
+.character-card.is-swapping [id$="-main-line"] {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
 .card a {
   display: inline-block;
   margin-top: 0.7rem;

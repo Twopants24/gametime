@@ -226,13 +226,14 @@
 
         <h3 class="subhead">Rival Team: Pendragon</h3>
         <div class="team-grid">
-          <article class="card character-card char-khrome">
+          <article class="card character-card char-khrome" id="khrome-toggle-card">
             <div class="fx fx-khrome" aria-hidden="true"><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span><span>🐉</span></div>
-            <img class="char-photo" src="https://beyblade.takaratomy.co.jp/anime/character/_image/chara_kuromu_chara01.png" alt="Khrome Ryugu (Ryugu Chrome)" loading="lazy" />
+            <img class="char-photo" id="khrome-photo" src="https://beyblade.takaratomy.co.jp/anime/character/_image/chara_kuromu_chara01.png" alt="Khrome Ryugu (Ryugu Chrome)" loading="lazy" />
             <p class="kicker">Team Pendragon</p>
-            <h3>Khrome Ryugu (Ryugu Chrome)</h3>
-            <p>Bey: CobaltDragoon. Official profile birthday listing: June 3.</p>
-            <p class="cx-line"><strong>Additional Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).</p>
+            <h3 id="khrome-name">Khrome Ryugu (Ryugu Chrome)</h3>
+            <p id="khrome-main-line">Bey: CobaltDragoon. Official profile birthday listing: June 3.</p>
+            <p class="cx-line" id="khrome-cx-line"><strong>Additional Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).</p>
+            <p class="tap-note">Tap card to switch with Blader Y</p>
             <a href="https://beyblade.takaratomy.co.jp/anime/character/chara18.html" target="_blank" rel="noreferrer">Official Profile</a>
           </article>
           <article class="card character-card char-shiguru">
@@ -244,13 +245,14 @@
             <p class="cx-line"><strong>Additional Bey:</strong> ShinobiShadow 1-80MN (シノビシャドウ 1-80MN).</p>
             <a href="https://beyblade.takaratomy.co.jp/anime/character/chara16.html" target="_blank" rel="noreferrer">Official Profile</a>
           </article>
-          <article class="card character-card char-ciel">
+          <article class="card character-card char-ciel" id="ciel-toggle-card">
             <div class="fx fx-ciel" aria-hidden="true"><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span><span>⚡</span></div>
-            <img class="char-photo" src="https://beyblade.takaratomy.co.jp/anime/character/_image/chara_shieru_chara01.png" alt="Ciel Kaminari" loading="lazy" />
+            <img class="char-photo" id="ciel-photo" src="https://beyblade.takaratomy.co.jp/anime/character/_image/chara_shieru_chara01.png" alt="Ciel Kaminari" loading="lazy" />
             <p class="kicker">Team Pendragon</p>
-            <h3>Ciel Kaminari</h3>
-            <p>Bey: BlackShell. Official profile birthday listing: December 5.</p>
-            <p class="cx-line"><strong>Additional Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).</p>
+            <h3 id="ciel-name">Ciel Kaminari</h3>
+            <p id="ciel-main-line">Bey: BlackShell. Official profile birthday listing: December 5.</p>
+            <p class="cx-line" id="ciel-cx-line"><strong>Additional Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).</p>
+            <p class="tap-note">Tap card to switch with Blader Z</p>
             <a href="https://beyblade.takaratomy.co.jp/anime/character/chara17.html" target="_blank" rel="noreferrer">Official Profile</a>
           </article>
         </div>
@@ -395,6 +397,78 @@
           swapJaxonState(showBladerX);
           jaxonCard.classList.remove("is-swapping");
           jaxonBusy = false;
+        }, 200);
+      });
+
+      const khromeCard = document.getElementById("khrome-toggle-card");
+      const khromePhoto = document.getElementById("khrome-photo");
+      const khromeName = document.getElementById("khrome-name");
+      const khromeMainLine = document.getElementById("khrome-main-line");
+      const khromeCxLine = document.getElementById("khrome-cx-line");
+      let showBladerY = false;
+      let khromeBusy = false;
+
+      function swapKhromeState(nextBladerY) {
+        if (nextBladerY) {
+          khromePhoto.alt = "Blader Y";
+          khromeName.textContent = "Blader Y";
+          khromeMainLine.textContent = "Alias mode for Khrome in this site interaction.";
+          khromeCxLine.innerHTML = "<strong>Signature Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).";
+          return;
+        }
+
+        khromePhoto.alt = "Khrome Ryugu (Ryugu Chrome)";
+        khromeName.textContent = "Khrome Ryugu (Ryugu Chrome)";
+        khromeMainLine.textContent = "Bey: CobaltDragoon. Official profile birthday listing: June 3.";
+        khromeCxLine.innerHTML = "<strong>Additional Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).";
+      }
+
+      khromeCard.addEventListener("click", (event) => {
+        if (event.target.closest("a") || khromeBusy) return;
+        khromeBusy = true;
+        showBladerY = !showBladerY;
+        khromeCard.classList.add("is-swapping");
+
+        window.setTimeout(() => {
+          swapKhromeState(showBladerY);
+          khromeCard.classList.remove("is-swapping");
+          khromeBusy = false;
+        }, 200);
+      });
+
+      const cielCard = document.getElementById("ciel-toggle-card");
+      const cielPhoto = document.getElementById("ciel-photo");
+      const cielName = document.getElementById("ciel-name");
+      const cielMainLine = document.getElementById("ciel-main-line");
+      const cielCxLine = document.getElementById("ciel-cx-line");
+      let showBladerZ = false;
+      let cielBusy = false;
+
+      function swapCielState(nextBladerZ) {
+        if (nextBladerZ) {
+          cielPhoto.alt = "Blader Z";
+          cielName.textContent = "Blader Z";
+          cielMainLine.textContent = "Alias mode for Ciel in this site interaction.";
+          cielCxLine.innerHTML = "<strong>Signature Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).";
+          return;
+        }
+
+        cielPhoto.alt = "Ciel Kaminari";
+        cielName.textContent = "Ciel Kaminari";
+        cielMainLine.textContent = "Bey: BlackShell. Official profile birthday listing: December 5.";
+        cielCxLine.innerHTML = "<strong>Additional Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).";
+      }
+
+      cielCard.addEventListener("click", (event) => {
+        if (event.target.closest("a") || cielBusy) return;
+        cielBusy = true;
+        showBladerZ = !showBladerZ;
+        cielCard.classList.add("is-swapping");
+
+        window.setTimeout(() => {
+          swapCielState(showBladerZ);
+          cielCard.classList.remove("is-swapping");
+          cielBusy = false;
         }, 200);
       });
 
