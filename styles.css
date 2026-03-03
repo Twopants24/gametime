@@ -331,11 +331,11 @@ h1 {
   font-size: 1.45rem;
   font-weight: 800;
   letter-spacing: 0.03em;
-  padding: 0.3rem 0.45rem;
-  border: 2px solid #1e1e24;
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 8px;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
   animation: fx-float 0.9s ease-in-out infinite alternate;
 }
 
@@ -357,12 +357,12 @@ h1 {
   opacity: 1;
 }
 
-.fx-multi span { font-size: 1.7rem; background: rgba(255, 255, 255, 0.93); }
-.fx-jaxon span { font-size: 1.62rem; background: rgba(245, 252, 255, 0.95); }
-.fx-bird span { font-size: 1.58rem; background: rgba(255, 247, 242, 0.95); }
-.fx-khrome span { font-size: 1.62rem; background: rgba(243, 247, 255, 0.95); }
-.fx-shiguru span { font-size: 1.62rem; background: rgba(255, 252, 235, 0.95); }
-.fx-ciel span { font-size: 1.62rem; background: rgba(238, 255, 249, 0.95); }
+.fx-multi span { font-size: 1.7rem; }
+.fx-jaxon span { font-size: 1.62rem; }
+.fx-bird span { font-size: 1.58rem; }
+.fx-khrome span { font-size: 1.62rem; }
+.fx-shiguru span { font-size: 1.62rem; }
+.fx-ciel span { font-size: 1.62rem; }
 
 @keyframes fx-float {
   from { transform: translateY(0) rotate(-7deg) scale(0.92); }
