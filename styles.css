@@ -328,20 +328,27 @@ h1 {
 
 .fx span {
   position: absolute;
-  font-size: 1rem;
+  font-size: 1.45rem;
   font-weight: 800;
   letter-spacing: 0.03em;
-  padding: 0.2rem 0.35rem;
+  padding: 0.3rem 0.45rem;
   border: 2px solid #1e1e24;
   background: rgba(255, 255, 255, 0.88);
   border-radius: 8px;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
-  animation: fx-float 1.4s ease-in-out infinite alternate;
+  animation: fx-float 0.9s ease-in-out infinite alternate;
 }
 
-.fx span:nth-child(1) { left: 10%; top: 10%; }
-.fx span:nth-child(2) { left: 44%; top: 58%; animation-delay: 0.2s; }
-.fx span:nth-child(3) { left: 78%; top: 20%; animation-delay: 0.4s; }
+.fx span:nth-child(1) { left: 2%; top: 4%; }
+.fx span:nth-child(2) { left: 24%; top: 12%; animation-delay: 0.08s; }
+.fx span:nth-child(3) { left: 49%; top: 7%; animation-delay: 0.16s; }
+.fx span:nth-child(4) { left: 73%; top: 14%; animation-delay: 0.24s; }
+.fx span:nth-child(5) { left: 8%; top: 44%; animation-delay: 0.32s; }
+.fx span:nth-child(6) { left: 33%; top: 53%; animation-delay: 0.4s; }
+.fx span:nth-child(7) { left: 57%; top: 48%; animation-delay: 0.48s; }
+.fx span:nth-child(8) { left: 80%; top: 56%; animation-delay: 0.56s; }
+.fx span:nth-child(9) { left: 17%; top: 79%; animation-delay: 0.64s; }
+.fx span:nth-child(10) { left: 63%; top: 82%; animation-delay: 0.72s; }
 
 .character-card:hover .fx,
 .character-card:focus-within .fx,
@@ -350,16 +357,16 @@ h1 {
   opacity: 1;
 }
 
-.fx-multi span { font-size: 1.4rem; }
-.fx-jaxon span,
-.fx-bird span,
-.fx-khrome span,
-.fx-shiguru span,
-.fx-ciel span { font-size: 1.35rem; }
+.fx-multi span { font-size: 1.7rem; background: rgba(255, 255, 255, 0.93); }
+.fx-jaxon span { font-size: 1.62rem; background: rgba(245, 252, 255, 0.95); }
+.fx-bird span { font-size: 1.58rem; background: rgba(255, 247, 242, 0.95); }
+.fx-khrome span { font-size: 1.62rem; background: rgba(243, 247, 255, 0.95); }
+.fx-shiguru span { font-size: 1.62rem; background: rgba(255, 252, 235, 0.95); }
+.fx-ciel span { font-size: 1.62rem; background: rgba(238, 255, 249, 0.95); }
 
 @keyframes fx-float {
-  from { transform: translateY(0) rotate(-5deg) scale(0.95); }
-  to { transform: translateY(-8px) rotate(5deg) scale(1.05); }
+  from { transform: translateY(0) rotate(-7deg) scale(0.92); }
+  to { transform: translateY(-14px) rotate(7deg) scale(1.12); }
 }
 
 .character-card::after {
