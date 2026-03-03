@@ -233,6 +233,7 @@
             <h3 id="khrome-name">Khrome Ryugu (Ryugu Chrome)</h3>
             <p id="khrome-main-line">Bey: CobaltDragoon. Official profile birthday listing: June 3.</p>
             <p class="cx-line" id="khrome-cx-line"><strong>Additional Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).</p>
+            <p class="mode-badge" id="khrome-mode-badge">Mode: Khrome</p>
             <p class="tap-note">Tap card to switch with Blader Y</p>
             <a href="https://beyblade.takaratomy.co.jp/anime/character/chara18.html" target="_blank" rel="noreferrer">Official Profile</a>
           </article>
@@ -252,6 +253,7 @@
             <h3 id="ciel-name">Ciel Kaminari</h3>
             <p id="ciel-main-line">Bey: BlackShell. Official profile birthday listing: December 5.</p>
             <p class="cx-line" id="ciel-cx-line"><strong>Additional Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).</p>
+            <p class="mode-badge" id="ciel-mode-badge">Mode: Ciel</p>
             <p class="tap-note">Tap card to switch with Blader Z</p>
             <a href="https://beyblade.takaratomy.co.jp/anime/character/chara17.html" target="_blank" rel="noreferrer">Official Profile</a>
           </article>
@@ -388,7 +390,8 @@
       }
 
       jaxonCard.addEventListener("click", (event) => {
-        if (event.target.closest("a") || jaxonBusy) return;
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if ((targetEl && targetEl.closest("a")) || jaxonBusy) return;
         jaxonBusy = true;
         showBladerX = !showBladerX;
         jaxonCard.classList.add("is-swapping");
@@ -405,26 +408,32 @@
       const khromeName = document.getElementById("khrome-name");
       const khromeMainLine = document.getElementById("khrome-main-line");
       const khromeCxLine = document.getElementById("khrome-cx-line");
+      const khromeModeBadge = document.getElementById("khrome-mode-badge");
       let showBladerY = false;
       let khromeBusy = false;
 
       function swapKhromeState(nextBladerY) {
         if (nextBladerY) {
+          khromePhoto.style.filter = "hue-rotate(45deg) saturate(1.18)";
           khromePhoto.alt = "Blader Y";
           khromeName.textContent = "Blader Y";
           khromeMainLine.textContent = "Alias mode for Khrome in this site interaction.";
           khromeCxLine.innerHTML = "<strong>Signature Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).";
+          khromeModeBadge.textContent = "Mode: Blader Y";
           return;
         }
 
+        khromePhoto.style.filter = "";
         khromePhoto.alt = "Khrome Ryugu (Ryugu Chrome)";
         khromeName.textContent = "Khrome Ryugu (Ryugu Chrome)";
         khromeMainLine.textContent = "Bey: CobaltDragoon. Official profile birthday listing: June 3.";
         khromeCxLine.innerHTML = "<strong>Additional Bey:</strong> Meteor Dragon 3-70J (メテオドラグーン3-70J).";
+        khromeModeBadge.textContent = "Mode: Khrome";
       }
 
       khromeCard.addEventListener("click", (event) => {
-        if (event.target.closest("a") || khromeBusy) return;
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if ((targetEl && targetEl.closest("a")) || khromeBusy) return;
         khromeBusy = true;
         showBladerY = !showBladerY;
         khromeCard.classList.add("is-swapping");
@@ -441,26 +450,32 @@
       const cielName = document.getElementById("ciel-name");
       const cielMainLine = document.getElementById("ciel-main-line");
       const cielCxLine = document.getElementById("ciel-cx-line");
+      const cielModeBadge = document.getElementById("ciel-mode-badge");
       let showBladerZ = false;
       let cielBusy = false;
 
       function swapCielState(nextBladerZ) {
         if (nextBladerZ) {
+          cielPhoto.style.filter = "hue-rotate(185deg) saturate(1.2)";
           cielPhoto.alt = "Blader Z";
           cielName.textContent = "Blader Z";
           cielMainLine.textContent = "Alias mode for Ciel in this site interaction.";
           cielCxLine.innerHTML = "<strong>Signature Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).";
+          cielModeBadge.textContent = "Mode: Blader Z";
           return;
         }
 
+        cielPhoto.style.filter = "";
         cielPhoto.alt = "Ciel Kaminari";
         cielName.textContent = "Ciel Kaminari";
         cielMainLine.textContent = "Bey: BlackShell. Official profile birthday listing: December 5.";
         cielCxLine.innerHTML = "<strong>Additional Bey:</strong> ShelterDrake 7-80GP (シェルタードレイク 7-80GP).";
+        cielModeBadge.textContent = "Mode: Ciel";
       }
 
       cielCard.addEventListener("click", (event) => {
-        if (event.target.closest("a") || cielBusy) return;
+        const targetEl = event.target instanceof Element ? event.target : null;
+        if ((targetEl && targetEl.closest("a")) || cielBusy) return;
         cielBusy = true;
         showBladerZ = !showBladerZ;
         cielCard.classList.add("is-swapping");
