@@ -307,38 +307,45 @@ h1 {
 }
 
 .character-card:hover,
-.character-card:focus-within {
+.character-card:focus-within,
+.character-card:active {
   transform: translateY(-4px);
 }
 
 .character-card.char-bird:hover,
-.character-card.char-bird:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(177, 90, 255, 0.55), 0 16px 36px rgba(125, 69, 210, 0.45);
+.character-card.char-bird:focus-within,
+.character-card.char-bird:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(177, 90, 255, 0.7), 0 18px 42px rgba(125, 69, 210, 0.62);
 }
 
 .character-card.char-jaxon:hover,
-.character-card.char-jaxon:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(78, 172, 255, 0.58), 0 16px 36px rgba(43, 113, 223, 0.46);
+.character-card.char-jaxon:focus-within,
+.character-card.char-jaxon:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(78, 172, 255, 0.74), 0 18px 42px rgba(43, 113, 223, 0.64);
 }
 
 .character-card.char-multi:hover,
-.character-card.char-multi:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(255, 120, 206, 0.55), 0 16px 36px rgba(224, 71, 155, 0.45);
+.character-card.char-multi:focus-within,
+.character-card.char-multi:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(255, 120, 206, 0.7), 0 18px 42px rgba(224, 71, 155, 0.6);
 }
 
 .character-card.char-khrome:hover,
-.character-card.char-khrome:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(86, 120, 255, 0.58), 0 16px 36px rgba(43, 71, 204, 0.46);
+.character-card.char-khrome:focus-within,
+.character-card.char-khrome:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(86, 120, 255, 0.7), 0 18px 42px rgba(43, 71, 204, 0.62);
 }
 
 .character-card.char-shiguru:hover,
-.character-card.char-shiguru:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(255, 210, 88, 0.6), 0 16px 36px rgba(214, 156, 40, 0.47);
+.character-card.char-shiguru:focus-within,
+.character-card.char-shiguru:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(255, 210, 88, 0.76), 0 18px 42px rgba(214, 156, 40, 0.62);
 }
 
 .character-card.char-ciel:hover,
-.character-card.char-ciel:focus-within {
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 6px rgba(95, 237, 203, 0.55), 0 16px 36px rgba(42, 171, 148, 0.45);
+.character-card.char-ciel:focus-within,
+.character-card.char-ciel:active {
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(95, 237, 203, 0.72), 0 18px 42px rgba(42, 171, 148, 0.6);
 }
 
 .grid {
