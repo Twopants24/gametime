@@ -305,10 +305,55 @@ h1 {
 .character-card {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
   transition: box-shadow 0.22s ease, transform 0.22s ease, background-color 0.22s ease;
   --char-glow: rgba(120, 120, 255, 0.65);
   --char-tint: rgba(120, 120, 255, 0.08);
   background-color: var(--char-tint);
+}
+
+.character-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  z-index: 0;
+}
+
+.fx span {
+  position: absolute;
+  font-size: 1.5rem;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
+  animation: fx-float 1.4s ease-in-out infinite alternate;
+}
+
+.fx span:nth-child(1) { left: 10%; top: 10%; }
+.fx span:nth-child(2) { left: 44%; top: 58%; animation-delay: 0.2s; }
+.fx span:nth-child(3) { left: 78%; top: 20%; animation-delay: 0.4s; }
+
+.character-card:hover .fx,
+.character-card:focus-within .fx,
+.character-card:active .fx,
+.character-card.is-glow .fx {
+  opacity: 0.95;
+}
+
+.fx-multi span { font-size: 1.4rem; }
+.fx-jaxon span,
+.fx-bird span,
+.fx-khrome span,
+.fx-shiguru span,
+.fx-ciel span { font-size: 1.35rem; }
+
+@keyframes fx-float {
+  from { transform: translateY(0) rotate(-5deg) scale(0.95); }
+  to { transform: translateY(-8px) rotate(5deg) scale(1.05); }
 }
 
 .character-card::after {
