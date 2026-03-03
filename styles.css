@@ -305,7 +305,10 @@ h1 {
 .character-card {
   position: relative;
   isolation: isolate;
-  transition: box-shadow 0.22s ease, transform 0.22s ease;
+  transition: box-shadow 0.22s ease, transform 0.22s ease, background-color 0.22s ease;
+  --char-glow: rgba(120, 120, 255, 0.65);
+  --char-tint: rgba(120, 120, 255, 0.08);
+  background-color: var(--char-tint);
 }
 
 .character-card::after {
@@ -313,9 +316,9 @@ h1 {
   position: absolute;
   inset: -10px;
   border-radius: 12px;
-  background: var(--char-glow, rgba(120, 120, 255, 0.65));
+  background: var(--char-glow);
   filter: blur(14px);
-  opacity: 0;
+  opacity: 0.28;
   z-index: -1;
   transition: opacity 0.22s ease;
 }
@@ -324,62 +327,86 @@ h1 {
 .character-card:focus-within,
 .character-card:active,
 .character-card.is-glow {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.01);
 }
 
 .character-card.char-bird:hover,
 .character-card.char-bird:focus-within,
 .character-card.char-bird:active,
 .character-card.char-bird.is-glow {
-  --char-glow: rgba(177, 90, 255, 0.88);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(177, 90, 255, 0.7), 0 18px 42px rgba(125, 69, 210, 0.62);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(177, 90, 255, 0.86), 0 22px 50px rgba(125, 69, 210, 0.75);
 }
 
 .character-card.char-jaxon:hover,
 .character-card.char-jaxon:focus-within,
 .character-card.char-jaxon:active,
 .character-card.char-jaxon.is-glow {
-  --char-glow: rgba(78, 172, 255, 0.9);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(78, 172, 255, 0.74), 0 18px 42px rgba(43, 113, 223, 0.64);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(78, 172, 255, 0.9), 0 22px 50px rgba(43, 113, 223, 0.76);
 }
 
 .character-card.char-multi:hover,
 .character-card.char-multi:focus-within,
 .character-card.char-multi:active,
 .character-card.char-multi.is-glow {
-  --char-glow: rgba(255, 120, 206, 0.88);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(255, 120, 206, 0.7), 0 18px 42px rgba(224, 71, 155, 0.6);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(255, 120, 206, 0.88), 0 22px 50px rgba(224, 71, 155, 0.72);
 }
 
 .character-card.char-khrome:hover,
 .character-card.char-khrome:focus-within,
 .character-card.char-khrome:active,
 .character-card.char-khrome.is-glow {
-  --char-glow: rgba(86, 120, 255, 0.88);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(86, 120, 255, 0.7), 0 18px 42px rgba(43, 71, 204, 0.62);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(86, 120, 255, 0.88), 0 22px 50px rgba(43, 71, 204, 0.74);
 }
 
 .character-card.char-shiguru:hover,
 .character-card.char-shiguru:focus-within,
 .character-card.char-shiguru:active,
 .character-card.char-shiguru.is-glow {
-  --char-glow: rgba(255, 210, 88, 0.92);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(255, 210, 88, 0.76), 0 18px 42px rgba(214, 156, 40, 0.62);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(255, 210, 88, 0.94), 0 22px 50px rgba(214, 156, 40, 0.74);
 }
 
 .character-card.char-ciel:hover,
 .character-card.char-ciel:focus-within,
 .character-card.char-ciel:active,
 .character-card.char-ciel.is-glow {
-  --char-glow: rgba(95, 237, 203, 0.9);
-  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 8px rgba(95, 237, 203, 0.72), 0 18px 42px rgba(42, 171, 148, 0.6);
+  box-shadow: 0 0 0 2px #1e1e24, 0 0 0 10px rgba(95, 237, 203, 0.92), 0 22px 50px rgba(42, 171, 148, 0.72);
 }
 
 .character-card:hover::after,
 .character-card:focus-within::after,
 .character-card:active::after,
 .character-card.is-glow::after {
-  opacity: 1;
+  opacity: 0.95;
+}
+
+.character-card.char-bird {
+  --char-glow: rgba(177, 90, 255, 0.88);
+  --char-tint: rgba(177, 90, 255, 0.07);
+}
+
+.character-card.char-jaxon {
+  --char-glow: rgba(78, 172, 255, 0.9);
+  --char-tint: rgba(78, 172, 255, 0.08);
+}
+
+.character-card.char-multi {
+  --char-glow: rgba(255, 120, 206, 0.88);
+  --char-tint: rgba(255, 120, 206, 0.08);
+}
+
+.character-card.char-khrome {
+  --char-glow: rgba(86, 120, 255, 0.88);
+  --char-tint: rgba(86, 120, 255, 0.08);
+}
+
+.character-card.char-shiguru {
+  --char-glow: rgba(255, 210, 88, 0.94);
+  --char-tint: rgba(255, 210, 88, 0.09);
+}
+
+.character-card.char-ciel {
+  --char-glow: rgba(95, 237, 203, 0.92);
+  --char-tint: rgba(95, 237, 203, 0.08);
 }
 
 .grid {
