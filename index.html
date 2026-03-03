@@ -411,10 +411,17 @@
       const khromeModeBadge = document.getElementById("khrome-mode-badge");
       let showBladerY = false;
       let khromeBusy = false;
+      const khromeBaseSrc = "https://beyblade.takaratomy.co.jp/anime/character/_image/chara_kuromu_chara01.png";
+      const khromeAltSrc = "https://beyblade.takaratomy.co.jp/anime/character/_image/chara_kuromu_chara02.png";
 
       function swapKhromeState(nextBladerY) {
         if (nextBladerY) {
-          khromePhoto.style.filter = "hue-rotate(45deg) saturate(1.18)";
+          khromePhoto.src = khromeAltSrc;
+          khromePhoto.onerror = () => {
+            khromePhoto.src = khromeBaseSrc;
+          };
+          khromePhoto.style.filter = "hue-rotate(65deg) saturate(1.35) contrast(1.15)";
+          khromePhoto.style.transform = "scaleX(-1)";
           khromePhoto.alt = "Blader Y";
           khromeName.textContent = "Blader Y";
           khromeMainLine.textContent = "Alias mode for Khrome in this site interaction.";
@@ -423,7 +430,10 @@
           return;
         }
 
+        khromePhoto.src = khromeBaseSrc;
+        khromePhoto.onerror = null;
         khromePhoto.style.filter = "";
+        khromePhoto.style.transform = "";
         khromePhoto.alt = "Khrome Ryugu (Ryugu Chrome)";
         khromeName.textContent = "Khrome Ryugu (Ryugu Chrome)";
         khromeMainLine.textContent = "Bey: CobaltDragoon. Official profile birthday listing: June 3.";
@@ -453,10 +463,17 @@
       const cielModeBadge = document.getElementById("ciel-mode-badge");
       let showBladerZ = false;
       let cielBusy = false;
+      const cielBaseSrc = "https://beyblade.takaratomy.co.jp/anime/character/_image/chara_shieru_chara01.png";
+      const cielAltSrc = "https://beyblade.takaratomy.co.jp/anime/character/_image/chara_shieru_chara02.png";
 
       function swapCielState(nextBladerZ) {
         if (nextBladerZ) {
-          cielPhoto.style.filter = "hue-rotate(185deg) saturate(1.2)";
+          cielPhoto.src = cielAltSrc;
+          cielPhoto.onerror = () => {
+            cielPhoto.src = cielBaseSrc;
+          };
+          cielPhoto.style.filter = "hue-rotate(210deg) saturate(1.45) contrast(1.12)";
+          cielPhoto.style.transform = "scaleX(-1)";
           cielPhoto.alt = "Blader Z";
           cielName.textContent = "Blader Z";
           cielMainLine.textContent = "Alias mode for Ciel in this site interaction.";
@@ -465,7 +482,10 @@
           return;
         }
 
+        cielPhoto.src = cielBaseSrc;
+        cielPhoto.onerror = null;
         cielPhoto.style.filter = "";
+        cielPhoto.style.transform = "";
         cielPhoto.alt = "Ciel Kaminari";
         cielName.textContent = "Ciel Kaminari";
         cielMainLine.textContent = "Bey: BlackShell. Official profile birthday listing: December 5.";
