@@ -392,6 +392,29 @@
         }, 200);
       });
 
+      const characterCards = document.querySelectorAll(".character-card");
+      characterCards.forEach((card) => {
+        let touchGlowTimer = null;
+
+        card.addEventListener("pointerenter", () => {
+          card.classList.add("is-glow");
+        });
+
+        card.addEventListener("pointerleave", () => {
+          card.classList.remove("is-glow");
+        });
+
+        card.addEventListener("pointerdown", () => {
+          card.classList.add("is-glow");
+          if (touchGlowTimer) {
+            window.clearTimeout(touchGlowTimer);
+          }
+          touchGlowTimer = window.setTimeout(() => {
+            card.classList.remove("is-glow");
+          }, 700);
+        });
+      });
+
       const menuToggle = document.getElementById("menu-toggle");
       const siteNav = document.getElementById("site-nav");
       const revealNodes = document.querySelectorAll(".reveal");
