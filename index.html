@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>beyformation</title>
+    <title>fun random stuff</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,7 +18,7 @@
 
     <section id="auth-gate" class="auth-gate">
       <form id="auth-form" class="auth-card">
-        <h1>beyformation</h1>
+        <h1>fun random stuff</h1>
         <p>Enter login details to view the site.</p>
         <label for="auth-user">Username</label>
         <input id="auth-user" name="user" autocomplete="username" required />
@@ -30,12 +30,15 @@
     </section>
 
     <header class="site-header protected">
-      <a href="#" class="brand">beyformation</a>
+      <a href="#" class="brand">fun random stuff</a>
       <button id="menu-toggle" class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
         Menu
       </button>
       <nav id="site-nav" class="site-nav">
         <a href="#overview">Overview</a>
+        <a href="#sim4d">2D-8D Sim</a>
+        <a href="#blackhole">Black Hole</a>
+        <a href="#atom">Atom</a>
         <a href="#system">System</a>
         <a href="#characters">Characters</a>
         <a href="#timeline">Timeline</a>
@@ -72,6 +75,133 @@
             <h3>Scale</h3>
             <p>Over 28 million BEYBLADE X units shipped worldwide as of February 2025.</p>
           </article>
+        </div>
+      </section>
+
+      <section id="sim4d" class="panel reveal">
+        <h2>Multi-D Game: Hypercube Lock</h2>
+        <p class="section-note">
+          Choose a 3D cube, 4D tesseract, or 5D penteract. Rotate it and line up the glowing target node with
+          the center crosshair, then press Lock Target before time runs out.
+        </p>
+        <div class="sim4d-wrap">
+          <canvas id="sim4d-canvas" width="960" height="560" aria-label="Animated multi-dimensional hypercube projection"></canvas>
+          <div class="sim4d-hud" aria-live="polite">
+            <p>Score: <strong id="sim4d-score">0</strong></p>
+            <p>Time: <strong id="sim4d-time">45.0</strong>s</p>
+            <p>Combo: <strong id="sim4d-combo">0</strong></p>
+            <p>Target: <strong id="sim4d-target">1 / 32</strong></p>
+          </div>
+          <div class="sim4d-controls">
+            <div class="sim4d-buttons">
+              <button id="sim4d-start" class="btn btn-primary" type="button">Start Game</button>
+              <button id="sim4d-lock" class="btn btn-ghost" type="button">Lock Target</button>
+              <button id="sim4d-toggle" class="btn btn-ghost" type="button">Pause Sim</button>
+              <button id="sim4d-reset-view" class="btn btn-ghost" type="button">Reset View</button>
+            </div>
+            <label for="sim4d-dimension">Object</label>
+            <select id="sim4d-dimension">
+              <option value="1">1D Line</option>
+              <option value="2">2D Square</option>
+              <option value="3">3D Cube</option>
+              <option value="4">4D Tesseract</option>
+              <option value="5" selected>5D Penteract</option>
+              <option value="6">6D Hexeract</option>
+              <option value="7">7D Hepteract</option>
+              <option value="8">8D Octeract</option>
+            </select>
+            <label for="sim4d-speed-xy">XY Speed</label>
+            <input id="sim4d-speed-xy" type="range" min="-2.5" max="2.5" step="0.01" value="0.75" />
+            <label for="sim4d-speed-xz">XZ Speed</label>
+            <input id="sim4d-speed-xz" type="range" min="-2.5" max="2.5" step="0.01" value="0.46" />
+            <label for="sim4d-speed-yz">YZ Speed</label>
+            <input id="sim4d-speed-yz" type="range" min="-2.5" max="2.5" step="0.01" value="-0.54" />
+            <label for="sim4d-speed-zw">ZW Speed</label>
+            <input id="sim4d-speed-zw" type="range" min="-2.5" max="2.5" step="0.01" value="1.08" />
+            <label for="sim4d-speed-xw">XW Speed</label>
+            <input id="sim4d-speed-xw" type="range" min="-2.5" max="2.5" step="0.01" value="0.62" />
+            <label for="sim4d-speed-xv">XV Speed</label>
+            <input id="sim4d-speed-xv" type="range" min="-2.5" max="2.5" step="0.01" value="0.53" />
+            <label for="sim4d-speed-zv">ZV Speed</label>
+            <input id="sim4d-speed-zv" type="range" min="-2.5" max="2.5" step="0.01" value="-0.47" />
+            <label for="sim4d-speed-xu">XU Speed</label>
+            <input id="sim4d-speed-xu" type="range" min="-2.5" max="2.5" step="0.01" value="0.41" />
+            <label for="sim4d-speed-wu">WU Speed</label>
+            <input id="sim4d-speed-wu" type="range" min="-2.5" max="2.5" step="0.01" value="-0.39" />
+            <label for="sim4d-speed-xt">XT Speed</label>
+            <input id="sim4d-speed-xt" type="range" min="-2.5" max="2.5" step="0.01" value="0.36" />
+            <label for="sim4d-speed-yt">YT Speed</label>
+            <input id="sim4d-speed-yt" type="range" min="-2.5" max="2.5" step="0.01" value="-0.33" />
+            <label for="sim4d-speed-xs">XS Speed</label>
+            <input id="sim4d-speed-xs" type="range" min="-2.5" max="2.5" step="0.01" value="0.29" />
+            <label for="sim4d-speed-zs">ZS Speed</label>
+            <input id="sim4d-speed-zs" type="range" min="-2.5" max="2.5" step="0.01" value="-0.27" />
+            <p id="sim4d-message" class="sim4d-message">Press Start Game to begin. Drag canvas to move perspective.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="blackhole" class="panel reveal">
+        <h2>Black Hole Simulation</h2>
+        <p class="section-note">
+          Particle-field simulation with gravity, frame dragging, and an event horizon sink. Tweak sliders to
+          create stable rings, chaos spirals, or fast collapse.
+        </p>
+        <div class="bh-wrap">
+          <canvas id="bh-canvas" width="960" height="560" aria-label="Black hole particle simulation"></canvas>
+          <div class="bh-hud" aria-live="polite">
+            <p>Particles: <strong id="bh-live-count">0</strong></p>
+            <p>Absorbed: <strong id="bh-eaten-count">0</strong></p>
+            <p>FPS: <strong id="bh-fps">0</strong></p>
+          </div>
+          <div class="bh-controls">
+            <label for="bh-gravity">Gravity</label>
+            <input id="bh-gravity" type="range" min="0.3" max="4.5" step="0.01" value="1.4" />
+            <label for="bh-spin">Spin / Frame Drag</label>
+            <input id="bh-spin" type="range" min="-3.0" max="3.0" step="0.01" value="1.18" />
+            <label for="bh-horizon">Event Horizon</label>
+            <input id="bh-horizon" type="range" min="24" max="180" step="1" value="70" />
+            <label for="bh-particles">Particle Count</label>
+            <input id="bh-particles" type="range" min="180" max="1800" step="20" value="720" />
+            <label for="bh-trail">Trail Length</label>
+            <input id="bh-trail" type="range" min="0.02" max="0.30" step="0.01" value="0.09" />
+            <div class="bh-buttons">
+              <button id="bh-reset" class="btn btn-primary" type="button">Restart Field</button>
+              <button id="bh-collapse" class="btn btn-ghost" type="button">Collapse Mode</button>
+              <button id="bh-pause" class="btn btn-ghost" type="button">Pause Sim</button>
+            </div>
+            <p id="bh-message" class="bh-message">Drag nothing. Just tune sliders and watch spacetime eat light.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="atom" class="panel reveal">
+        <h2>Atom Simulation</h2>
+        <p class="section-note">
+          Interactive atom model with a dynamic nucleus and electron shells. Raise energy to widen and speed
+          electron behavior.
+        </p>
+        <div class="atom-wrap">
+          <canvas id="atom-canvas" width="960" height="560" aria-label="Animated atom simulation"></canvas>
+          <div class="atom-hud" aria-live="polite">
+            <p>Z: <strong id="atom-z">8</strong></p>
+            <p>Electrons: <strong id="atom-electrons">8</strong></p>
+            <p>Shells: <strong id="atom-shells">2, 6</strong></p>
+          </div>
+          <div class="atom-controls">
+            <label for="atom-z-slider">Atomic Number (Z)</label>
+            <input id="atom-z-slider" type="range" min="1" max="30" step="1" value="8" />
+            <label for="atom-energy">Energy Level</label>
+            <input id="atom-energy" type="range" min="0" max="100" step="1" value="28" />
+            <label for="atom-speed">Time Scale</label>
+            <input id="atom-speed" type="range" min="0.3" max="3.2" step="0.01" value="1.15" />
+            <div class="atom-buttons">
+              <button id="atom-reset" class="btn btn-primary" type="button">Reset Atom</button>
+              <button id="atom-excite" class="btn btn-ghost" type="button">Excite Electron</button>
+              <button id="atom-pause" class="btn btn-ghost" type="button">Pause Sim</button>
+            </div>
+            <p id="atom-message" class="atom-message">Adjust Z to switch elements (up to Zinc).</p>
+          </div>
         </div>
       </section>
 
@@ -325,7 +455,7 @@
     </main>
 
     <footer class="site-footer reveal protected">
-      <h2>beyformation</h2>
+      <h2>fun random stuff</h2>
       <p>This page summarizes public information and may lag behind future product/event updates.</p>
       <p>© <span id="year"></span> Fan reference page</p>
     </footer>
@@ -533,6 +663,1020 @@
       const menuToggle = document.getElementById("menu-toggle");
       const siteNav = document.getElementById("site-nav");
       const revealNodes = document.querySelectorAll(".reveal");
+      const simCanvas = document.getElementById("sim4d-canvas");
+      const simDimension = document.getElementById("sim4d-dimension");
+      const simSpeedXY = document.getElementById("sim4d-speed-xy");
+      const simSpeedXZ = document.getElementById("sim4d-speed-xz");
+      const simSpeedZW = document.getElementById("sim4d-speed-zw");
+      const simSpeedXW = document.getElementById("sim4d-speed-xw");
+      const simSpeedYZ = document.getElementById("sim4d-speed-yz");
+      const simSpeedXV = document.getElementById("sim4d-speed-xv");
+      const simSpeedZV = document.getElementById("sim4d-speed-zv");
+      const simSpeedXU = document.getElementById("sim4d-speed-xu");
+      const simSpeedWU = document.getElementById("sim4d-speed-wu");
+      const simSpeedXT = document.getElementById("sim4d-speed-xt");
+      const simSpeedYT = document.getElementById("sim4d-speed-yt");
+      const simSpeedXS = document.getElementById("sim4d-speed-xs");
+      const simSpeedZS = document.getElementById("sim4d-speed-zs");
+      const simToggle = document.getElementById("sim4d-toggle");
+      const simResetView = document.getElementById("sim4d-reset-view");
+      const simStart = document.getElementById("sim4d-start");
+      const simLock = document.getElementById("sim4d-lock");
+      const simScore = document.getElementById("sim4d-score");
+      const simTime = document.getElementById("sim4d-time");
+      const simCombo = document.getElementById("sim4d-combo");
+      const simTarget = document.getElementById("sim4d-target");
+      const simMessage = document.getElementById("sim4d-message");
+      const bhCanvas = document.getElementById("bh-canvas");
+      const bhGravity = document.getElementById("bh-gravity");
+      const bhSpin = document.getElementById("bh-spin");
+      const bhHorizon = document.getElementById("bh-horizon");
+      const bhParticles = document.getElementById("bh-particles");
+      const bhTrail = document.getElementById("bh-trail");
+      const bhReset = document.getElementById("bh-reset");
+      const bhCollapse = document.getElementById("bh-collapse");
+      const bhPause = document.getElementById("bh-pause");
+      const bhLiveCount = document.getElementById("bh-live-count");
+      const bhEatenCount = document.getElementById("bh-eaten-count");
+      const bhFps = document.getElementById("bh-fps");
+      const bhMessage = document.getElementById("bh-message");
+      const atomCanvas = document.getElementById("atom-canvas");
+      const atomZSlider = document.getElementById("atom-z-slider");
+      const atomEnergy = document.getElementById("atom-energy");
+      const atomSpeed = document.getElementById("atom-speed");
+      const atomReset = document.getElementById("atom-reset");
+      const atomExcite = document.getElementById("atom-excite");
+      const atomPause = document.getElementById("atom-pause");
+      const atomZ = document.getElementById("atom-z");
+      const atomElectrons = document.getElementById("atom-electrons");
+      const atomShells = document.getElementById("atom-shells");
+      const atomMessage = document.getElementById("atom-message");
+
+      if (
+        simCanvas &&
+        simDimension &&
+        simSpeedXY &&
+        simSpeedXZ &&
+        simSpeedZW &&
+        simSpeedXW &&
+        simSpeedYZ &&
+        simSpeedXV &&
+        simSpeedZV &&
+        simSpeedXU &&
+        simSpeedWU &&
+        simSpeedXT &&
+        simSpeedYT &&
+        simSpeedXS &&
+        simSpeedZS &&
+        simToggle &&
+        simResetView &&
+        simStart &&
+        simLock &&
+        simScore &&
+        simTime &&
+        simCombo &&
+        simTarget &&
+        simMessage
+      ) {
+        const ctx = simCanvas.getContext("2d");
+        let currentDimension = Number(simDimension.value);
+        let vertices = [];
+        let edges = [];
+
+        let thetaXY = 0;
+        let thetaXZ = 0;
+        let thetaZW = 0;
+        let thetaXW = 0;
+        let thetaYZ = 0;
+        let thetaXV = 0;
+        let thetaZV = 0;
+        let thetaXU = 0;
+        let thetaWU = 0;
+        let thetaXT = 0;
+        let thetaYT = 0;
+        let thetaXS = 0;
+        let thetaZS = 0;
+        let lastTs = 0;
+        let running = true;
+        let gameActive = false;
+        let score = 0;
+        let combo = 0;
+        let timeLeft = 45;
+        let targetIndex = 0;
+        let points2d = [];
+        let uiDirty = true;
+        let viewYaw = 0.32;
+        let viewPitch = -0.18;
+        let viewZoom = 2.35;
+        const viewDistance = 4.5;
+        let draggingView = false;
+        let dragLastX = 0;
+        let dragLastY = 0;
+
+        function rotatePlane(v, axisA, axisB, angle) {
+          const c = Math.cos(angle);
+          const s = Math.sin(angle);
+          const out = [...v];
+          out[axisA] = v[axisA] * c - v[axisB] * s;
+          out[axisB] = v[axisA] * s + v[axisB] * c;
+          return out;
+        }
+
+        function projectNDto2D(point, width, height) {
+          let reduced = [...point];
+          for (let axis = reduced.length - 1; axis >= 3; axis -= 1) {
+            const depth = 2.7 + (axis - 3) * 0.22;
+            const offset = 3.5 + (axis - 3) * 0.24;
+            const factor = depth / (offset - reduced[axis]);
+            const next = [];
+            for (let i = 0; i < axis; i += 1) {
+              next.push(reduced[i] * factor);
+            }
+            reduced = next;
+          }
+
+          const x3 = reduced.length >= 1 ? reduced[0] : 0;
+          const y3 = reduced.length >= 2 ? reduced[1] : 0;
+          const z3 = reduced.length >= 3 ? reduced[2] : 0;
+
+          const yawCos = Math.cos(viewYaw);
+          const yawSin = Math.sin(viewYaw);
+          const xYaw = x3 * yawCos - z3 * yawSin;
+          const zYaw = x3 * yawSin + z3 * yawCos;
+
+          const pitchCos = Math.cos(viewPitch);
+          const pitchSin = Math.sin(viewPitch);
+          const yPitch = y3 * pitchCos - zYaw * pitchSin;
+          const zPitch = y3 * pitchSin + zYaw * pitchCos;
+
+          const zDepth = viewZoom / (viewDistance - zPitch);
+          const x = xYaw * zDepth;
+          const y = yPitch * zDepth;
+          const scale = Math.min(width, height) * 0.28;
+          return [width * 0.5 + x * scale, height * 0.5 + y * scale];
+        }
+
+        function buildGeometry(dimension) {
+          currentDimension = dimension;
+          const total = 2 ** dimension;
+          const nextVertices = [];
+          const nextEdges = [];
+
+          for (let i = 0; i < total; i += 1) {
+            const point = [];
+            for (let axis = 0; axis < dimension; axis += 1) {
+              point.push((i & (1 << axis)) === 0 ? -1 : 1);
+            }
+            nextVertices.push(point);
+          }
+
+          for (let i = 0; i < total; i += 1) {
+            for (let j = i + 1; j < total; j += 1) {
+              const xor = i ^ j;
+              if ((xor & (xor - 1)) === 0) {
+                nextEdges.push([i, j]);
+              }
+            }
+          }
+
+          vertices = nextVertices;
+          edges = nextEdges;
+          points2d = [];
+          targetIndex = 0;
+          uiDirty = true;
+        }
+
+        function syncControlsForDimension() {
+          simSpeedXY.disabled = currentDimension < 2;
+          simSpeedXZ.disabled = currentDimension < 3;
+          simSpeedYZ.disabled = currentDimension < 3;
+          simSpeedZW.disabled = currentDimension < 4;
+          simSpeedXW.disabled = currentDimension < 4;
+          simSpeedXV.disabled = currentDimension < 5;
+          simSpeedZV.disabled = currentDimension < 5;
+          simSpeedXU.disabled = currentDimension < 6;
+          simSpeedWU.disabled = currentDimension < 6;
+          simSpeedXT.disabled = currentDimension < 7;
+          simSpeedYT.disabled = currentDimension < 7;
+          simSpeedXS.disabled = currentDimension < 8;
+          simSpeedZS.disabled = currentDimension < 8;
+        }
+
+        function clamp(value, min, max) {
+          return Math.max(min, Math.min(max, value));
+        }
+
+        function resetView() {
+          viewYaw = 0.32;
+          viewPitch = -0.18;
+          viewZoom = 2.35;
+        }
+
+        function resizeCanvasForDisplay() {
+          const rect = simCanvas.getBoundingClientRect();
+          const width = Math.max(420, Math.floor(rect.width));
+          const height = Math.max(320, Math.floor(width * 0.58));
+          if (simCanvas.width !== width || simCanvas.height !== height) {
+            simCanvas.width = width;
+            simCanvas.height = height;
+          }
+        }
+
+        function pickRandomTarget(except) {
+          let next = Math.floor(Math.random() * vertices.length);
+          if (vertices.length > 1 && next === except) {
+            next = (next + 1 + Math.floor(Math.random() * (vertices.length - 1))) % vertices.length;
+          }
+          return next;
+        }
+
+        function updateHud() {
+          if (!uiDirty) return;
+          simScore.textContent = String(score);
+          simTime.textContent = timeLeft.toFixed(1);
+          simCombo.textContent = String(combo);
+          simTarget.textContent = `${targetIndex + 1} / ${vertices.length}`;
+          uiDirty = false;
+        }
+
+        function setMessage(text) {
+          simMessage.textContent = text;
+        }
+
+        function endGame() {
+          gameActive = false;
+          setMessage(`Time up. Final score: ${score}. Press Start Game to play again.`);
+        }
+
+        function startGame() {
+          score = 0;
+          combo = 0;
+          timeLeft = 45;
+          gameActive = true;
+          targetIndex = pickRandomTarget(-1);
+          uiDirty = true;
+          setMessage(`Align the glowing node on the ${currentDimension}D object and press Lock Target (or Enter).`);
+        }
+
+        function tryLockTarget() {
+          if (!gameActive || points2d.length !== vertices.length) return;
+
+          const centerX = simCanvas.width * 0.5;
+          const centerY = simCanvas.height * 0.5;
+          const targetPoint = points2d[targetIndex];
+          const dx = targetPoint[0] - centerX;
+          const dy = targetPoint[1] - centerY;
+          const distance = Math.hypot(dx, dy);
+          const perfectRadius = Math.min(simCanvas.width, simCanvas.height) * 0.05;
+          const goodRadius = Math.min(simCanvas.width, simCanvas.height) * 0.11;
+
+          if (distance <= perfectRadius) {
+            combo += 1;
+            score += 140 + combo * 15;
+            timeLeft = Math.min(45, timeLeft + 1.2);
+            setMessage(`Perfect lock! +${140 + combo * 15} points`);
+          } else if (distance <= goodRadius) {
+            combo += 1;
+            score += 70 + combo * 10;
+            timeLeft = Math.min(45, timeLeft + 0.45);
+            setMessage(`Good lock! +${70 + combo * 10} points`);
+          } else {
+            combo = 0;
+            score = Math.max(0, score - 30);
+            timeLeft = Math.max(0, timeLeft - 1.2);
+            setMessage("Missed lock. Try centering the glowing node.");
+          }
+
+          targetIndex = pickRandomTarget(targetIndex);
+          uiDirty = true;
+        }
+
+        function drawCrosshair(width, height) {
+          if (!ctx) return;
+          const cx = width * 0.5;
+          const cy = height * 0.5;
+          ctx.strokeStyle = "rgba(255, 220, 120, 0.95)";
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(cx - 16, cy);
+          ctx.lineTo(cx + 16, cy);
+          ctx.moveTo(cx, cy - 16);
+          ctx.lineTo(cx, cy + 16);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        function drawFrame(ts) {
+          if (!ctx) return;
+          const dt = Math.min(0.033, (ts - lastTs) / 1000 || 0.016);
+          lastTs = ts;
+
+          if (running) {
+            thetaXY += Number(simSpeedXY.value) * dt;
+            thetaXZ += Number(simSpeedXZ.value) * dt;
+            thetaZW += Number(simSpeedZW.value) * dt;
+            thetaXW += Number(simSpeedXW.value) * dt;
+            thetaYZ += Number(simSpeedYZ.value) * dt;
+            thetaXV += Number(simSpeedXV.value) * dt;
+            thetaZV += Number(simSpeedZV.value) * dt;
+            thetaXU += Number(simSpeedXU.value) * dt;
+            thetaWU += Number(simSpeedWU.value) * dt;
+            thetaXT += Number(simSpeedXT.value) * dt;
+            thetaYT += Number(simSpeedYT.value) * dt;
+            thetaXS += Number(simSpeedXS.value) * dt;
+            thetaZS += Number(simSpeedZS.value) * dt;
+            if (gameActive) {
+              timeLeft = Math.max(0, timeLeft - dt);
+              uiDirty = true;
+              if (timeLeft <= 0) {
+                endGame();
+              }
+            }
+          }
+
+          resizeCanvasForDisplay();
+          const width = simCanvas.width;
+          const height = simCanvas.height;
+
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = "rgba(23, 16, 42, 0.96)";
+          ctx.fillRect(0, 0, width, height);
+
+          const projectedPoints = vertices.map((base) => {
+            let b = base;
+            if (currentDimension >= 2) {
+              b = rotatePlane(b, 0, 1, thetaXY);
+            }
+            if (currentDimension >= 3) {
+              b = rotatePlane(b, 0, 2, thetaXZ);
+              b = rotatePlane(b, 1, 2, thetaYZ);
+            }
+            let d = b;
+            if (currentDimension >= 4) {
+              d = rotatePlane(d, 2, 3, thetaZW);
+              d = rotatePlane(d, 0, 3, thetaXW);
+            }
+            if (currentDimension >= 5) {
+              d = rotatePlane(d, 0, 4, thetaXV);
+              d = rotatePlane(d, 2, 4, thetaZV);
+            }
+            if (currentDimension >= 6) {
+              d = rotatePlane(d, 0, 5, thetaXU);
+              d = rotatePlane(d, 3, 5, thetaWU);
+            }
+            if (currentDimension >= 7) {
+              d = rotatePlane(d, 0, 6, thetaXT);
+              d = rotatePlane(d, 1, 6, thetaYT);
+            }
+            if (currentDimension >= 8) {
+              d = rotatePlane(d, 0, 7, thetaXS);
+              d = rotatePlane(d, 2, 7, thetaZS);
+            }
+            return projectNDto2D(d, width, height);
+          });
+          points2d = projectedPoints;
+
+          ctx.strokeStyle = "rgba(154, 110, 255, 0.85)";
+          ctx.lineWidth = 1.6;
+          for (const [a, b] of edges) {
+            const p1 = projectedPoints[a];
+            const p2 = projectedPoints[b];
+            ctx.beginPath();
+            ctx.moveTo(p1[0], p1[1]);
+            ctx.lineTo(p2[0], p2[1]);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = "rgba(236, 225, 255, 0.95)";
+          for (const p of projectedPoints) {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 3.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (gameActive) {
+            const p = projectedPoints[targetIndex];
+            ctx.strokeStyle = "rgba(123, 255, 189, 0.98)";
+            ctx.lineWidth = 3.2;
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = "rgba(123, 255, 189, 0.9)";
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 4.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          drawCrosshair(width, height);
+          updateHud();
+          window.requestAnimationFrame(drawFrame);
+        }
+
+        simStart.addEventListener("click", startGame);
+        simLock.addEventListener("click", tryLockTarget);
+        simDimension.addEventListener("change", () => {
+          const nextDimension = Number(simDimension.value);
+          buildGeometry(nextDimension);
+          syncControlsForDimension();
+          setMessage(`Switched to ${nextDimension}D object.`);
+        });
+        simToggle.addEventListener("click", () => {
+          running = !running;
+          simToggle.textContent = running ? "Pause Sim" : "Resume Sim";
+        });
+        simResetView.addEventListener("click", () => {
+          resetView();
+          setMessage("View reset. Drag canvas to orbit and use mouse wheel to zoom.");
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            const active = document.activeElement;
+            const inTextInput =
+              active &&
+              (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+            if (!inTextInput) {
+              event.preventDefault();
+              tryLockTarget();
+            }
+          }
+        });
+        simCanvas.addEventListener("pointerdown", (event) => {
+          draggingView = true;
+          dragLastX = event.clientX;
+          dragLastY = event.clientY;
+          simCanvas.setPointerCapture(event.pointerId);
+        });
+        simCanvas.addEventListener("pointermove", (event) => {
+          if (!draggingView) return;
+          const dx = event.clientX - dragLastX;
+          const dy = event.clientY - dragLastY;
+          dragLastX = event.clientX;
+          dragLastY = event.clientY;
+          viewYaw += dx * 0.008;
+          viewPitch = clamp(viewPitch + dy * 0.008, -1.3, 1.3);
+        });
+        simCanvas.addEventListener("pointerup", () => {
+          draggingView = false;
+        });
+        simCanvas.addEventListener("pointercancel", () => {
+          draggingView = false;
+        });
+        simCanvas.addEventListener(
+          "wheel",
+          (event) => {
+            event.preventDefault();
+            const zoomDelta = event.deltaY > 0 ? -0.12 : 0.12;
+            viewZoom = clamp(viewZoom + zoomDelta, 1.3, 4.2);
+          },
+          { passive: false }
+        );
+
+        window.addEventListener("resize", resizeCanvasForDisplay);
+        resizeCanvasForDisplay();
+        buildGeometry(currentDimension);
+        syncControlsForDimension();
+        updateHud();
+        window.requestAnimationFrame(drawFrame);
+      }
+
+      if (
+        bhCanvas &&
+        bhGravity &&
+        bhSpin &&
+        bhHorizon &&
+        bhParticles &&
+        bhTrail &&
+        bhReset &&
+        bhCollapse &&
+        bhPause &&
+        bhLiveCount &&
+        bhEatenCount &&
+        bhFps &&
+        bhMessage
+      ) {
+        const ctx = bhCanvas.getContext("2d");
+        const particles = [];
+        const stars = [];
+        let eatenCount = 0;
+        let lastTs = 0;
+        let hudTimer = 0;
+        let fpsValue = 0;
+        let paused = false;
+        let collapseMode = false;
+        let activeHorizon = 0;
+        let centerX = 0;
+        let centerY = 0;
+        let baseRadius = 0;
+
+        function setBhMessage(text) {
+          bhMessage.textContent = text;
+        }
+
+        function random(min, max) {
+          return min + Math.random() * (max - min);
+        }
+
+        function resizeBhCanvas() {
+          const rect = bhCanvas.getBoundingClientRect();
+          const width = Math.max(420, Math.floor(rect.width));
+          const height = Math.max(320, Math.floor(width * 0.58));
+          if (bhCanvas.width !== width || bhCanvas.height !== height) {
+            bhCanvas.width = width;
+            bhCanvas.height = height;
+          }
+          centerX = bhCanvas.width * 0.5;
+          centerY = bhCanvas.height * 0.5;
+          baseRadius = Math.min(bhCanvas.width, bhCanvas.height) * 0.48;
+        }
+
+        function seedStars() {
+          stars.length = 0;
+          const count = 160;
+          for (let i = 0; i < count; i += 1) {
+            stars.push({
+              x: Math.random(),
+              y: Math.random(),
+              a: random(0.2, 0.9),
+              r: random(0.5, 1.8),
+            });
+          }
+        }
+
+        function spawnParticle(index) {
+          const horizon = activeHorizon || Number(bhHorizon.value);
+          const angle = random(0, Math.PI * 2);
+          const radius = collapseMode ? random(horizon + 8, Math.min(baseRadius, horizon + 64)) : random(horizon + 30, baseRadius);
+          const speedFactor = Math.sqrt(Number(bhGravity.value) * 2200 / Math.max(40, radius));
+          const tangential = speedFactor * (collapseMode ? random(0.04, 0.22) : random(0.72, 1.35));
+          const radialJitter = collapseMode ? -random(0.9, 2.2) : random(-0.34, 0.34);
+
+          const x = centerX + Math.cos(angle) * radius;
+          const y = centerY + Math.sin(angle) * radius;
+          const tx = -Math.sin(angle);
+          const ty = Math.cos(angle);
+
+          const particle = {
+            x,
+            y,
+            vx: tx * tangential + Math.cos(angle) * radialJitter,
+            vy: ty * tangential + Math.sin(angle) * radialJitter,
+            hue: random(188, 272),
+            life: random(0.75, 1.25),
+          };
+
+          if (typeof index === "number") {
+            particles[index] = particle;
+          } else {
+            particles.push(particle);
+          }
+        }
+
+        function reseedParticles() {
+          particles.length = 0;
+          const targetCount = Number(bhParticles.value);
+          for (let i = 0; i < targetCount; i += 1) {
+            spawnParticle();
+          }
+          setBhMessage(collapseMode ? "Collapse field restarted." : "Field restarted.");
+        }
+
+        function updateHud() {
+          bhLiveCount.textContent = String(particles.length);
+          bhEatenCount.textContent = String(eatenCount);
+          bhFps.textContent = String(Math.round(fpsValue));
+        }
+
+        function drawBlackHole(timeSec) {
+          if (!ctx) return;
+          const horizon = activeHorizon || Number(bhHorizon.value);
+          const ringR = horizon * 1.9;
+
+          const glow = ctx.createRadialGradient(centerX, centerY, horizon * 0.75, centerX, centerY, ringR * 1.5);
+          glow.addColorStop(0, "rgba(8, 8, 10, 1)");
+          glow.addColorStop(0.25, "rgba(22, 18, 35, 0.92)");
+          glow.addColorStop(0.5, "rgba(98, 52, 170, 0.34)");
+          glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, ringR * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          const spinSign = Number(bhSpin.value) >= 0 ? 1 : -1;
+          for (let i = 0; i < 3; i += 1) {
+            const phase = timeSec * (0.7 + i * 0.18) * spinSign + i * 1.3;
+            ctx.strokeStyle = `hsla(${250 + i * 20}, 90%, ${60 - i * 8}%, ${0.28 - i * 0.05})`;
+            ctx.lineWidth = 10 - i * 2;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, ringR + i * 10, ringR * (0.36 + i * 0.07), phase, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = "#020204";
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, horizon, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255, 190, 80, 0.36)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, horizon * 1.03, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        function drawStars() {
+          if (!ctx) return;
+          for (const star of stars) {
+            ctx.fillStyle = `rgba(220, 235, 255, ${star.a})`;
+            ctx.beginPath();
+            ctx.arc(star.x * bhCanvas.width, star.y * bhCanvas.height, star.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        function stepParticles(dt) {
+          const horizon = activeHorizon || Number(bhHorizon.value);
+          const gravity = Number(bhGravity.value) * (collapseMode ? 7600 : 2400);
+          const spin = Number(bhSpin.value) * (collapseMode ? 28 : 260);
+          const consumeRadius = collapseMode ? horizon * 1.1 : horizon;
+          const horizonSq = consumeRadius * consumeRadius;
+          const maxDist = baseRadius * 1.3;
+          const maxDistSq = maxDist * maxDist;
+
+          for (let i = particles.length - 1; i >= 0; i -= 1) {
+            const p = particles[i];
+            const dx = p.x - centerX;
+            const dy = p.y - centerY;
+            const r2 = dx * dx + dy * dy;
+            const r = Math.sqrt(r2);
+
+            if (r2 < horizonSq || !Number.isFinite(r2)) {
+              eatenCount += 1;
+              if (collapseMode) {
+                particles.splice(i, 1);
+              } else {
+                spawnParticle(i);
+              }
+              continue;
+            }
+
+            if (r2 > maxDistSq) {
+              if (collapseMode) {
+                particles.splice(i, 1);
+              } else {
+                spawnParticle(i);
+              }
+              continue;
+            }
+
+            const invR = 1 / Math.max(1, r);
+            const accelG = -gravity / Math.max(300, r2);
+            const axG = dx * invR * accelG;
+            const ayG = dy * invR * accelG;
+
+            const tx = -dy * invR;
+            const ty = dx * invR;
+            const swirl = spin / Math.max(35, r);
+
+            p.vx += (axG + tx * swirl) * dt;
+            p.vy += (ayG + ty * swirl) * dt;
+            if (collapseMode) {
+              p.vx += (-dx * invR) * 0.22 * dt;
+              p.vy += (-dy * invR) * 0.22 * dt;
+            }
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+
+            const speed = Math.hypot(p.vx, p.vy);
+            const speedGlow = Math.min(1, speed / 8.5);
+            const px = p.x;
+            const py = p.y;
+
+            ctx.fillStyle = `hsla(${p.hue + speedGlow * 65}, 95%, ${56 + speedGlow * 18}%, ${0.18 + p.life * 0.35})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 1.1 + speedGlow * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        function frame(ts) {
+          if (!ctx) return;
+          const dt = Math.min(0.033, (ts - lastTs) / 1000 || 0.016);
+          lastTs = ts;
+          const t = ts / 1000;
+
+          const trail = Number(bhTrail.value);
+          ctx.fillStyle = `rgba(4, 6, 14, ${trail})`;
+          ctx.fillRect(0, 0, bhCanvas.width, bhCanvas.height);
+          drawStars();
+
+          if (!paused) {
+            if (collapseMode) {
+              const singularityRadius = 6;
+              const collapseRate = 18;
+              activeHorizon = Math.max(singularityRadius, activeHorizon - collapseRate * dt);
+            } else {
+              activeHorizon = Number(bhHorizon.value);
+            }
+
+            stepParticles(dt * 60);
+            if (collapseMode && particles.length === 0 && activeHorizon <= 6.01) {
+              setBhMessage("Complete collapse: horizon and matter collapsed to singularity.");
+              paused = true;
+              bhPause.textContent = "Resume Sim";
+            } else if (collapseMode && particles.length === 0) {
+              setBhMessage("Matter consumed. Horizon is still collapsing.");
+            }
+            fpsValue = 1 / Math.max(0.0001, dt);
+          }
+
+          drawBlackHole(t);
+
+          hudTimer += dt;
+          if (hudTimer >= 0.12) {
+            hudTimer = 0;
+            updateHud();
+          }
+
+          window.requestAnimationFrame(frame);
+        }
+
+        bhReset.addEventListener("click", () => {
+          collapseMode = false;
+          activeHorizon = Number(bhHorizon.value);
+          eatenCount = 0;
+          resizeBhCanvas();
+          reseedParticles();
+          updateHud();
+        });
+        bhCollapse.addEventListener("click", () => {
+          collapseMode = true;
+          bhGravity.value = "4.4";
+          bhSpin.value = "0.12";
+          bhHorizon.value = "168";
+          bhParticles.value = "1600";
+          bhTrail.value = "0.22";
+          activeHorizon = Number(bhHorizon.value);
+          paused = false;
+          bhPause.textContent = "Pause Sim";
+          eatenCount = 0;
+          resizeBhCanvas();
+          reseedParticles();
+          updateHud();
+          setBhMessage("Collapse Mode engaged: particles now infall toward the horizon.");
+        });
+        bhPause.addEventListener("click", () => {
+          paused = !paused;
+          bhPause.textContent = paused ? "Resume Sim" : "Pause Sim";
+        });
+        bhParticles.addEventListener("input", () => {
+          collapseMode = false;
+          activeHorizon = Number(bhHorizon.value);
+          resizeBhCanvas();
+          reseedParticles();
+          updateHud();
+        });
+        bhHorizon.addEventListener("input", () => {
+          collapseMode = false;
+          activeHorizon = Number(bhHorizon.value);
+          setBhMessage(`Event horizon: ${bhHorizon.value}px`);
+        });
+        bhGravity.addEventListener("input", () => {
+          collapseMode = false;
+          activeHorizon = Number(bhHorizon.value);
+          setBhMessage(`Gravity tuned to ${Number(bhGravity.value).toFixed(2)}.`);
+        });
+        bhSpin.addEventListener("input", () => {
+          collapseMode = false;
+          activeHorizon = Number(bhHorizon.value);
+          setBhMessage(`Frame drag tuned to ${Number(bhSpin.value).toFixed(2)}.`);
+        });
+        bhTrail.addEventListener("input", () => {
+          setBhMessage(`Trail alpha set to ${Number(bhTrail.value).toFixed(2)}.`);
+        });
+
+        window.addEventListener("resize", () => {
+          resizeBhCanvas();
+          seedStars();
+          updateHud();
+        });
+
+        resizeBhCanvas();
+        seedStars();
+        activeHorizon = Number(bhHorizon.value);
+        reseedParticles();
+        updateHud();
+        ctx.fillStyle = "rgba(4, 6, 14, 1)";
+        ctx.fillRect(0, 0, bhCanvas.width, bhCanvas.height);
+        window.requestAnimationFrame(frame);
+      }
+
+      if (
+        atomCanvas &&
+        atomZSlider &&
+        atomEnergy &&
+        atomSpeed &&
+        atomReset &&
+        atomExcite &&
+        atomPause &&
+        atomZ &&
+        atomElectrons &&
+        atomShells &&
+        atomMessage
+      ) {
+        const ctx = atomCanvas.getContext("2d");
+        const shellCapacity = [2, 8, 18, 32, 50];
+        const electrons = [];
+        const nucleus = [];
+        let shellCounts = [];
+        let paused = false;
+        let centerX = 0;
+        let centerY = 0;
+        let maxRadius = 0;
+        let lastTs = 0;
+
+        function setAtomMessage(text) {
+          atomMessage.textContent = text;
+        }
+
+        function random(min, max) {
+          return min + Math.random() * (max - min);
+        }
+
+        function resizeAtomCanvas() {
+          const rect = atomCanvas.getBoundingClientRect();
+          const width = Math.max(420, Math.floor(rect.width));
+          const height = Math.max(320, Math.floor(width * 0.58));
+          if (atomCanvas.width !== width || atomCanvas.height !== height) {
+            atomCanvas.width = width;
+            atomCanvas.height = height;
+          }
+          centerX = atomCanvas.width * 0.5;
+          centerY = atomCanvas.height * 0.5;
+          maxRadius = Math.min(atomCanvas.width, atomCanvas.height) * 0.44;
+        }
+
+        function fillShellCounts(electronCount) {
+          const counts = [];
+          let remaining = electronCount;
+          for (let i = 0; i < shellCapacity.length && remaining > 0; i += 1) {
+            const used = Math.min(shellCapacity[i], remaining);
+            counts.push(used);
+            remaining -= used;
+          }
+          if (remaining > 0) {
+            counts.push(remaining);
+          }
+          return counts;
+        }
+
+        function shellRadius(shellIndex) {
+          const energy = Number(atomEnergy.value);
+          const base = 42 + shellIndex * 36;
+          const spread = energy * 0.17 + shellIndex * 3;
+          return Math.min(maxRadius, base + spread);
+        }
+
+        function rebuildAtom() {
+          const z = Number(atomZSlider.value);
+          shellCounts = fillShellCounts(z);
+          electrons.length = 0;
+          nucleus.length = 0;
+
+          shellCounts.forEach((count, shell) => {
+            for (let i = 0; i < count; i += 1) {
+              const phase = (Math.PI * 2 * i) / Math.max(1, count);
+              electrons.push({
+                shell,
+                angle: phase + random(-0.2, 0.2),
+                omega: random(0.4, 1.3) * (1 / (shell + 1)),
+                excite: 0,
+              });
+            }
+          });
+
+          const neutronCount = Math.max(1, Math.round(z * (1.02 + random(0.0, 0.32))));
+          const nucleonCount = z + neutronCount;
+          for (let i = 0; i < nucleonCount; i += 1) {
+            const angle = random(0, Math.PI * 2);
+            const radius = random(0, 18 + Math.sqrt(z) * 1.7);
+            const proton = i < z;
+            nucleus.push({
+              proton,
+              angle,
+              radius,
+              jitter: random(0.3, 1.3),
+            });
+          }
+
+          atomZ.textContent = String(z);
+          atomElectrons.textContent = String(z);
+          atomShells.textContent = shellCounts.join(", ");
+        }
+
+        function exciteElectron() {
+          if (electrons.length === 0) return;
+          const idx = Math.floor(Math.random() * electrons.length);
+          const electron = electrons[idx];
+          electron.excite = random(16, 52);
+          electron.omega *= random(1.06, 1.22);
+          setAtomMessage("Electron excited: temporary higher-energy orbit.");
+        }
+
+        function drawFrame(ts) {
+          if (!ctx) return;
+          const dt = Math.min(0.033, (ts - lastTs) / 1000 || 0.016);
+          lastTs = ts;
+          const t = ts / 1000;
+
+          ctx.fillStyle = "rgba(7, 11, 23, 0.28)";
+          ctx.fillRect(0, 0, atomCanvas.width, atomCanvas.height);
+
+          const z = Number(atomZSlider.value);
+          const speed = Number(atomSpeed.value);
+          const energy = Number(atomEnergy.value) / 100;
+
+          for (let i = 0; i < shellCounts.length; i += 1) {
+            const r = shellRadius(i);
+            ctx.strokeStyle = `rgba(116, 175, 255, ${0.2 + i * 0.04})`;
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          const glowR = 18 + Math.sqrt(z) * 3.5;
+          const glow = ctx.createRadialGradient(centerX, centerY, 2, centerX, centerY, glowR * 2.3);
+          glow.addColorStop(0, "rgba(255, 190, 120, 0.95)");
+          glow.addColorStop(0.4, "rgba(255, 120, 80, 0.46)");
+          glow.addColorStop(1, "rgba(255, 120, 80, 0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, glowR * 2.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          for (const n of nucleus) {
+            const j = Math.sin(t * (1.8 + n.jitter) + n.angle) * 1.1;
+            const x = centerX + Math.cos(n.angle) * (n.radius + j);
+            const y = centerY + Math.sin(n.angle) * (n.radius + j);
+            ctx.fillStyle = n.proton ? "rgba(255, 150, 90, 0.95)" : "rgba(120, 180, 255, 0.9)";
+            ctx.beginPath();
+            ctx.arc(x, y, n.proton ? 3.4 : 3.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          if (!paused) {
+            for (const e of electrons) {
+              e.angle += e.omega * dt * speed * (1.2 + energy * 0.8);
+              e.excite = Math.max(0, e.excite - dt * 22);
+            }
+          }
+
+          for (const e of electrons) {
+            const r = shellRadius(e.shell) + e.excite * (0.45 + energy * 0.45);
+            const x = centerX + Math.cos(e.angle) * r;
+            const y = centerY + Math.sin(e.angle) * r;
+            ctx.fillStyle = `rgba(181, 243, 255, ${0.68 + energy * 0.28})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 2.6 + energy * 0.85, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          window.requestAnimationFrame(drawFrame);
+        }
+
+        atomReset.addEventListener("click", () => {
+          paused = false;
+          atomPause.textContent = "Pause Sim";
+          rebuildAtom();
+          setAtomMessage("Atom reset.");
+        });
+        atomExcite.addEventListener("click", exciteElectron);
+        atomPause.addEventListener("click", () => {
+          paused = !paused;
+          atomPause.textContent = paused ? "Resume Sim" : "Pause Sim";
+        });
+        atomZSlider.addEventListener("input", () => {
+          rebuildAtom();
+          setAtomMessage(`Element changed to atomic number ${atomZSlider.value}.`);
+        });
+        atomEnergy.addEventListener("input", () => {
+          setAtomMessage(`Energy level set to ${atomEnergy.value}.`);
+        });
+        atomSpeed.addEventListener("input", () => {
+          setAtomMessage(`Time scale set to ${Number(atomSpeed.value).toFixed(2)}x.`);
+        });
+        window.addEventListener("resize", () => {
+          resizeAtomCanvas();
+        });
+
+        resizeAtomCanvas();
+        rebuildAtom();
+        ctx.fillStyle = "rgba(7, 11, 23, 1)";
+        ctx.fillRect(0, 0, atomCanvas.width, atomCanvas.height);
+        window.requestAnimationFrame(drawFrame);
+      }
 
       menuToggle.addEventListener("click", () => {
         const isOpen = siteNav.classList.toggle("open");
