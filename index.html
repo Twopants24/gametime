@@ -155,12 +155,17 @@
             <p>Facing: <strong id="miner-facing">+X</strong></p>
             <p>Slice W: <strong id="miner-slice">0</strong></p>
             <p>Mined: <strong id="miner-mined">0</strong></p>
+            <p>Plane: <strong id="miner-plane">XW</strong></p>
+            <p>Angle: <strong id="miner-angle">0deg</strong></p>
           </div>
           <div class="miner-controls">
             <div class="miner-buttons">
               <button id="miner-reset" class="btn btn-primary" type="button">Reset Field</button>
               <button id="miner-mine" class="btn btn-ghost" type="button">Mine Forward</button>
               <button id="miner-toggle-grid" class="btn btn-ghost" type="button">Hide Ghost Slices</button>
+              <button id="miner-rotate-neg" class="btn btn-ghost" type="button">Rotate -</button>
+              <button id="miner-rotate-pos" class="btn btn-ghost" type="button">Rotate +</button>
+              <button id="miner-plane-cycle" class="btn btn-ghost" type="button">Plane: XW</button>
             </div>
             <div class="miner-move-buttons">
               <button id="miner-move-up" class="btn btn-ghost" type="button">Forward</button>
@@ -178,7 +183,7 @@
             <input id="miner-ghost" type="range" min="0" max="0.55" step="0.01" value="0.18" />
             <label for="miner-density">Ore Density</label>
             <input id="miner-density" type="range" min="0.15" max="0.65" step="0.01" value="0.34" />
-            <p id="miner-message" class="miner-message">Use the keyboard or buttons to walk the 4D cave.</p>
+            <p id="miner-message" class="miner-message">Use the keyboard or buttons to walk, then `Z/X` to rotate the 4D slice.</p>
           </div>
         </div>
       </section>
@@ -763,6 +768,9 @@
       const minerRadius = document.getElementById("miner-radius");
       const minerGhost = document.getElementById("miner-ghost");
       const minerDensity = document.getElementById("miner-density");
+      const minerRotateNeg = document.getElementById("miner-rotate-neg");
+      const minerRotatePos = document.getElementById("miner-rotate-pos");
+      const minerPlaneCycle = document.getElementById("miner-plane-cycle");
       const minerMoveUp = document.getElementById("miner-move-up");
       const minerMoveLeft = document.getElementById("miner-move-left");
       const minerMoveRight = document.getElementById("miner-move-right");
@@ -775,6 +783,8 @@
       const minerFacing = document.getElementById("miner-facing");
       const minerSlice = document.getElementById("miner-slice");
       const minerMined = document.getElementById("miner-mined");
+      const minerPlane = document.getElementById("miner-plane");
+      const minerAngle = document.getElementById("miner-angle");
       const minerMessage = document.getElementById("miner-message");
 
       if (
@@ -1788,6 +1798,9 @@
         minerRadius &&
         minerGhost &&
         minerDensity &&
+        minerRotateNeg &&
+        minerRotatePos &&
+        minerPlaneCycle &&
         minerMoveUp &&
         minerMoveLeft &&
         minerMoveRight &&
@@ -1800,6 +1813,8 @@
         minerFacing &&
         minerSlice &&
         minerMined &&
+        minerPlane &&
+        minerAngle &&
         minerMessage
       ) {
         const ctx = minerCanvas.getContext("2d");
@@ -1807,8 +1822,11 @@
         const world = new Map();
         const player = { x: 0, y: 0, z: 0, w: 0 };
         const facing = { x: 1, y: 0, z: 0 };
+        const planes = ["XW", "YW", "ZW"];
         let minedCount = 0;
         let showGhostSlices = true;
+        let planeIndex = 0;
+        let sliceAngle = 0;
 
         function setMinerMessage(text) {
           minerMessage.textContent = text;
@@ -1893,8 +1911,11 @@
         function updateMinerHud() {
           minerPos.textContent = `${player.x}, ${player.y}, ${player.z}, ${player.w}`;
           minerFacing.textContent = facingLabel();
-          minerSlice.textContent = String(player.w);
+          minerSlice.textContent = sliceAngle === 0 ? String(player.w) : `${player.w} @ ${planes[planeIndex]}`;
           minerMined.textContent = String(minedCount);
+          minerPlane.textContent = planes[planeIndex];
+          minerAngle.textContent = `${Math.round((sliceAngle * 180) / Math.PI)}deg`;
+          minerPlaneCycle.textContent = `Plane: ${planes[planeIndex]}`;
         }
 
         function resetMiner() {
@@ -1999,6 +2020,36 @@
           };
         }
 
+        function rotateSlice(local) {
+          const c = Math.cos(sliceAngle);
+          const s = Math.sin(sliceAngle);
+          const out = { x: local.x, y: local.y, z: local.z, w: local.w };
+          const plane = planes[planeIndex];
+          if (plane === "XW") {
+            out.x = local.x * c - local.w * s;
+            out.w = local.x * s + local.w * c;
+          } else if (plane === "YW") {
+            out.y = local.y * c - local.w * s;
+            out.w = local.y * s + local.w * c;
+          } else {
+            out.z = local.z * c - local.w * s;
+            out.w = local.z * s + local.w * c;
+          }
+          return out;
+        }
+
+        function rotateMiner(delta) {
+          sliceAngle += delta;
+          updateMinerHud();
+          setMinerMessage(`Rotated ${planes[planeIndex]} slice to ${Math.round((sliceAngle * 180) / Math.PI)}deg.`);
+        }
+
+        function cyclePlane() {
+          planeIndex = (planeIndex + 1) % planes.length;
+          updateMinerHud();
+          setMinerMessage(`Slice plane switched to ${planes[planeIndex]}.`);
+        }
+
         function drawVoxel(screenX, screenY, size, color, alpha) {
           if (!ctx) return;
           const top = `hsla(${color}, 80%, 70%, ${alpha})`;
@@ -2046,22 +2097,25 @@
           const ghostOpacity = showGhostSlices ? Number(minerGhost.value) : 0;
           const cells = [];
 
-          for (let w = player.w - 1; w <= player.w + 1; w += 1) {
+          for (let w = player.w - radius; w <= player.w + radius; w += 1) {
             for (let z = player.z - radius; z <= player.z + radius; z += 1) {
               for (let y = player.y - radius; y <= player.y + radius; y += 1) {
                 for (let x = player.x - radius; x <= player.x + radius; x += 1) {
                   if (!isFilled(x, y, z, w)) continue;
-                  const localX = x - player.x;
-                  const localY = y - player.y;
-                  const localZ = z - player.z;
-                  const p = projectIso(localX, localY, localZ);
-                  const wDelta = w - player.w;
-                  const alpha = wDelta === 0 ? 0.95 : ghostOpacity;
+                  const rotated = rotateSlice({
+                    x: x - player.x,
+                    y: y - player.y,
+                    z: z - player.z,
+                    w: w - player.w,
+                  });
+                  const p = projectIso(rotated.x, rotated.y, rotated.z);
+                  const wDelta = rotated.w;
+                  const alpha = Math.abs(wDelta) < 0.28 ? 0.98 : Math.max(0, ghostOpacity * (1 - Math.abs(wDelta) / (radius + 1)));
                   if (alpha <= 0) continue;
                   cells.push({
                     sx: p.x,
                     sy: p.y + wDelta * 18,
-                    depth: localX + localY + localZ + wDelta * 4,
+                    depth: rotated.x + rotated.y + rotated.z + wDelta * 4,
                     hue: 190 + (wDelta + 1) * 48 + (z + fieldRadius) * 4,
                     alpha,
                   });
@@ -2090,8 +2144,8 @@
 
           ctx.fillStyle = "rgba(207, 225, 255, 0.9)";
           ctx.font = '700 14px "Archivo", sans-serif';
-          ctx.fillText(`Visible W slice: ${player.w}`, 18, 28);
-          ctx.fillText("WASD = move, R/F = depth, Q/E = W-shift, Space = mine", 18, 50);
+          ctx.fillText(`Slice plane ${planes[planeIndex]} at ${Math.round((sliceAngle * 180) / Math.PI)}deg`, 18, 28);
+          ctx.fillText("WASD move, R/F depth, Q/E W-shift, Z/X rotate, C cycle plane, Space mine", 18, 50);
         }
 
         function handleMinerKey(event) {
@@ -2151,6 +2205,21 @@
               event.preventDefault();
               mineForward();
               break;
+            case "z":
+            case "Z":
+              event.preventDefault();
+              rotateMiner(-Math.PI / 12);
+              break;
+            case "x":
+            case "X":
+              event.preventDefault();
+              rotateMiner(Math.PI / 12);
+              break;
+            case "c":
+            case "C":
+              event.preventDefault();
+              cyclePlane();
+              break;
             default:
               break;
           }
@@ -2163,6 +2232,9 @@
 
         minerReset.addEventListener("click", resetMiner);
         minerMine.addEventListener("click", mineForward);
+        minerRotateNeg.addEventListener("click", () => rotateMiner(-Math.PI / 12));
+        minerRotatePos.addEventListener("click", () => rotateMiner(Math.PI / 12));
+        minerPlaneCycle.addEventListener("click", cyclePlane);
         minerMoveUp.addEventListener("click", () => moveMiner("forward"));
         minerMoveLeft.addEventListener("click", () => moveMiner("left"));
         minerMoveRight.addEventListener("click", () => moveMiner("right"));
