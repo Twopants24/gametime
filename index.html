@@ -165,6 +165,8 @@
             <input id="bh-particles" type="range" min="180" max="1800" step="20" value="720" />
             <label for="bh-trail">Trail Length</label>
             <input id="bh-trail" type="range" min="0.02" max="0.30" step="0.01" value="0.09" />
+            <label for="bh-timewarp">Timewarp</label>
+            <input id="bh-timewarp" type="range" min="0.1" max="8.0" step="0.01" value="1.00" />
             <div class="bh-buttons">
               <button id="bh-reset" class="btn btn-primary" type="button">Restart Field</button>
               <button id="bh-collapse" class="btn btn-ghost" type="button">Collapse Mode</button>
@@ -693,6 +695,7 @@
       const bhHorizon = document.getElementById("bh-horizon");
       const bhParticles = document.getElementById("bh-particles");
       const bhTrail = document.getElementById("bh-trail");
+      const bhTimewarp = document.getElementById("bh-timewarp");
       const bhReset = document.getElementById("bh-reset");
       const bhCollapse = document.getElementById("bh-collapse");
       const bhPause = document.getElementById("bh-pause");
@@ -1148,6 +1151,7 @@
         bhHorizon &&
         bhParticles &&
         bhTrail &&
+        bhTimewarp &&
         bhReset &&
         bhCollapse &&
         bhPause &&
@@ -1166,6 +1170,7 @@
         let paused = false;
         let collapseMode = false;
         let activeHorizon = 0;
+        let horizonGrowth = 0;
         let centerX = 0;
         let centerY = 0;
         let baseRadius = 0;
@@ -1313,6 +1318,7 @@
 
             if (r2 < horizonSq || !Number.isFinite(r2)) {
               eatenCount += 1;
+              horizonGrowth += collapseMode ? 0.46 : 0.18;
               if (collapseMode) {
                 particles.splice(i, 1);
               } else {
@@ -1363,6 +1369,7 @@
         function frame(ts) {
           if (!ctx) return;
           const dt = Math.min(0.033, (ts - lastTs) / 1000 || 0.016);
+          const simDt = dt * Number(bhTimewarp.value);
           lastTs = ts;
           const t = ts / 1000;
 
@@ -1377,10 +1384,11 @@
               const collapseRate = 18;
               activeHorizon = Math.max(singularityRadius, activeHorizon - collapseRate * dt);
             } else {
-              activeHorizon = Number(bhHorizon.value);
+              activeHorizon = Number(bhHorizon.value) + horizonGrowth;
             }
+            horizonGrowth = Math.max(0, horizonGrowth - (collapseMode ? 2.4 : 0.6) * dt);
 
-            stepParticles(dt * 60);
+            stepParticles(simDt * 60);
             if (collapseMode && particles.length === 0 && activeHorizon <= 6.01) {
               setBhMessage("Complete collapse: horizon and matter collapsed to singularity.");
               paused = true;
@@ -1404,6 +1412,7 @@
 
         bhReset.addEventListener("click", () => {
           collapseMode = false;
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           eatenCount = 0;
           resizeBhCanvas();
@@ -1417,6 +1426,7 @@
           bhHorizon.value = "168";
           bhParticles.value = "1600";
           bhTrail.value = "0.22";
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           paused = false;
           bhPause.textContent = "Pause Sim";
@@ -1432,6 +1442,7 @@
         });
         bhParticles.addEventListener("input", () => {
           collapseMode = false;
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           resizeBhCanvas();
           reseedParticles();
@@ -1439,21 +1450,27 @@
         });
         bhHorizon.addEventListener("input", () => {
           collapseMode = false;
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           setBhMessage(`Event horizon: ${bhHorizon.value}px`);
         });
         bhGravity.addEventListener("input", () => {
           collapseMode = false;
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           setBhMessage(`Gravity tuned to ${Number(bhGravity.value).toFixed(2)}.`);
         });
         bhSpin.addEventListener("input", () => {
           collapseMode = false;
+          horizonGrowth = 0;
           activeHorizon = Number(bhHorizon.value);
           setBhMessage(`Frame drag tuned to ${Number(bhSpin.value).toFixed(2)}.`);
         });
         bhTrail.addEventListener("input", () => {
           setBhMessage(`Trail alpha set to ${Number(bhTrail.value).toFixed(2)}.`);
+        });
+        bhTimewarp.addEventListener("input", () => {
+          setBhMessage(`Timewarp set to ${Number(bhTimewarp.value).toFixed(2)}x.`);
         });
 
         window.addEventListener("resize", () => {
