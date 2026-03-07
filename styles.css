@@ -315,6 +315,11 @@ h1 {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
+#miner-canvas:focus {
+  outline: 3px solid rgba(126, 176, 255, 0.95);
+  outline-offset: 2px;
+}
+
 .miner-hud {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -348,6 +353,12 @@ h1 {
 .miner-buttons {
   display: flex;
   flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.miner-move-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.55rem;
 }
 

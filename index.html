@@ -149,7 +149,7 @@
           shifts into neighboring W-slices, and `Space` mines the block in front of you.
         </p>
         <div class="miner-wrap">
-          <canvas id="miner-canvas" width="960" height="560" aria-label="4D Miner style prototype"></canvas>
+          <canvas id="miner-canvas" width="960" height="560" tabindex="0" aria-label="4D Miner style prototype"></canvas>
           <div class="miner-hud" aria-live="polite">
             <p>Pos: <strong id="miner-pos">0, 0, 0, 0</strong></p>
             <p>Facing: <strong id="miner-facing">+X</strong></p>
@@ -161,6 +161,16 @@
               <button id="miner-reset" class="btn btn-primary" type="button">Reset Field</button>
               <button id="miner-mine" class="btn btn-ghost" type="button">Mine Forward</button>
               <button id="miner-toggle-grid" class="btn btn-ghost" type="button">Hide Ghost Slices</button>
+            </div>
+            <div class="miner-move-buttons">
+              <button id="miner-move-up" class="btn btn-ghost" type="button">Forward</button>
+              <button id="miner-move-left" class="btn btn-ghost" type="button">Left</button>
+              <button id="miner-move-right" class="btn btn-ghost" type="button">Right</button>
+              <button id="miner-move-down" class="btn btn-ghost" type="button">Back</button>
+              <button id="miner-move-in" class="btn btn-ghost" type="button">+Z</button>
+              <button id="miner-move-out" class="btn btn-ghost" type="button">-Z</button>
+              <button id="miner-shift-neg" class="btn btn-ghost" type="button">W-</button>
+              <button id="miner-shift-pos" class="btn btn-ghost" type="button">W+</button>
             </div>
             <label for="miner-radius">View Radius</label>
             <input id="miner-radius" type="range" min="2" max="5" step="1" value="3" />
@@ -753,6 +763,14 @@
       const minerRadius = document.getElementById("miner-radius");
       const minerGhost = document.getElementById("miner-ghost");
       const minerDensity = document.getElementById("miner-density");
+      const minerMoveUp = document.getElementById("miner-move-up");
+      const minerMoveLeft = document.getElementById("miner-move-left");
+      const minerMoveRight = document.getElementById("miner-move-right");
+      const minerMoveDown = document.getElementById("miner-move-down");
+      const minerMoveIn = document.getElementById("miner-move-in");
+      const minerMoveOut = document.getElementById("miner-move-out");
+      const minerShiftNeg = document.getElementById("miner-shift-neg");
+      const minerShiftPos = document.getElementById("miner-shift-pos");
       const minerPos = document.getElementById("miner-pos");
       const minerFacing = document.getElementById("miner-facing");
       const minerSlice = document.getElementById("miner-slice");
@@ -1770,6 +1788,14 @@
         minerRadius &&
         minerGhost &&
         minerDensity &&
+        minerMoveUp &&
+        minerMoveLeft &&
+        minerMoveRight &&
+        minerMoveDown &&
+        minerMoveIn &&
+        minerMoveOut &&
+        minerShiftNeg &&
+        minerShiftPos &&
         minerPos &&
         minerFacing &&
         minerSlice &&
@@ -1916,6 +1942,55 @@
           setMinerMessage(`Mined voxel at ${tx}, ${ty}, ${tz}, ${tw}.`);
         }
 
+        function moveMiner(direction) {
+          switch (direction) {
+            case "forward":
+              facing.x = 0;
+              facing.y = -1;
+              facing.z = 0;
+              tryMove(0, -1, 0, 0);
+              break;
+            case "back":
+              facing.x = 0;
+              facing.y = 1;
+              facing.z = 0;
+              tryMove(0, 1, 0, 0);
+              break;
+            case "left":
+              facing.x = -1;
+              facing.y = 0;
+              facing.z = 0;
+              tryMove(-1, 0, 0, 0);
+              break;
+            case "right":
+              facing.x = 1;
+              facing.y = 0;
+              facing.z = 0;
+              tryMove(1, 0, 0, 0);
+              break;
+            case "in":
+              facing.x = 0;
+              facing.y = 0;
+              facing.z = 1;
+              tryMove(0, 0, 1, 0);
+              break;
+            case "out":
+              facing.x = 0;
+              facing.y = 0;
+              facing.z = -1;
+              tryMove(0, 0, -1, 0);
+              break;
+            case "w-":
+              tryMove(0, 0, 0, -1);
+              break;
+            case "w+":
+              tryMove(0, 0, 0, 1);
+              break;
+            default:
+              break;
+          }
+        }
+
         function projectIso(x, y, z) {
           const scale = Math.min(minerCanvas.width, minerCanvas.height) * 0.06;
           return {
@@ -2032,63 +2107,45 @@
             case "W":
             case "ArrowUp":
               event.preventDefault();
-              facing.x = 0;
-              facing.y = -1;
-              facing.z = 0;
-              tryMove(0, -1, 0, 0);
+              moveMiner("forward");
               break;
             case "s":
             case "S":
             case "ArrowDown":
               event.preventDefault();
-              facing.x = 0;
-              facing.y = 1;
-              facing.z = 0;
-              tryMove(0, 1, 0, 0);
+              moveMiner("back");
               break;
             case "a":
             case "A":
             case "ArrowLeft":
               event.preventDefault();
-              facing.x = -1;
-              facing.y = 0;
-              facing.z = 0;
-              tryMove(-1, 0, 0, 0);
+              moveMiner("left");
               break;
             case "d":
             case "D":
             case "ArrowRight":
               event.preventDefault();
-              facing.x = 1;
-              facing.y = 0;
-              facing.z = 0;
-              tryMove(1, 0, 0, 0);
+              moveMiner("right");
               break;
             case "r":
             case "R":
               event.preventDefault();
-              facing.x = 0;
-              facing.y = 0;
-              facing.z = 1;
-              tryMove(0, 0, 1, 0);
+              moveMiner("in");
               break;
             case "f":
             case "F":
               event.preventDefault();
-              facing.x = 0;
-              facing.y = 0;
-              facing.z = -1;
-              tryMove(0, 0, -1, 0);
+              moveMiner("out");
               break;
             case "q":
             case "Q":
               event.preventDefault();
-              tryMove(0, 0, 0, -1);
+              moveMiner("w-");
               break;
             case "e":
             case "E":
               event.preventDefault();
-              tryMove(0, 0, 0, 1);
+              moveMiner("w+");
               break;
             case " ":
               event.preventDefault();
@@ -2106,6 +2163,14 @@
 
         minerReset.addEventListener("click", resetMiner);
         minerMine.addEventListener("click", mineForward);
+        minerMoveUp.addEventListener("click", () => moveMiner("forward"));
+        minerMoveLeft.addEventListener("click", () => moveMiner("left"));
+        minerMoveRight.addEventListener("click", () => moveMiner("right"));
+        minerMoveDown.addEventListener("click", () => moveMiner("back"));
+        minerMoveIn.addEventListener("click", () => moveMiner("in"));
+        minerMoveOut.addEventListener("click", () => moveMiner("out"));
+        minerShiftNeg.addEventListener("click", () => moveMiner("w-"));
+        minerShiftPos.addEventListener("click", () => moveMiner("w+"));
         minerToggleGrid.addEventListener("click", () => {
           showGhostSlices = !showGhostSlices;
           minerToggleGrid.textContent = showGhostSlices ? "Hide Ghost Slices" : "Show Ghost Slices";
@@ -2117,6 +2182,10 @@
         });
         minerGhost.addEventListener("input", () => {
           setMinerMessage(`Ghost slice opacity set to ${Number(minerGhost.value).toFixed(2)}.`);
+        });
+        minerCanvas.addEventListener("click", () => {
+          minerCanvas.focus();
+          setMinerMessage("4D Miner canvas focused. Keyboard movement is active.");
         });
         document.addEventListener("keydown", handleMinerKey);
         window.addEventListener("resize", resizeMinerCanvas);
