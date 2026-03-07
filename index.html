@@ -37,6 +37,7 @@
       <nav id="site-nav" class="site-nav">
         <a href="#overview">Overview</a>
         <a href="#sim4d">2D-8D Sim</a>
+        <a href="#miner4d">4D Miner</a>
         <a href="#blackhole">Black Hole</a>
         <a href="#atom">Atom</a>
         <a href="#system">System</a>
@@ -137,6 +138,37 @@
             <label for="sim4d-speed-zs">ZS Speed</label>
             <input id="sim4d-speed-zs" type="range" min="-2.5" max="2.5" step="0.01" value="-0.27" />
             <p id="sim4d-message" class="sim4d-message">Press Start Game to begin. Drag canvas to move perspective.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="miner4d" class="panel reveal">
+        <h2>4D Miner Prototype</h2>
+        <p class="section-note">
+          Navigate a tiny 4D cave field. `WASD` moves on the floor plane, `R/F` moves through depth, `Q/E`
+          shifts into neighboring W-slices, and `Space` mines the block in front of you.
+        </p>
+        <div class="miner-wrap">
+          <canvas id="miner-canvas" width="960" height="560" aria-label="4D Miner style prototype"></canvas>
+          <div class="miner-hud" aria-live="polite">
+            <p>Pos: <strong id="miner-pos">0, 0, 0, 0</strong></p>
+            <p>Facing: <strong id="miner-facing">+X</strong></p>
+            <p>Slice W: <strong id="miner-slice">0</strong></p>
+            <p>Mined: <strong id="miner-mined">0</strong></p>
+          </div>
+          <div class="miner-controls">
+            <div class="miner-buttons">
+              <button id="miner-reset" class="btn btn-primary" type="button">Reset Field</button>
+              <button id="miner-mine" class="btn btn-ghost" type="button">Mine Forward</button>
+              <button id="miner-toggle-grid" class="btn btn-ghost" type="button">Hide Ghost Slices</button>
+            </div>
+            <label for="miner-radius">View Radius</label>
+            <input id="miner-radius" type="range" min="2" max="5" step="1" value="3" />
+            <label for="miner-ghost">Ghost Slice Opacity</label>
+            <input id="miner-ghost" type="range" min="0" max="0.55" step="0.01" value="0.18" />
+            <label for="miner-density">Ore Density</label>
+            <input id="miner-density" type="range" min="0.15" max="0.65" step="0.01" value="0.34" />
+            <p id="miner-message" class="miner-message">Use the keyboard or buttons to walk the 4D cave.</p>
           </div>
         </div>
       </section>
@@ -714,6 +746,18 @@
       const atomElectrons = document.getElementById("atom-electrons");
       const atomShells = document.getElementById("atom-shells");
       const atomMessage = document.getElementById("atom-message");
+      const minerCanvas = document.getElementById("miner-canvas");
+      const minerReset = document.getElementById("miner-reset");
+      const minerMine = document.getElementById("miner-mine");
+      const minerToggleGrid = document.getElementById("miner-toggle-grid");
+      const minerRadius = document.getElementById("miner-radius");
+      const minerGhost = document.getElementById("miner-ghost");
+      const minerDensity = document.getElementById("miner-density");
+      const minerPos = document.getElementById("miner-pos");
+      const minerFacing = document.getElementById("miner-facing");
+      const minerSlice = document.getElementById("miner-slice");
+      const minerMined = document.getElementById("miner-mined");
+      const minerMessage = document.getElementById("miner-message");
 
       if (
         simCanvas &&
@@ -1716,6 +1760,370 @@
         ctx.fillStyle = "rgba(7, 11, 23, 1)";
         ctx.fillRect(0, 0, atomCanvas.width, atomCanvas.height);
         window.requestAnimationFrame(drawFrame);
+      }
+
+      if (
+        minerCanvas &&
+        minerReset &&
+        minerMine &&
+        minerToggleGrid &&
+        minerRadius &&
+        minerGhost &&
+        minerDensity &&
+        minerPos &&
+        minerFacing &&
+        minerSlice &&
+        minerMined &&
+        minerMessage
+      ) {
+        const ctx = minerCanvas.getContext("2d");
+        const fieldRadius = 4;
+        const world = new Map();
+        const player = { x: 0, y: 0, z: 0, w: 0 };
+        const facing = { x: 1, y: 0, z: 0 };
+        let minedCount = 0;
+        let showGhostSlices = true;
+
+        function setMinerMessage(text) {
+          minerMessage.textContent = text;
+        }
+
+        function clamp(value, min, max) {
+          return Math.max(min, Math.min(max, value));
+        }
+
+        function resizeMinerCanvas() {
+          const rect = minerCanvas.getBoundingClientRect();
+          const width = Math.max(420, Math.floor(rect.width));
+          const height = Math.max(320, Math.floor(width * 0.58));
+          if (minerCanvas.width !== width || minerCanvas.height !== height) {
+            minerCanvas.width = width;
+            minerCanvas.height = height;
+          }
+        }
+
+        function keyOf(x, y, z, w) {
+          return `${x},${y},${z},${w}`;
+        }
+
+        function isFilled(x, y, z, w) {
+          return world.get(keyOf(x, y, z, w)) === 1;
+        }
+
+        function setFilled(x, y, z, w, filled) {
+          const key = keyOf(x, y, z, w);
+          if (filled) {
+            world.set(key, 1);
+          } else {
+            world.delete(key);
+          }
+        }
+
+        function noiseValue(x, y, z, w) {
+          const mixed =
+            Math.sin(x * 1.21 + y * 0.77 + z * 0.52 + w * 1.11) +
+            Math.cos(x * 0.43 - y * 1.09 + z * 0.91 - w * 0.63) +
+            Math.sin((x * z - y * w) * 0.28);
+          return mixed / 3;
+        }
+
+        function generateWorld() {
+          world.clear();
+          const density = Number(minerDensity.value);
+          for (let x = -fieldRadius; x <= fieldRadius; x += 1) {
+            for (let y = -fieldRadius; y <= fieldRadius; y += 1) {
+              for (let z = -fieldRadius; z <= fieldRadius; z += 1) {
+                for (let w = -fieldRadius; w <= fieldRadius; w += 1) {
+                  const dist = Math.abs(x) + Math.abs(y) + Math.abs(z) + Math.abs(w);
+                  const carve = noiseValue(x, y, z, w) > density - 0.5;
+                  if (dist > 1 && carve) {
+                    setFilled(x, y, z, w, true);
+                  }
+                }
+              }
+            }
+          }
+
+          for (let x = -1; x <= 1; x += 1) {
+            for (let y = -1; y <= 1; y += 1) {
+              for (let z = -1; z <= 1; z += 1) {
+                for (let w = -1; w <= 1; w += 1) {
+                  setFilled(x, y, z, w, false);
+                }
+              }
+            }
+          }
+        }
+
+        function facingLabel() {
+          if (facing.x === 1) return "+X";
+          if (facing.x === -1) return "-X";
+          if (facing.y === 1) return "+Y";
+          if (facing.y === -1) return "-Y";
+          if (facing.z === 1) return "+Z";
+          return "-Z";
+        }
+
+        function updateMinerHud() {
+          minerPos.textContent = `${player.x}, ${player.y}, ${player.z}, ${player.w}`;
+          minerFacing.textContent = facingLabel();
+          minerSlice.textContent = String(player.w);
+          minerMined.textContent = String(minedCount);
+        }
+
+        function resetMiner() {
+          player.x = 0;
+          player.y = 0;
+          player.z = 0;
+          player.w = 0;
+          facing.x = 1;
+          facing.y = 0;
+          facing.z = 0;
+          minedCount = 0;
+          generateWorld();
+          updateMinerHud();
+          setMinerMessage("Fresh 4D cave generated.");
+        }
+
+        function tryMove(dx, dy, dz, dw) {
+          const nx = clamp(player.x + dx, -fieldRadius, fieldRadius);
+          const ny = clamp(player.y + dy, -fieldRadius, fieldRadius);
+          const nz = clamp(player.z + dz, -fieldRadius, fieldRadius);
+          const nw = clamp(player.w + dw, -fieldRadius, fieldRadius);
+          if (isFilled(nx, ny, nz, nw)) {
+            setMinerMessage("Blocked. Mine the voxel first.");
+            return;
+          }
+          player.x = nx;
+          player.y = ny;
+          player.z = nz;
+          player.w = nw;
+          updateMinerHud();
+        }
+
+        function mineForward() {
+          const tx = player.x + facing.x;
+          const ty = player.y + facing.y;
+          const tz = player.z + facing.z;
+          const tw = player.w;
+          if (!isFilled(tx, ty, tz, tw)) {
+            setMinerMessage("No voxel in front to mine.");
+            return;
+          }
+          setFilled(tx, ty, tz, tw, false);
+          minedCount += 1;
+          updateMinerHud();
+          setMinerMessage(`Mined voxel at ${tx}, ${ty}, ${tz}, ${tw}.`);
+        }
+
+        function projectIso(x, y, z) {
+          const scale = Math.min(minerCanvas.width, minerCanvas.height) * 0.06;
+          return {
+            x: minerCanvas.width * 0.5 + (x - y) * scale,
+            y: minerCanvas.height * 0.58 + (x + y) * scale * 0.5 - z * scale * 0.92,
+          };
+        }
+
+        function drawVoxel(screenX, screenY, size, color, alpha) {
+          if (!ctx) return;
+          const top = `hsla(${color}, 80%, 70%, ${alpha})`;
+          const left = `hsla(${color}, 70%, 52%, ${alpha})`;
+          const right = `hsla(${color}, 70%, 40%, ${alpha})`;
+          const half = size * 0.5;
+          const quarter = size * 0.25;
+
+          ctx.fillStyle = top;
+          ctx.beginPath();
+          ctx.moveTo(screenX, screenY - half);
+          ctx.lineTo(screenX + size, screenY - quarter);
+          ctx.lineTo(screenX, screenY);
+          ctx.lineTo(screenX - size, screenY - quarter);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = left;
+          ctx.beginPath();
+          ctx.moveTo(screenX - size, screenY - quarter);
+          ctx.lineTo(screenX, screenY);
+          ctx.lineTo(screenX, screenY + half);
+          ctx.lineTo(screenX - size, screenY + quarter);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = right;
+          ctx.beginPath();
+          ctx.moveTo(screenX + size, screenY - quarter);
+          ctx.lineTo(screenX, screenY);
+          ctx.lineTo(screenX, screenY + half);
+          ctx.lineTo(screenX + size, screenY + quarter);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        function renderMiner() {
+          if (!ctx) return;
+          resizeMinerCanvas();
+          ctx.clearRect(0, 0, minerCanvas.width, minerCanvas.height);
+          ctx.fillStyle = "rgba(8, 16, 31, 0.98)";
+          ctx.fillRect(0, 0, minerCanvas.width, minerCanvas.height);
+
+          const radius = Number(minerRadius.value);
+          const ghostOpacity = showGhostSlices ? Number(minerGhost.value) : 0;
+          const cells = [];
+
+          for (let w = player.w - 1; w <= player.w + 1; w += 1) {
+            for (let z = player.z - radius; z <= player.z + radius; z += 1) {
+              for (let y = player.y - radius; y <= player.y + radius; y += 1) {
+                for (let x = player.x - radius; x <= player.x + radius; x += 1) {
+                  if (!isFilled(x, y, z, w)) continue;
+                  const localX = x - player.x;
+                  const localY = y - player.y;
+                  const localZ = z - player.z;
+                  const p = projectIso(localX, localY, localZ);
+                  const wDelta = w - player.w;
+                  const alpha = wDelta === 0 ? 0.95 : ghostOpacity;
+                  if (alpha <= 0) continue;
+                  cells.push({
+                    sx: p.x,
+                    sy: p.y + wDelta * 18,
+                    depth: localX + localY + localZ + wDelta * 4,
+                    hue: 190 + (wDelta + 1) * 48 + (z + fieldRadius) * 4,
+                    alpha,
+                  });
+                }
+              }
+            }
+          }
+
+          cells.sort((a, b) => a.depth - b.depth);
+          for (const cell of cells) {
+            drawVoxel(cell.sx, cell.sy, 18, cell.hue, cell.alpha);
+          }
+
+          const minerP = projectIso(0, 0, 0);
+          ctx.fillStyle = "rgba(255, 237, 117, 0.98)";
+          ctx.beginPath();
+          ctx.arc(minerP.x, minerP.y - 12, 7, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255, 237, 117, 0.9)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(minerP.x, minerP.y - 12);
+          ctx.lineTo(minerP.x + facing.x * 18 - facing.y * 18, minerP.y - 12 + (facing.x + facing.y) * 9 - facing.z * 16);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(207, 225, 255, 0.9)";
+          ctx.font = '700 14px "Archivo", sans-serif';
+          ctx.fillText(`Visible W slice: ${player.w}`, 18, 28);
+          ctx.fillText("WASD = move, R/F = depth, Q/E = W-shift, Space = mine", 18, 50);
+        }
+
+        function handleMinerKey(event) {
+          if (event.target instanceof Element) {
+            const tag = event.target.tagName;
+            if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || event.target.closest("form")) {
+              return;
+            }
+          }
+
+          switch (event.key) {
+            case "w":
+            case "W":
+            case "ArrowUp":
+              event.preventDefault();
+              facing.x = 0;
+              facing.y = -1;
+              facing.z = 0;
+              tryMove(0, -1, 0, 0);
+              break;
+            case "s":
+            case "S":
+            case "ArrowDown":
+              event.preventDefault();
+              facing.x = 0;
+              facing.y = 1;
+              facing.z = 0;
+              tryMove(0, 1, 0, 0);
+              break;
+            case "a":
+            case "A":
+            case "ArrowLeft":
+              event.preventDefault();
+              facing.x = -1;
+              facing.y = 0;
+              facing.z = 0;
+              tryMove(-1, 0, 0, 0);
+              break;
+            case "d":
+            case "D":
+            case "ArrowRight":
+              event.preventDefault();
+              facing.x = 1;
+              facing.y = 0;
+              facing.z = 0;
+              tryMove(1, 0, 0, 0);
+              break;
+            case "r":
+            case "R":
+              event.preventDefault();
+              facing.x = 0;
+              facing.y = 0;
+              facing.z = 1;
+              tryMove(0, 0, 1, 0);
+              break;
+            case "f":
+            case "F":
+              event.preventDefault();
+              facing.x = 0;
+              facing.y = 0;
+              facing.z = -1;
+              tryMove(0, 0, -1, 0);
+              break;
+            case "q":
+            case "Q":
+              event.preventDefault();
+              tryMove(0, 0, 0, -1);
+              break;
+            case "e":
+            case "E":
+              event.preventDefault();
+              tryMove(0, 0, 0, 1);
+              break;
+            case " ":
+              event.preventDefault();
+              mineForward();
+              break;
+            default:
+              break;
+          }
+        }
+
+        function minerFrame() {
+          renderMiner();
+          window.requestAnimationFrame(minerFrame);
+        }
+
+        minerReset.addEventListener("click", resetMiner);
+        minerMine.addEventListener("click", mineForward);
+        minerToggleGrid.addEventListener("click", () => {
+          showGhostSlices = !showGhostSlices;
+          minerToggleGrid.textContent = showGhostSlices ? "Hide Ghost Slices" : "Show Ghost Slices";
+          setMinerMessage(showGhostSlices ? "Ghost W slices visible." : "Only current W slice visible.");
+        });
+        minerDensity.addEventListener("input", resetMiner);
+        minerRadius.addEventListener("input", () => {
+          setMinerMessage(`View radius set to ${minerRadius.value}.`);
+        });
+        minerGhost.addEventListener("input", () => {
+          setMinerMessage(`Ghost slice opacity set to ${Number(minerGhost.value).toFixed(2)}.`);
+        });
+        document.addEventListener("keydown", handleMinerKey);
+        window.addEventListener("resize", resizeMinerCanvas);
+
+        resizeMinerCanvas();
+        resetMiner();
+        window.requestAnimationFrame(minerFrame);
       }
 
       menuToggle.addEventListener("click", () => {
