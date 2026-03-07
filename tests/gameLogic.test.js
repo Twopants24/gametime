@@ -1,87 +1,64 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createInitialState, setDirection, step, placeFood } from "../src/gameLogic.js";
+import { ATTACKS, PHYSICS, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
 
-test("snake moves one cell in current direction", () => {
-  const initial = createInitialState({
-    gridSize: 10,
-    initialSnake: [
-      { x: 3, y: 3 },
-      { x: 2, y: 3 },
-      { x: 1, y: 3 },
-    ],
-    food: { x: 9, y: 9 },
-  });
+test("jab hit increases damage and launches defender", () => {
+  const state = createInitialState();
+  let [attacker, defender] = state.fighters;
+  attacker.x = 400;
+  attacker.y = 400;
+  attacker.face = 1;
+  attacker.attack = { type: "jab", frame: ATTACKS.jab.startup - 1, didHit: false };
 
-  const next = step(initial, () => 0);
-  assert.deepEqual(next.snake, [
-    { x: 4, y: 3 },
-    { x: 3, y: 3 },
-    { x: 2, y: 3 },
-  ]);
-  assert.equal(next.score, 0);
+  defender.x = 438;
+  defender.y = 400;
+
+  const resolved = resolveAttack(attacker, defender);
+  assert.equal(resolved.defender.damage, 7);
+  assert.ok(resolved.defender.vx > 0);
+  assert.ok(resolved.defender.vy < 0);
 });
 
-test("snake grows and increments score when eating food", () => {
-  const initial = createInitialState({
-    gridSize: 10,
-    initialSnake: [
-      { x: 3, y: 3 },
-      { x: 2, y: 3 },
-      { x: 1, y: 3 },
-    ],
-    food: { x: 4, y: 3 },
-  });
+test("fighter landing on a platform restores jumps", () => {
+  let fighter = createInitialState().fighters[0];
+  fighter.x = STAGE.platforms[0].x + 40;
+  fighter.y = STAGE.platforms[0].y - fighter.height - 2;
+  fighter.vy = 5;
+  fighter.jumpsLeft = 0;
 
-  const next = step(initial, () => 0);
-  assert.equal(next.snake.length, 4);
-  assert.equal(next.score, 1);
-  assert.notDeepEqual(next.food, { x: 4, y: 3 });
+  fighter = updateFighter(fighter);
+  assert.equal(fighter.grounded, true);
+  assert.equal(fighter.jumpsLeft, PHYSICS.maxJumps);
 });
 
-test("wall collision ends game", () => {
-  const initial = createInitialState({
-    gridSize: 5,
-    initialSnake: [
-      { x: 4, y: 2 },
-      { x: 3, y: 2 },
-      { x: 2, y: 2 },
-    ],
-    food: { x: 0, y: 0 },
+test("crossing the blast zone removes a stock and respawns the fighter", () => {
+  const initial = createInitialState();
+  initial.running = true;
+  initial.fighters[0].x = -STAGE.blastPadding - 5;
+
+  const next = stepState(initial, {
+    p1: { left: false, right: false, jump: false, attack: null },
+    p2: { left: false, right: false, jump: false, attack: null },
   });
 
-  const next = step(initial);
-  assert.equal(next.gameOver, true);
+  assert.equal(next.fighters[0].stocks, 2);
+  assert.equal(next.fighters[0].x, next.fighters[0].spawnX);
+  assert.equal(next.fighters[0].damage, 0);
+  assert.ok(next.fighters[0].invuln > 0);
 });
 
-test("self collision ends game", () => {
-  const initial = createInitialState({
-    gridSize: 7,
-    initialDirection: "UP",
-    initialSnake: [
-      { x: 3, y: 3 },
-      { x: 3, y: 4 },
-      { x: 2, y: 4 },
-      { x: 2, y: 3 },
-      { x: 2, y: 2 },
-      { x: 3, y: 2 },
-    ],
-    food: { x: 0, y: 0 },
+test("losing the final stock ends the match and declares a winner", () => {
+  const initial = createInitialState();
+  initial.running = true;
+  initial.fighters[1].stocks = 1;
+  initial.fighters[1].x = STAGE.width + STAGE.blastPadding + 10;
+
+  const next = stepState(initial, {
+    p1: { left: false, right: false, jump: false, attack: null },
+    p2: { left: false, right: false, jump: false, attack: null },
   });
 
-  const turned = setDirection(initial, "LEFT");
-  const next = step(turned);
-  assert.equal(next.gameOver, true);
-});
-
-test("food placement never overlaps snake", () => {
-  const snake = [
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 2, y: 0 },
-  ];
-  const food = placeFood(3, snake, () => 0);
-  assert.notEqual(`${food.x},${food.y}`, "0,0");
-  assert.notEqual(`${food.x},${food.y}`, "1,0");
-  assert.notEqual(`${food.x},${food.y}`, "2,0");
+  assert.equal(next.running, false);
+  assert.equal(next.winner, "Nova");
+  assert.equal(next.fighters[1].stocks, 0);
 });

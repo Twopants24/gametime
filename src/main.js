@@ -1,135 +1,216 @@
-import { createInitialState, setDirection, step } from "./gameLogic.js";
+import { ATTACKS, STAGE, createInitialState, stepState } from "./gameLogic.js";
 
-const TICK_MS = 140;
-const GRID_SIZE = 45;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const overlay = document.getElementById("overlay");
+const overlayMessage = document.getElementById("overlay-message");
+const startButton = document.getElementById("start-button");
 
-const boardEl = document.getElementById("board");
-const scoreEl = document.getElementById("score");
-const statusEl = document.getElementById("status");
-const restartBtn = document.getElementById("restart");
-const pauseBtn = document.getElementById("pause");
-const controlButtons = document.querySelectorAll("[data-direction]");
+const hud = {
+  p1Damage: document.getElementById("p1-damage"),
+  p1Stocks: document.getElementById("p1-stocks"),
+  p2Damage: document.getElementById("p2-damage"),
+  p2Stocks: document.getElementById("p2-stocks"),
+};
 
-let state = createInitialState({ gridSize: GRID_SIZE });
-let tickHandle = null;
-let paused = false;
+let state = createInitialState();
 
-boardEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
-boardEl.style.gridTemplateRows = `repeat(${GRID_SIZE}, 1fr)`;
+const input = {
+  left: false,
+  right: false,
+  jumpQueued: false,
+  jabQueued: false,
+  smashQueued: false,
+};
 
-function directionFromKey(key) {
-  switch (key) {
-    case "ArrowUp":
-    case "w":
-    case "W":
-      return "UP";
-    case "ArrowDown":
-    case "s":
-    case "S":
-      return "DOWN";
-    case "ArrowLeft":
-    case "a":
-    case "A":
-      return "LEFT";
-    case "ArrowRight":
-    case "d":
-    case "D":
-      return "RIGHT";
-    default:
-      return null;
+function setOverlay(title, message, buttonText) {
+  overlay.querySelector("h2").textContent = title;
+  overlayMessage.textContent = message;
+  startButton.textContent = buttonText;
+}
+
+function updateHud() {
+  const [p1, p2] = state.fighters;
+  hud.p1Damage.textContent = `${Math.round(p1.damage)}%`;
+  hud.p1Stocks.textContent = String(p1.stocks);
+  hud.p2Damage.textContent = `${Math.round(p2.damage)}%`;
+  hud.p2Stocks.textContent = String(p2.stocks);
+}
+
+function resetMatch() {
+  state = createInitialState();
+  overlay.classList.remove("hidden");
+  setOverlay("Enter The Arena", "A/D move, W jump, F jab, G smash, R full reset.", "Start Match");
+  updateHud();
+}
+
+function startMatch() {
+  if (state.winner) {
+    state = createInitialState();
+  }
+  state.running = true;
+  state.winner = null;
+  overlay.classList.add("hidden");
+}
+
+function getPlayerInput() {
+  let attack = null;
+  if (input.jabQueued) attack = "jab";
+  if (input.smashQueued) attack = "smash";
+
+  const next = {
+    left: input.left,
+    right: input.right,
+    jump: input.jumpQueued,
+    attack,
+  };
+
+  input.jumpQueued = false;
+  input.jabQueued = false;
+  input.smashQueued = false;
+  return next;
+}
+
+function getCpuInput(cpu, target) {
+  const deltaX = target.x - cpu.x;
+  const deltaY = target.y - cpu.y;
+
+  return {
+    left: deltaX < -30,
+    right: deltaX > 30,
+    jump: (deltaY < -36 || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
+    attack:
+      Math.abs(deltaX) < 86 && Math.abs(deltaY) < 42 && !cpu.attack && cpu.attackCooldown <= 0
+        ? cpu.damage > 65
+          ? "smash"
+          : "jab"
+        : null,
+  };
+}
+
+function drawBackground() {
+  ctx.fillStyle = "#93c5fd";
+  ctx.beginPath();
+  ctx.arc(1080, 120, 82, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  for (const [x, y, r] of [
+    [180, 120, 90],
+    [420, 160, 72],
+    [780, 96, 110],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
-function render() {
-  scoreEl.textContent = String(state.score);
-  pauseBtn.textContent = paused ? "Resume" : "Pause";
+function drawPlatforms() {
+  for (const [index, platform] of STAGE.platforms.entries()) {
+    const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+    gradient.addColorStop(0, index === 0 ? "#f8fafc" : "#bae6fd");
+    gradient.addColorStop(1, index === 0 ? "#cbd5e1" : "#7dd3fc");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
+    ctx.fill();
+  }
+}
 
-  if (state.gameOver) {
-    statusEl.textContent = "Game over. Press Restart.";
-  } else if (paused) {
-    statusEl.textContent = "Paused.";
-  } else {
-    statusEl.textContent = "";
+function drawAttack(fighter) {
+  if (!fighter.attack) return;
+  const attackData = ATTACKS[fighter.attack.type];
+  const activeStart = attackData.startup;
+  const activeEnd = attackData.startup + attackData.active;
+  if (fighter.attack.frame < activeStart || fighter.attack.frame > activeEnd) return;
+
+  const hitbox = {
+    x: fighter.face === 1 ? fighter.x + fighter.width - 6 : fighter.x - attackData.xReach + 6,
+    y: fighter.y + fighter.height / 2 - attackData.yReach,
+    width: attackData.xReach,
+    height: attackData.yReach * 2,
+  };
+
+  ctx.fillStyle = fighter.attack.type === "smash" ? "rgba(251, 113, 133, 0.3)" : "rgba(255, 255, 255, 0.22)";
+  ctx.fillRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+}
+
+function drawFighter(fighter) {
+  if (fighter.invuln > 0 && Math.floor(fighter.invuln / 6) % 2 === 0) {
+    return;
   }
 
-  const snakeSet = new Set(state.snake.map((segment) => `${segment.x},${segment.y}`));
-  const foodKey = state.food ? `${state.food.x},${state.food.y}` : null;
+  ctx.save();
+  ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
+  ctx.scale(fighter.face, 1);
 
-  const cells = [];
-  for (let y = 0; y < state.gridSize; y += 1) {
-    for (let x = 0; x < state.gridSize; x += 1) {
-      const key = `${x},${y}`;
-      const classes = ["cell"];
-      if (snakeSet.has(key)) classes.push("snake");
-      if (foodKey === key) classes.push("food");
-      cells.push(`<div class="${classes.join(" ")}"></div>`);
+  ctx.fillStyle = fighter.color;
+  ctx.beginPath();
+  ctx.roundRect(-fighter.width / 2, -fighter.height / 2, fighter.width, fighter.height, 14);
+  ctx.fill();
+
+  ctx.fillStyle = fighter.accent;
+  ctx.beginPath();
+  ctx.arc(6, -10, 9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#08111f";
+  ctx.fillRect(2, -8, 8, 3);
+  ctx.restore();
+
+  ctx.fillStyle = "rgba(8, 17, 31, 0.76)";
+  ctx.font = "700 18px Space Grotesk";
+  ctx.textAlign = "center";
+  ctx.fillText(fighter.name, fighter.x + fighter.width / 2, fighter.y - 14);
+
+  drawAttack(fighter);
+}
+
+function drawFrame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawPlatforms();
+  state.fighters.forEach(drawFighter);
+}
+
+function tick() {
+  if (state.running) {
+    const [p1, p2] = state.fighters;
+    state = stepState(state, {
+      p1: getPlayerInput(),
+      p2: getCpuInput(p2, p1),
+    });
+    updateHud();
+
+    if (state.winner) {
+      overlay.classList.remove("hidden");
+      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or R for a full reset.", "Rematch");
     }
   }
 
-  boardEl.innerHTML = cells.join("");
+  drawFrame();
+  window.requestAnimationFrame(tick);
 }
 
-function restart() {
-  state = createInitialState({ gridSize: GRID_SIZE });
-  paused = false;
-  startLoop();
-  render();
-}
-
-function gameTick() {
-  if (paused) {
-    return;
-  }
-
-  state = step(state);
-  render();
-
-  if (state.gameOver) {
-    stopLoop();
-  }
-}
-
-function stopLoop() {
-  if (tickHandle) {
-    window.clearInterval(tickHandle);
-    tickHandle = null;
-  }
-}
-
-function startLoop() {
-  stopLoop();
-  tickHandle = window.setInterval(gameTick, TICK_MS);
-}
-
-function togglePause() {
-  if (state.gameOver) return;
-  paused = !paused;
-  render();
-}
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === " ") {
-    event.preventDefault();
-    togglePause();
-    return;
-  }
-
-  const direction = directionFromKey(event.key);
-  if (!direction) return;
-
-  event.preventDefault();
-  state = setDirection(state, direction);
+window.addEventListener("keydown", (event) => {
+  const key = event.key.toLowerCase();
+  if (key === "a") input.left = true;
+  if (key === "d") input.right = true;
+  if (key === "w") input.jumpQueued = true;
+  if (key === "f") input.jabQueued = true;
+  if (key === "g") input.smashQueued = true;
+  if (key === "r") resetMatch();
 });
 
-controlButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const direction = button.getAttribute("data-direction");
-    state = setDirection(state, direction);
-  });
+window.addEventListener("keyup", (event) => {
+  const key = event.key.toLowerCase();
+  if (key === "a") input.left = false;
+  if (key === "d") input.right = false;
 });
 
-restartBtn.addEventListener("click", restart);
-pauseBtn.addEventListener("click", togglePause);
+startButton.addEventListener("click", startMatch);
 
-render();
-startLoop();
+resetMatch();
+drawFrame();
+tick();
