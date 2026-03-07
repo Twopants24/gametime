@@ -850,6 +850,9 @@
         }
 
         function syncControlsForDimension() {
+          const lockDisabled = currentDimension === 1;
+          simStart.disabled = lockDisabled;
+          simLock.disabled = lockDisabled;
           simSpeedXY.disabled = currentDimension < 2;
           simSpeedXZ.disabled = currentDimension < 3;
           simSpeedYZ.disabled = currentDimension < 3;
@@ -896,9 +899,9 @@
         function updateHud() {
           if (!uiDirty) return;
           simScore.textContent = String(score);
-          simTime.textContent = timeLeft.toFixed(1);
-          simCombo.textContent = String(combo);
-          simTarget.textContent = `${targetIndex + 1} / ${vertices.length}`;
+          simTime.textContent = currentDimension === 1 ? "--" : timeLeft.toFixed(1);
+          simCombo.textContent = currentDimension === 1 ? "--" : String(combo);
+          simTarget.textContent = currentDimension === 1 ? "N/A" : `${targetIndex + 1} / ${vertices.length}`;
           uiDirty = false;
         }
 
@@ -912,6 +915,11 @@
         }
 
         function startGame() {
+          if (currentDimension === 1) {
+            gameActive = false;
+            setMessage("1D Line mode is view-only. Switch to 2D or higher to use Hypercube Lock.");
+            return;
+          }
           score = 0;
           combo = 0;
           timeLeft = 45;
@@ -922,6 +930,7 @@
         }
 
         function tryLockTarget() {
+          if (currentDimension === 1) return;
           if (!gameActive || points2d.length !== vertices.length) return;
 
           const centerX = simCanvas.width * 0.5;
@@ -955,7 +964,7 @@
         }
 
         function drawCrosshair(width, height) {
-          if (!ctx) return;
+          if (!ctx || currentDimension === 1) return;
           const cx = width * 0.5;
           const cy = height * 0.5;
           ctx.strokeStyle = "rgba(255, 220, 120, 0.95)";
@@ -1082,8 +1091,19 @@
         simDimension.addEventListener("change", () => {
           const nextDimension = Number(simDimension.value);
           buildGeometry(nextDimension);
+          if (nextDimension === 1) {
+            gameActive = false;
+            score = 0;
+            combo = 0;
+            timeLeft = 45;
+            uiDirty = true;
+          }
           syncControlsForDimension();
-          setMessage(`Switched to ${nextDimension}D object.`);
+          setMessage(
+            nextDimension === 1
+              ? "Switched to 1D Line. Hypercube Lock is disabled in this mode."
+              : `Switched to ${nextDimension}D object.`
+          );
         });
         simToggle.addEventListener("click", () => {
           running = !running;
@@ -1094,6 +1114,9 @@
           setMessage("View reset. Drag canvas to orbit and use mouse wheel to zoom.");
         });
         document.addEventListener("keydown", (event) => {
+          if (currentDimension === 1) {
+            return;
+          }
           if (event.key === "Enter") {
             const active = document.activeElement;
             const inTextInput =
