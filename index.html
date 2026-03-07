@@ -2012,14 +2012,6 @@
           }
         }
 
-        function projectIso(x, y, z) {
-          const scale = Math.min(minerCanvas.width, minerCanvas.height) * 0.06;
-          return {
-            x: minerCanvas.width * 0.5 + (x - y) * scale,
-            y: minerCanvas.height * 0.58 + (x + y) * scale * 0.5 - z * scale * 0.92,
-          };
-        }
-
         function rotateSlice(local) {
           const c = Math.cos(sliceAngle);
           const s = Math.sin(sliceAngle);
@@ -2050,40 +2042,36 @@
           setMinerMessage(`Slice plane switched to ${planes[planeIndex]}.`);
         }
 
-        function drawVoxel(screenX, screenY, size, color, alpha) {
+        function cameraBasis() {
+          if (facing.x === 1) return { forward: { x: 1, y: 0, z: 0 }, right: { x: 0, y: -1, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+          if (facing.x === -1) return { forward: { x: -1, y: 0, z: 0 }, right: { x: 0, y: 1, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+          if (facing.y === 1) return { forward: { x: 0, y: 1, z: 0 }, right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+          if (facing.y === -1) return { forward: { x: 0, y: -1, z: 0 }, right: { x: -1, y: 0, z: 0 }, up: { x: 0, y: 0, z: 1 } };
+          if (facing.z === 1) return { forward: { x: 0, y: 0, z: 1 }, right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: -1, z: 0 } };
+          return { forward: { x: 0, y: 0, z: -1 }, right: { x: -1, y: 0, z: 0 }, up: { x: 0, y: -1, z: 0 } };
+        }
+
+        function dot(a, b) {
+          return a.x * b.x + a.y * b.y + a.z * b.z;
+        }
+
+        function drawCubePerspective(cx, cy, size, color, alpha) {
           if (!ctx) return;
-          const top = `hsla(${color}, 80%, 70%, ${alpha})`;
-          const left = `hsla(${color}, 70%, 52%, ${alpha})`;
-          const right = `hsla(${color}, 70%, 40%, ${alpha})`;
           const half = size * 0.5;
-          const quarter = size * 0.25;
+          const depth = size * 0.22;
+          ctx.fillStyle = `hsla(${color}, 76%, 56%, ${alpha})`;
+          ctx.fillRect(cx - half, cy - half, size, size);
+          ctx.strokeStyle = `hsla(${color}, 90%, 85%, ${alpha})`;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(cx - half, cy - half, size, size);
 
-          ctx.fillStyle = top;
           ctx.beginPath();
-          ctx.moveTo(screenX, screenY - half);
-          ctx.lineTo(screenX + size, screenY - quarter);
-          ctx.lineTo(screenX, screenY);
-          ctx.lineTo(screenX - size, screenY - quarter);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = left;
-          ctx.beginPath();
-          ctx.moveTo(screenX - size, screenY - quarter);
-          ctx.lineTo(screenX, screenY);
-          ctx.lineTo(screenX, screenY + half);
-          ctx.lineTo(screenX - size, screenY + quarter);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = right;
-          ctx.beginPath();
-          ctx.moveTo(screenX + size, screenY - quarter);
-          ctx.lineTo(screenX, screenY);
-          ctx.lineTo(screenX, screenY + half);
-          ctx.lineTo(screenX + size, screenY + quarter);
-          ctx.closePath();
-          ctx.fill();
+          ctx.moveTo(cx - half, cy - half);
+          ctx.lineTo(cx - half + depth, cy - half - depth);
+          ctx.lineTo(cx + half + depth, cy - half - depth);
+          ctx.lineTo(cx + half + depth, cy + half - depth);
+          ctx.lineTo(cx + half, cy + half);
+          ctx.stroke();
         }
 
         function renderMiner() {
@@ -2097,6 +2085,23 @@
           const ghostOpacity = showGhostSlices ? Number(minerGhost.value) : 0;
           const sliceThickness = 0.22;
           const cells = [];
+          const basis = cameraBasis();
+          const horizonY = minerCanvas.height * 0.6;
+
+          ctx.strokeStyle = "rgba(86, 122, 255, 0.18)";
+          ctx.lineWidth = 1;
+          for (let i = -6; i <= 6; i += 1) {
+            ctx.beginPath();
+            ctx.moveTo(minerCanvas.width * 0.5 + i * 60, minerCanvas.height);
+            ctx.lineTo(minerCanvas.width * 0.5 + i * 16, horizonY);
+            ctx.stroke();
+          }
+          for (let i = 1; i <= 6; i += 1) {
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY + i * 30);
+            ctx.lineTo(minerCanvas.width, horizonY + i * 30);
+            ctx.stroke();
+          }
 
           for (let w = player.w - radius; w <= player.w + radius; w += 1) {
             for (let z = player.z - radius; z <= player.z + radius; z += 1) {
@@ -2109,7 +2114,11 @@
                     z: z - player.z,
                     w: w - player.w,
                   });
-                  const p = projectIso(rotated.x, rotated.y, rotated.z);
+                  const spatial = { x: rotated.x, y: rotated.y, z: rotated.z };
+                  const camX = dot(spatial, basis.right);
+                  const camY = dot(spatial, basis.up);
+                  const camZ = dot(spatial, basis.forward);
+                  if (camZ < -0.5) continue;
                   const wDelta = rotated.w;
                   const sliceDistance = Math.abs(wDelta);
                   const inSlice = sliceDistance <= sliceThickness;
@@ -2117,36 +2126,35 @@
                     ? 0.98
                     : Math.max(0, ghostOpacity * (1 - sliceDistance / (radius + 0.25)));
                   if (alpha <= 0) continue;
-                  const size = inSlice ? 24 : 10 + Math.max(0, 10 * (1 - sliceDistance / (radius + 0.25)));
+                  const depth = camZ + 2.4;
+                  const scale = 190 / Math.max(1, depth);
+                  const size = (inSlice ? 42 : 18) * scale / 18;
                   cells.push({
-                    sx: p.x,
-                    sy: p.y + wDelta * 18,
-                    depth: rotated.x + rotated.y + rotated.z + wDelta * 4,
-                    hue: 190 + (wDelta + 1) * 48 + (z + fieldRadius) * 4,
+                    sx: minerCanvas.width * 0.5 + camX * 52 * scale / 18,
+                    sy: horizonY + camY * -52 * scale / 18 + wDelta * 10,
+                    depth: depth + sliceDistance * 0.5,
+                    hue: inSlice ? 46 : 215 + (planes[planeIndex].charCodeAt(0) % 30),
                     alpha,
                     size,
+                    inSlice,
                   });
                 }
               }
             }
           }
 
-          cells.sort((a, b) => a.depth - b.depth);
+          cells.sort((a, b) => b.depth - a.depth);
           for (const cell of cells) {
-            drawVoxel(cell.sx, cell.sy, cell.size, cell.hue, cell.alpha);
+            drawCubePerspective(cell.sx, cell.sy, cell.size, cell.hue, cell.alpha);
           }
 
-          const minerP = projectIso(0, 0, 0);
-          ctx.fillStyle = "rgba(255, 237, 117, 0.98)";
+          ctx.strokeStyle = "rgba(255, 237, 117, 0.95)";
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.arc(minerP.x, minerP.y - 12, 7, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.strokeStyle = "rgba(255, 237, 117, 0.9)";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(minerP.x, minerP.y - 12);
-          ctx.lineTo(minerP.x + facing.x * 18 - facing.y * 18, minerP.y - 12 + (facing.x + facing.y) * 9 - facing.z * 16);
+          ctx.moveTo(minerCanvas.width * 0.5 - 12, minerCanvas.height * 0.5);
+          ctx.lineTo(minerCanvas.width * 0.5 + 12, minerCanvas.height * 0.5);
+          ctx.moveTo(minerCanvas.width * 0.5, minerCanvas.height * 0.5 - 12);
+          ctx.lineTo(minerCanvas.width * 0.5, minerCanvas.height * 0.5 + 12);
           ctx.stroke();
 
           ctx.fillStyle = "rgba(207, 225, 255, 0.9)";
