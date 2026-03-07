@@ -183,7 +183,7 @@
             <input id="miner-ghost" type="range" min="0" max="0.55" step="0.01" value="0.18" />
             <label for="miner-density">Ore Density</label>
             <input id="miner-density" type="range" min="0.15" max="0.65" step="0.01" value="0.34" />
-            <p id="miner-message" class="miner-message">`WASD` move, `Z/X` rotate, `Shift+Q/E` W-strafe, `G` toggles 4D glasses.</p>
+            <p id="miner-message" class="miner-message">`WASD` move, `Q/E` rotate, `Shift+Q/E` W-strafe, `G` toggles 4D glasses.</p>
           </div>
         </div>
       </section>
@@ -2056,14 +2056,16 @@
           return a.x * b.x + a.y * b.y + a.z * b.z;
         }
 
-        function drawCubePerspective(cx, cy, size, color, alpha) {
+        function drawCubePerspective(cx, cy, size, color, alpha, wireframe = false) {
           if (!ctx) return;
           const half = size * 0.5;
           const depth = size * 0.22;
-          ctx.fillStyle = `hsla(${color}, 76%, 56%, ${alpha})`;
-          ctx.fillRect(cx - half, cy - half, size, size);
           ctx.strokeStyle = `hsla(${color}, 90%, 85%, ${alpha})`;
           ctx.lineWidth = 2;
+          if (!wireframe) {
+            ctx.fillStyle = `hsla(${color}, 76%, 56%, ${alpha})`;
+            ctx.fillRect(cx - half, cy - half, size, size);
+          }
           ctx.strokeRect(cx - half, cy - half, size, size);
 
           ctx.beginPath();
@@ -2146,7 +2148,7 @@
 
           cells.sort((a, b) => b.depth - a.depth);
           for (const cell of cells) {
-            drawCubePerspective(cell.sx, cell.sy, cell.size, cell.hue, cell.alpha);
+            drawCubePerspective(cell.sx, cell.sy, cell.size, cell.hue, cell.alpha, !cell.inSlice);
           }
 
           ctx.strokeStyle = "rgba(255, 237, 117, 0.95)";
@@ -2161,7 +2163,7 @@
           ctx.fillStyle = "rgba(207, 225, 255, 0.9)";
           ctx.font = '700 14px "Archivo", sans-serif';
           ctx.fillText(`Slice plane ${planes[planeIndex]} at ${Math.round((sliceAngle * 180) / Math.PI)}deg`, 18, 28);
-          ctx.fillText("WASD move, R/F depth, Shift+Q/E W-strafe, Z/X rotate, C cycle plane, G glasses", 18, 50);
+          ctx.fillText("WASD move, R/F depth, Q/E rotate, Shift+Q/E W-strafe, C plane, G glasses", 18, 50);
           ctx.strokeStyle = "rgba(125, 196, 255, 0.6)";
           ctx.lineWidth = 2;
           ctx.strokeRect(minerCanvas.width * 0.5 - 80, minerCanvas.height * 0.5 - 80, 160, 160);
