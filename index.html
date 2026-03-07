@@ -145,15 +145,15 @@
       <section id="miner4d" class="panel reveal">
         <h2>4D Miner Prototype</h2>
         <p class="section-note">
-          Navigate a tiny 4D cave field. `WASD` moves on the floor plane, `R/F` moves through depth, `Q/E`
-          shifts into neighboring W-slices, and `Space` mines the block in front of you.
+          Explore a 3D slice of a 4D cave. Walk in the current slice, rotate the slice through the 4th
+          dimension, and turn on 4D glasses when you want to see neighboring slices.
         </p>
         <div class="miner-wrap">
           <canvas id="miner-canvas" width="960" height="560" tabindex="0" aria-label="4D Miner style prototype"></canvas>
           <div class="miner-hud" aria-live="polite">
             <p>Pos: <strong id="miner-pos">0, 0, 0, 0</strong></p>
             <p>Facing: <strong id="miner-facing">+X</strong></p>
-            <p>Slice W: <strong id="miner-slice">0</strong></p>
+            <p>Compass: <strong id="miner-slice">0</strong></p>
             <p>Mined: <strong id="miner-mined">0</strong></p>
             <p>Plane: <strong id="miner-plane">XW</strong></p>
             <p>Angle: <strong id="miner-angle">0deg</strong></p>
@@ -162,7 +162,7 @@
             <div class="miner-buttons">
               <button id="miner-reset" class="btn btn-primary" type="button">Reset Field</button>
               <button id="miner-mine" class="btn btn-ghost" type="button">Mine Forward</button>
-              <button id="miner-toggle-grid" class="btn btn-ghost" type="button">Hide Ghost Slices</button>
+              <button id="miner-toggle-grid" class="btn btn-ghost" type="button">4D Glasses Off</button>
               <button id="miner-rotate-neg" class="btn btn-ghost" type="button">Rotate -</button>
               <button id="miner-rotate-pos" class="btn btn-ghost" type="button">Rotate +</button>
               <button id="miner-plane-cycle" class="btn btn-ghost" type="button">Plane: XW</button>
@@ -180,10 +180,10 @@
             <label for="miner-radius">View Radius</label>
             <input id="miner-radius" type="range" min="2" max="5" step="1" value="3" />
             <label for="miner-ghost">Ghost Slice Opacity</label>
-            <input id="miner-ghost" type="range" min="0" max="0.55" step="0.01" value="0.06" />
+            <input id="miner-ghost" type="range" min="0" max="0.55" step="0.01" value="0.18" />
             <label for="miner-density">Ore Density</label>
             <input id="miner-density" type="range" min="0.15" max="0.65" step="0.01" value="0.34" />
-            <p id="miner-message" class="miner-message">Use `Z/X` to cut a different 4D slice through the cave.</p>
+            <p id="miner-message" class="miner-message">`WASD` move, `Z/X` rotate, `Shift+Q/E` W-strafe, `G` toggles 4D glasses.</p>
           </div>
         </div>
       </section>
@@ -1824,7 +1824,7 @@
         const facing = { x: 1, y: 0, z: 0 };
         const planes = ["XW", "YW", "ZW"];
         let minedCount = 0;
-        let showGhostSlices = true;
+        let showGhostSlices = false;
         let planeIndex = 0;
         let sliceAngle = 0;
 
@@ -1911,7 +1911,7 @@
         function updateMinerHud() {
           minerPos.textContent = `${player.x}, ${player.y}, ${player.z}, ${player.w}`;
           minerFacing.textContent = facingLabel();
-          minerSlice.textContent = sliceAngle === 0 ? String(player.w) : `${player.w} @ ${planes[planeIndex]}`;
+          minerSlice.textContent = `${player.x}|${player.y}|${player.z}|${player.w}`;
           minerMined.textContent = String(minedCount);
           minerPlane.textContent = planes[planeIndex];
           minerAngle.textContent = `${Math.round((sliceAngle * 180) / Math.PI)}deg`;
@@ -1927,6 +1927,7 @@
           facing.y = 0;
           facing.z = 0;
           minedCount = 0;
+          sliceAngle = 0;
           generateWorld();
           updateMinerHud();
           setMinerMessage("Fresh 4D cave generated.");
@@ -2160,7 +2161,7 @@
           ctx.fillStyle = "rgba(207, 225, 255, 0.9)";
           ctx.font = '700 14px "Archivo", sans-serif';
           ctx.fillText(`Slice plane ${planes[planeIndex]} at ${Math.round((sliceAngle * 180) / Math.PI)}deg`, 18, 28);
-          ctx.fillText("WASD move, R/F depth, Q/E W-shift, Z/X rotate, C cycle plane, Space mine", 18, 50);
+          ctx.fillText("WASD move, R/F depth, Shift+Q/E W-strafe, Z/X rotate, C cycle plane, G glasses", 18, 50);
           ctx.strokeStyle = "rgba(125, 196, 255, 0.6)";
           ctx.lineWidth = 2;
           ctx.strokeRect(minerCanvas.width * 0.5 - 80, minerCanvas.height * 0.5 - 80, 160, 160);
@@ -2212,12 +2213,20 @@
             case "q":
             case "Q":
               event.preventDefault();
-              moveMiner("w-");
+              if (event.shiftKey) {
+                moveMiner("w-");
+              } else {
+                rotateMiner(-Math.PI / 4);
+              }
               break;
             case "e":
             case "E":
               event.preventDefault();
-              moveMiner("w+");
+              if (event.shiftKey) {
+                moveMiner("w+");
+              } else {
+                rotateMiner(Math.PI / 4);
+              }
               break;
             case " ":
               event.preventDefault();
@@ -2237,6 +2246,13 @@
             case "C":
               event.preventDefault();
               cyclePlane();
+              break;
+            case "g":
+            case "G":
+              event.preventDefault();
+              showGhostSlices = !showGhostSlices;
+              minerToggleGrid.textContent = showGhostSlices ? "4D Glasses On" : "4D Glasses Off";
+              setMinerMessage(showGhostSlices ? "4D glasses enabled." : "4D glasses disabled.");
               break;
             default:
               break;
@@ -2263,8 +2279,8 @@
         minerShiftPos.addEventListener("click", () => moveMiner("w+"));
         minerToggleGrid.addEventListener("click", () => {
           showGhostSlices = !showGhostSlices;
-          minerToggleGrid.textContent = showGhostSlices ? "Hide Ghost Slices" : "Show Ghost Slices";
-          setMinerMessage(showGhostSlices ? "Ghost W slices visible." : "Only current W slice visible.");
+          minerToggleGrid.textContent = showGhostSlices ? "4D Glasses On" : "4D Glasses Off";
+          setMinerMessage(showGhostSlices ? "4D glasses enabled." : "4D glasses disabled.");
         });
         minerDensity.addEventListener("input", resetMiner);
         minerRadius.addEventListener("input", () => {
