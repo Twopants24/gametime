@@ -3,7 +3,7 @@ export const STAGE = {
   height: 720,
   blastPadding: 180,
   platforms: [
-    { x: 360, y: 560, width: 560, height: 34, solid: true },
+    { x: 360, y: 560, width: 560, height: 64, solid: true, topInset: 30 },
     { x: 190, y: 420, width: 190, height: 20 },
     { x: 900, y: 420, width: 190, height: 20 },
     { x: 550, y: 304, width: 180, height: 18 },

@@ -105,18 +105,26 @@ function drawBackground() {
 
 function drawPlatforms() {
   for (const [index, platform] of STAGE.platforms.entries()) {
-    const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
-    gradient.addColorStop(0, index === 0 ? "#f8fafc" : "#bae6fd");
-    gradient.addColorStop(1, index === 0 ? "#cbd5e1" : "#7dd3fc");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
-    ctx.fill();
-
     if (platform.solid) {
       ctx.fillStyle = "#64748b";
       ctx.beginPath();
-      ctx.roundRect(platform.x + 10, platform.y + platform.height - 4, platform.width - 20, 30, 10);
+      ctx.roundRect(platform.x, platform.y + 12, platform.width, platform.height - 12, 12);
+      ctx.fill();
+
+      const capGradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.topInset);
+      capGradient.addColorStop(0, "#f8fafc");
+      capGradient.addColorStop(1, "#cbd5e1");
+      ctx.fillStyle = capGradient;
+      ctx.beginPath();
+      ctx.roundRect(platform.x, platform.y, platform.width, platform.topInset, 12);
+      ctx.fill();
+    } else {
+      const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+      gradient.addColorStop(0, "#bae6fd");
+      gradient.addColorStop(1, "#7dd3fc");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
       ctx.fill();
     }
   }
