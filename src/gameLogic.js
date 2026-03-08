@@ -252,12 +252,21 @@ export function resolvePlatformCollision(fighter, platform) {
     nextTop < platform.y + platform.height;
 
   if (platform.solid && overlaps) {
-    if (previousBottom <= platform.y) {
+    const topPenetration = nextBottom - platform.y;
+    const bottomPenetration = platform.y + platform.height - nextTop;
+    const leftPenetration = nextRight - platform.x;
+    const rightPenetration = platform.x + platform.width - nextLeft;
+
+    const resolveOnTop = () => {
       next.y = platform.y - next.height;
       next.vy = 0;
       next.grounded = true;
       next.jumpsLeft = PHYSICS.maxJumps;
       return next;
+    };
+
+    if (previousBottom <= platform.y) {
+      return resolveOnTop();
     }
 
     if (previousTop >= platform.y + platform.height) {
@@ -277,6 +286,27 @@ export function resolvePlatformCollision(fighter, platform) {
       next.vx = 0;
       return next;
     }
+
+    const minPenetration = Math.min(topPenetration, bottomPenetration, leftPenetration, rightPenetration);
+    if (minPenetration === topPenetration) {
+      return resolveOnTop();
+    }
+
+    if (minPenetration === bottomPenetration) {
+      next.y = platform.y + platform.height;
+      next.vy = Math.max(0, next.vy);
+      return next;
+    }
+
+    if (minPenetration === leftPenetration) {
+      next.x = platform.x - next.width;
+      next.vx = 0;
+      return next;
+    }
+
+    next.x = platform.x + platform.width;
+    next.vx = 0;
+    return next;
   }
 
   if (

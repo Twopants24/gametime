@@ -42,6 +42,18 @@ test("fighter cannot pass upward through the bottom platform", () => {
   assert.ok(fighter.vy >= 0);
 });
 
+test("fighter overlapping the solid bottom platform gets pushed out", () => {
+  let fighter = createInitialState().fighters[0];
+  fighter.x = STAGE.platforms[0].x + 120;
+  fighter.y = STAGE.platforms[0].y + 10;
+  fighter.vy = 4;
+
+  fighter = updateFighter(fighter);
+  const stillInsideX = fighter.x + fighter.width > STAGE.platforms[0].x && fighter.x < STAGE.platforms[0].x + STAGE.platforms[0].width;
+  const stillInsideY = fighter.y + fighter.height > STAGE.platforms[0].y && fighter.y < STAGE.platforms[0].y + STAGE.platforms[0].height;
+  assert.equal(stillInsideX && stillInsideY, false);
+});
+
 test("player can still jump with no jumps left", () => {
   const fighter = createInitialState().fighters[0];
   fighter.jumpsLeft = 0;
