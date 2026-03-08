@@ -40,7 +40,7 @@ function updateHud() {
 function resetMatch() {
   state = createInitialState();
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, F jab, G smash, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -195,11 +195,14 @@ function tick() {
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
+  if (event.code === "Space") {
+    event.preventDefault();
+    input.jabQueued = true;
+  }
   if (key === "a") input.left = true;
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
-  if (key === "f") input.jabQueued = true;
-  if (key === "g") input.smashQueued = true;
+  if (key === "s") input.smashQueued = true;
   if (key === "r") resetMatch();
 });
 

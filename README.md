@@ -10,8 +10,8 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 
 - `A` / `D`: move
 - `W`: jump
-- `F`: jab
-- `G`: smash attack
+- `Space`: jab
+- `S`: smash attack
 - `R`: reset the full match
 
 ## Test
