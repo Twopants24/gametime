@@ -15,6 +15,13 @@ const hud = {
 };
 
 let state = createInitialState();
+let lastHud = {
+  p1Damage: null,
+  p1Stocks: null,
+  p1Shield: null,
+  p2Damage: null,
+  p2Stocks: null,
+};
 
 const input = {
   left: false,
@@ -33,11 +40,20 @@ function setOverlay(title, message, buttonText) {
 
 function updateHud() {
   const [p1, p2] = state.fighters;
-  hud.p1Damage.textContent = `${Math.round(p1.damage)}%`;
-  hud.p1Stocks.textContent = String(p1.stocks);
-  hud.p1Shield.textContent = `${Math.round(p1.shield)}%`;
-  hud.p2Damage.textContent = `${Math.round(p2.damage)}%`;
-  hud.p2Stocks.textContent = String(p2.stocks);
+  const nextHud = {
+    p1Damage: `${Math.round(p1.damage)}%`,
+    p1Stocks: String(p1.stocks),
+    p1Shield: `${Math.round(p1.shield)}%`,
+    p2Damage: `${Math.round(p2.damage)}%`,
+    p2Stocks: String(p2.stocks),
+  };
+
+  if (nextHud.p1Damage !== lastHud.p1Damage) hud.p1Damage.textContent = nextHud.p1Damage;
+  if (nextHud.p1Stocks !== lastHud.p1Stocks) hud.p1Stocks.textContent = nextHud.p1Stocks;
+  if (nextHud.p1Shield !== lastHud.p1Shield) hud.p1Shield.textContent = nextHud.p1Shield;
+  if (nextHud.p2Damage !== lastHud.p2Damage) hud.p2Damage.textContent = nextHud.p2Damage;
+  if (nextHud.p2Stocks !== lastHud.p2Stocks) hud.p2Stocks.textContent = nextHud.p2Stocks;
+  lastHud = nextHud;
 }
 
 function resetMatch() {
@@ -177,13 +193,8 @@ function drawFighter(fighter) {
   ctx.restore();
 
   if (fighter.shielding && fighter.shield > 0) {
-    ctx.fillStyle = "rgba(125, 211, 252, 0.18)";
-    ctx.beginPath();
-    ctx.arc(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, 42, 0, Math.PI * 2);
-    ctx.fill();
-
     ctx.strokeStyle = "rgba(125, 211, 252, 0.98)";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, 42, 0, Math.PI * 2);
     ctx.stroke();
@@ -230,6 +241,10 @@ function tick() {
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
   const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
+  if (event.repeat && isShift) {
+    event.preventDefault();
+    return;
+  }
   if (event.code === "Space") {
     event.preventDefault();
     input.jabQueued = true;
