@@ -5,6 +5,11 @@ const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const overlayMessage = document.getElementById("overlay-message");
 const startButton = document.getElementById("start-button");
+const stageCanvas = document.createElement("canvas");
+const stageCtx = stageCanvas.getContext("2d");
+
+stageCanvas.width = canvas.width;
+stageCanvas.height = canvas.height;
 
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
@@ -99,49 +104,55 @@ function getCpuInput(cpu, target) {
   };
 }
 
-function drawBackground() {
-  ctx.fillStyle = "#93c5fd";
-  ctx.beginPath();
-  ctx.arc(1080, 120, 82, 0, Math.PI * 2);
-  ctx.fill();
+function drawBackground(targetCtx) {
+  targetCtx.fillStyle = "#93c5fd";
+  targetCtx.beginPath();
+  targetCtx.arc(1080, 120, 82, 0, Math.PI * 2);
+  targetCtx.fill();
 
-  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  targetCtx.fillStyle = "rgba(255,255,255,0.18)";
   for (const [x, y, r] of [
     [180, 120, 90],
     [420, 160, 72],
     [780, 96, 110],
   ]) {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
+    targetCtx.beginPath();
+    targetCtx.arc(x, y, r, 0, Math.PI * 2);
+    targetCtx.fill();
   }
 }
 
-function drawPlatforms() {
+function drawPlatforms(targetCtx) {
   for (const [index, platform] of STAGE.platforms.entries()) {
     if (platform.solid) {
-      ctx.fillStyle = "#64748b";
-      ctx.beginPath();
-      ctx.roundRect(platform.x, platform.y + 12, platform.width, platform.height - 12, 12);
-      ctx.fill();
+      targetCtx.fillStyle = "#64748b";
+      targetCtx.beginPath();
+      targetCtx.roundRect(platform.x, platform.y + 12, platform.width, platform.height - 12, 12);
+      targetCtx.fill();
 
-      const capGradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.topInset);
+      const capGradient = targetCtx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.topInset);
       capGradient.addColorStop(0, "#f8fafc");
       capGradient.addColorStop(1, "#cbd5e1");
-      ctx.fillStyle = capGradient;
-      ctx.beginPath();
-      ctx.roundRect(platform.x, platform.y, platform.width, platform.topInset, 12);
-      ctx.fill();
+      targetCtx.fillStyle = capGradient;
+      targetCtx.beginPath();
+      targetCtx.roundRect(platform.x, platform.y, platform.width, platform.topInset, 12);
+      targetCtx.fill();
     } else {
-      const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+      const gradient = targetCtx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
       gradient.addColorStop(0, "#bae6fd");
       gradient.addColorStop(1, "#7dd3fc");
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
-      ctx.fill();
+      targetCtx.fillStyle = gradient;
+      targetCtx.beginPath();
+      targetCtx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
+      targetCtx.fill();
     }
   }
+}
+
+function renderStaticStage() {
+  stageCtx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
+  drawBackground(stageCtx);
+  drawPlatforms(stageCtx);
 }
 
 function drawAttack(fighter) {
@@ -195,8 +206,7 @@ function drawFighter(fighter) {
 
 function drawFrame() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBackground();
-  drawPlatforms();
+  ctx.drawImage(stageCanvas, 0, 0);
   state.fighters.forEach(drawFighter);
 }
 
@@ -245,5 +255,6 @@ window.addEventListener("keyup", (event) => {
 startButton.addEventListener("click", startMatch);
 
 resetMatch();
+renderStaticStage();
 drawFrame();
 tick();
