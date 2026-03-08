@@ -56,16 +56,6 @@ export const DIFFICULTY = {
   playerInfiniteJumps: true,
 };
 
-export const SHIELD = {
-  max: 100,
-  drainPerFrame: 0,
-  regenPerFrame: 0.45,
-  minToActivate: 8,
-  damageMultiplier: 0,
-  knockbackMultiplier: 0.08,
-  hitstunMultiplier: 0.25,
-};
-
 export function createFighter(options) {
   return {
     name: options.name,
@@ -89,8 +79,6 @@ export function createFighter(options) {
     invuln: 0,
     attack: null,
     cpuCooldown: 0,
-    shielding: false,
-    shield: SHIELD.max,
   };
 }
 
@@ -162,13 +150,6 @@ export function applyInput(fighter, input) {
   const fighterIsPlayer = next.name === "Nova";
   const canInfiniteJump = fighterIsPlayer && DIFFICULTY.playerInfiniteJumps;
 
-  if (input.shield && next.shield >= SHIELD.minToActivate && !next.attack) {
-    next.shielding = true;
-    next.vx *= 0.72;
-  } else {
-    next.shielding = false;
-  }
-
   if (next.hitstun > 0) {
     return next;
   }
@@ -229,21 +210,14 @@ export function resolveAttack(attacker, defender) {
     intersects(getAttackHitbox(nextAttacker, attackData, hitboxBonus), nextDefender)
   ) {
     const scaledDamage = attackData.damage * damageMultiplier;
-    const defenderShielding = nextDefender.shielding && nextDefender.shield > 0;
-    const damageToPercent = defenderShielding ? scaledDamage * SHIELD.damageMultiplier : scaledDamage;
-    const knockback =
-      (attackData.baseKnockback + nextDefender.damage * attackData.scale) *
-      knockbackMultiplier *
-      (defenderShielding ? SHIELD.knockbackMultiplier : 1);
+    const knockback = (attackData.baseKnockback + nextDefender.damage * attackData.scale) * knockbackMultiplier;
     nextDefender = {
       ...nextDefender,
-      damage: nextDefender.damage + damageToPercent,
+      damage: nextDefender.damage + scaledDamage,
       vx: nextAttacker.face * knockback,
-      vy: -Math.max(2, knockback * 0.72),
-      hitstun: Math.round(scaledDamage * 1.4 * (defenderShielding ? SHIELD.hitstunMultiplier : 1)),
+      vy: -Math.max(5, knockback * 0.72),
+      hitstun: Math.round(scaledDamage * 1.4),
       grounded: false,
-      shield: defenderShielding ? Math.max(0, nextDefender.shield - scaledDamage * 2.4) : nextDefender.shield,
-      shielding: defenderShielding ? nextDefender.shield - scaledDamage * 2.4 > 0 : nextDefender.shielding,
     };
     nextAttacker.attack = {
       ...nextAttacker.attack,
@@ -358,15 +332,8 @@ export function updateFighter(fighter) {
     hitstun: Math.max(0, fighter.hitstun - 1),
     invuln: Math.max(0, fighter.invuln - 1),
     cpuCooldown: Math.max(0, fighter.cpuCooldown - 1),
-    shield: fighter.shielding
-      ? Math.max(0, fighter.shield - SHIELD.drainPerFrame)
-      : Math.min(SHIELD.max, fighter.shield + SHIELD.regenPerFrame),
     grounded: false,
   };
-
-  if (next.shield <= 0) {
-    next.shielding = false;
-  }
 
   next.vy = Math.min(next.vy + PHYSICS.gravity, PHYSICS.maxFall);
   next.x += next.vx;

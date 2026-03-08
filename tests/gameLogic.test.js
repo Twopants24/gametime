@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ATTACKS, DIFFICULTY, PHYSICS, SHIELD, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
+import { ATTACKS, DIFFICULTY, PHYSICS, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
 
 test("jab hit increases damage and launches defender", () => {
   const state = createInitialState();
@@ -63,7 +63,7 @@ test("player can still jump with no jumps left", () => {
     { running: true, winner: null, fighters: [fighter, createInitialState().fighters[1]] },
     {
       p1: { left: false, right: false, jump: true, attack: null },
-      p2: { left: false, right: false, jump: false, shield: false, attack: null },
+      p2: { left: false, right: false, jump: false, attack: null },
     }
   );
 
@@ -76,8 +76,8 @@ test("crossing the blast zone removes a stock and respawns the fighter", () => {
   initial.fighters[0].x = -STAGE.blastPadding - 5;
 
   const next = stepState(initial, {
-    p1: { left: false, right: false, jump: false, shield: false, attack: null },
-    p2: { left: false, right: false, jump: false, shield: false, attack: null },
+    p1: { left: false, right: false, jump: false, attack: null },
+    p2: { left: false, right: false, jump: false, attack: null },
   });
 
   assert.equal(next.fighters[0].stocks, DIFFICULTY.playerStocks - 1);
@@ -93,27 +93,11 @@ test("losing the final stock ends the match and declares a winner", () => {
   initial.fighters[1].x = STAGE.width + STAGE.blastPadding + 10;
 
   const next = stepState(initial, {
-    p1: { left: false, right: false, jump: false, shield: false, attack: null },
-    p2: { left: false, right: false, jump: false, shield: false, attack: null },
+    p1: { left: false, right: false, jump: false, attack: null },
+    p2: { left: false, right: false, jump: false, attack: null },
   });
 
   assert.equal(next.running, false);
   assert.equal(next.winner, "Nova");
   assert.equal(next.fighters[1].stocks, 0);
-});
-
-test("shielded defender takes reduced damage and loses shield meter", () => {
-  const state = createInitialState();
-  let [attacker, defender] = state.fighters;
-  attacker.x = 400;
-  attacker.y = 400;
-  attacker.face = 1;
-  attacker.attack = { type: "smash", frame: ATTACKS.smash.startup - 1, didHit: false };
-  defender.x = 448;
-  defender.y = 400;
-  defender.shielding = true;
-
-  const resolved = resolveAttack(attacker, defender);
-  assert.equal(resolved.defender.damage, 0);
-  assert.ok(resolved.defender.shield < SHIELD.max);
 });

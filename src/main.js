@@ -9,7 +9,6 @@ const startButton = document.getElementById("start-button");
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
   p1Stocks: document.getElementById("p1-stocks"),
-  p1Shield: document.getElementById("p1-shield"),
   p2Damage: document.getElementById("p2-damage"),
   p2Stocks: document.getElementById("p2-stocks"),
 };
@@ -18,7 +17,6 @@ let state = createInitialState();
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
-  p1Shield: null,
   p2Damage: null,
   p2Stocks: null,
 };
@@ -29,7 +27,6 @@ const input = {
   jumpQueued: false,
   jabQueued: false,
   smashQueued: false,
-  shield: false,
 };
 
 function setOverlay(title, message, buttonText) {
@@ -43,14 +40,12 @@ function updateHud() {
   const nextHud = {
     p1Damage: `${Math.round(p1.damage)}%`,
     p1Stocks: String(p1.stocks),
-    p1Shield: `${Math.round(p1.shield)}%`,
     p2Damage: `${Math.round(p2.damage)}%`,
     p2Stocks: String(p2.stocks),
   };
 
   if (nextHud.p1Damage !== lastHud.p1Damage) hud.p1Damage.textContent = nextHud.p1Damage;
   if (nextHud.p1Stocks !== lastHud.p1Stocks) hud.p1Stocks.textContent = nextHud.p1Stocks;
-  if (nextHud.p1Shield !== lastHud.p1Shield) hud.p1Shield.textContent = nextHud.p1Shield;
   if (nextHud.p2Damage !== lastHud.p2Damage) hud.p2Damage.textContent = nextHud.p2Damage;
   if (nextHud.p2Stocks !== lastHud.p2Stocks) hud.p2Stocks.textContent = nextHud.p2Stocks;
   lastHud = nextHud;
@@ -59,7 +54,7 @@ function updateHud() {
 function resetMatch() {
   state = createInitialState();
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift shield, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -81,7 +76,6 @@ function getPlayerInput() {
     left: input.left,
     right: input.right,
     jump: input.jumpQueued,
-    shield: input.shield,
     attack,
   };
 
@@ -101,7 +95,6 @@ function getCpuInput(cpu, target) {
     left: deltaX < (recovering ? -12 : -44),
     right: deltaX > (recovering ? 12 : 44),
     jump: (deltaY < -36 || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
-    shield: false,
     attack: shouldAttack && cpu.cpuCooldown === 0 ? (cpu.damage > 90 ? "smash" : "jab") : null,
   };
 }
@@ -192,14 +185,6 @@ function drawFighter(fighter) {
   ctx.fillRect(2, -8, 8, 3);
   ctx.restore();
 
-  if (fighter.shielding && fighter.shield > 0) {
-    ctx.strokeStyle = "rgba(125, 211, 252, 0.98)";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, 42, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
   ctx.fillStyle = "rgba(8, 17, 31, 0.76)";
   ctx.font = "700 18px Space Grotesk";
   ctx.textAlign = "center";
@@ -240,11 +225,6 @@ function tick() {
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
-  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
-  if (event.repeat && isShift) {
-    event.preventDefault();
-    return;
-  }
   if (event.code === "Space") {
     event.preventDefault();
     input.jabQueued = true;
@@ -253,19 +233,13 @@ window.addEventListener("keydown", (event) => {
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (isShift) {
-    event.preventDefault();
-    input.shield = true;
-  }
   if (key === "r") resetMatch();
 });
 
 window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
-  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
-  if (isShift) input.shield = false;
 });
 
 startButton.addEventListener("click", startMatch);
