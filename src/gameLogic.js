@@ -3,7 +3,7 @@ export const STAGE = {
   height: 720,
   blastPadding: 180,
   platforms: [
-    { x: 360, y: 560, width: 560, height: 34 },
+    { x: 360, y: 560, width: 560, height: 34, solid: true },
     { x: 190, y: 420, width: 190, height: 20 },
     { x: 900, y: 420, width: 190, height: 20 },
     { x: 550, y: 304, width: 180, height: 18 },
@@ -236,13 +236,53 @@ export function resolveAttack(attacker, defender) {
 
 export function resolvePlatformCollision(fighter, platform) {
   const next = { ...fighter };
+  const previousLeft = next.x - next.vx;
+  const previousRight = previousLeft + next.width;
+  const previousTop = next.y - next.vy;
+  const previousBottom = previousTop + next.height;
+  const nextLeft = next.x;
+  const nextRight = next.x + next.width;
+  const nextTop = next.y;
   const nextBottom = next.y + next.height;
-  const previousBottom = next.y + next.height - next.vy;
+
+  const overlaps =
+    nextRight > platform.x &&
+    nextLeft < platform.x + platform.width &&
+    nextBottom > platform.y &&
+    nextTop < platform.y + platform.height;
+
+  if (platform.solid && overlaps) {
+    if (previousBottom <= platform.y) {
+      next.y = platform.y - next.height;
+      next.vy = 0;
+      next.grounded = true;
+      next.jumpsLeft = PHYSICS.maxJumps;
+      return next;
+    }
+
+    if (previousTop >= platform.y + platform.height) {
+      next.y = platform.y + platform.height;
+      next.vy = Math.max(0, next.vy);
+      return next;
+    }
+
+    if (previousRight <= platform.x) {
+      next.x = platform.x - next.width;
+      next.vx = 0;
+      return next;
+    }
+
+    if (previousLeft >= platform.x + platform.width) {
+      next.x = platform.x + platform.width;
+      next.vx = 0;
+      return next;
+    }
+  }
 
   if (
     next.vy >= 0 &&
-    next.x + next.width > platform.x &&
-    next.x < platform.x + platform.width &&
+    nextRight > platform.x &&
+    nextLeft < platform.x + platform.width &&
     previousBottom <= platform.y &&
     nextBottom >= platform.y
   ) {

@@ -31,6 +31,17 @@ test("fighter landing on a platform restores jumps", () => {
   assert.equal(fighter.jumpsLeft, PHYSICS.maxJumps);
 });
 
+test("fighter cannot pass upward through the bottom platform", () => {
+  let fighter = createInitialState().fighters[0];
+  fighter.x = STAGE.platforms[0].x + 80;
+  fighter.y = STAGE.platforms[0].y + STAGE.platforms[0].height + 2;
+  fighter.vy = -8;
+
+  fighter = updateFighter(fighter);
+  assert.ok(fighter.y >= STAGE.platforms[0].y + STAGE.platforms[0].height);
+  assert.ok(fighter.vy >= 0);
+});
+
 test("player can still jump with no jumps left", () => {
   const fighter = createInitialState().fighters[0];
   fighter.jumpsLeft = 0;

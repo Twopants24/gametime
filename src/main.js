@@ -112,6 +112,13 @@ function drawPlatforms() {
     ctx.beginPath();
     ctx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
     ctx.fill();
+
+    if (platform.solid) {
+      ctx.fillStyle = "#64748b";
+      ctx.beginPath();
+      ctx.roundRect(platform.x + 10, platform.y + platform.height - 4, platform.width - 20, 30, 10);
+      ctx.fill();
+    }
   }
 }
 
