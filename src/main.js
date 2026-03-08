@@ -107,14 +107,14 @@ function getCpuInput(cpu, target) {
 function drawBackground(targetCtx) {
   targetCtx.fillStyle = "#93c5fd";
   targetCtx.beginPath();
-  targetCtx.arc(1080, 120, 82, 0, Math.PI * 2);
+  targetCtx.arc(810, 90, 62, 0, Math.PI * 2);
   targetCtx.fill();
 
   targetCtx.fillStyle = "rgba(255,255,255,0.18)";
   for (const [x, y, r] of [
-    [180, 120, 90],
-    [420, 160, 72],
-    [780, 96, 110],
+    [135, 90, 68],
+    [315, 120, 54],
+    [585, 72, 84],
   ]) {
     targetCtx.beginPath();
     targetCtx.arc(x, y, r, 0, Math.PI * 2);
