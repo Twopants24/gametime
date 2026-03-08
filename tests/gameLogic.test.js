@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ATTACKS, PHYSICS, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
+import { ATTACKS, DIFFICULTY, PHYSICS, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
 
 test("jab hit increases damage and launches defender", () => {
   const state = createInitialState();
@@ -14,7 +14,7 @@ test("jab hit increases damage and launches defender", () => {
   defender.y = 400;
 
   const resolved = resolveAttack(attacker, defender);
-  assert.equal(resolved.defender.damage, 7);
+  assert.equal(resolved.defender.damage, 7 * DIFFICULTY.playerDamageMultiplier);
   assert.ok(resolved.defender.vx > 0);
   assert.ok(resolved.defender.vy < 0);
 });
@@ -41,7 +41,7 @@ test("crossing the blast zone removes a stock and respawns the fighter", () => {
     p2: { left: false, right: false, jump: false, attack: null },
   });
 
-  assert.equal(next.fighters[0].stocks, 2);
+  assert.equal(next.fighters[0].stocks, DIFFICULTY.playerStocks - 1);
   assert.equal(next.fighters[0].x, next.fighters[0].spawnX);
   assert.equal(next.fighters[0].damage, 0);
   assert.ok(next.fighters[0].invuln > 0);

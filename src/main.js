@@ -1,4 +1,4 @@
-import { ATTACKS, STAGE, createInitialState, stepState } from "./gameLogic.js";
+import { ATTACKS, DIFFICULTY, STAGE, createInitialState, stepState } from "./gameLogic.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -72,19 +72,19 @@ function getPlayerInput() {
 }
 
 function getCpuInput(cpu, target) {
+  if (cpu.cpuCooldown > 0) {
+    return { left: false, right: false, jump: false, attack: null };
+  }
+
   const deltaX = target.x - cpu.x;
   const deltaY = target.y - cpu.y;
+  const shouldAttack = Math.abs(deltaX) < 74 && Math.abs(deltaY) < 38 && !cpu.attack && cpu.attackCooldown <= 0;
 
   return {
-    left: deltaX < -30,
-    right: deltaX > 30,
+    left: deltaX < -44,
+    right: deltaX > 44,
     jump: (deltaY < -36 || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
-    attack:
-      Math.abs(deltaX) < 86 && Math.abs(deltaY) < 42 && !cpu.attack && cpu.attackCooldown <= 0
-        ? cpu.damage > 65
-          ? "smash"
-          : "jab"
-        : null,
+    attack: shouldAttack ? (cpu.damage > 90 ? "smash" : "jab") : null,
   };
 }
 
@@ -181,6 +181,9 @@ function tick() {
       p1: getPlayerInput(),
       p2: getCpuInput(p2, p1),
     });
+    if (!state.fighters[1].attack && state.fighters[1].cpuCooldown === 0) {
+      state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
+    }
     updateHud();
 
     if (state.winner) {

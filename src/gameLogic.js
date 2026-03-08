@@ -44,6 +44,17 @@ export const ATTACKS = {
   },
 };
 
+export const DIFFICULTY = {
+  playerStocks: 4,
+  cpuStocks: 2,
+  playerDamageMultiplier: 1.15,
+  cpuDamageMultiplier: 0.78,
+  playerKnockbackMultiplier: 1.15,
+  cpuKnockbackMultiplier: 0.72,
+  playerHitboxBonus: 14,
+  cpuReactionFrames: 14,
+};
+
 export function createFighter(options) {
   return {
     name: options.name,
@@ -61,11 +72,12 @@ export function createFighter(options) {
     grounded: false,
     jumpsLeft: PHYSICS.maxJumps,
     damage: 0,
-    stocks: 3,
+    stocks: options.stocks ?? 3,
     attackCooldown: 0,
     hitstun: 0,
     invuln: 0,
     attack: null,
+    cpuCooldown: 0,
   };
 }
 
@@ -74,17 +86,36 @@ export function createInitialState() {
     running: false,
     winner: null,
     fighters: [
-      createFighter({ name: "Nova", color: "#fb923c", accent: "#fed7aa", x: 430, y: 160, face: 1 }),
-      createFighter({ name: "Volt", color: "#22d3ee", accent: "#a5f3fc", x: 850, y: 160, face: -1 }),
+      createFighter({
+        name: "Nova",
+        color: "#fb923c",
+        accent: "#fed7aa",
+        x: 430,
+        y: 160,
+        face: 1,
+        stocks: DIFFICULTY.playerStocks,
+      }),
+      createFighter({
+        name: "Volt",
+        color: "#22d3ee",
+        accent: "#a5f3fc",
+        x: 850,
+        y: 160,
+        face: -1,
+        stocks: DIFFICULTY.cpuStocks,
+      }),
     ],
   };
 }
 
-export function getAttackHitbox(fighter, attackData) {
+export function getAttackHitbox(fighter, attackData, bonusReach = 0) {
   return {
-    x: fighter.face === 1 ? fighter.x + fighter.width - 6 : fighter.x - attackData.xReach + 6,
+    x:
+      fighter.face === 1
+        ? fighter.x + fighter.width - 6
+        : fighter.x - (attackData.xReach + bonusReach) + 6,
     y: fighter.y + fighter.height / 2 - attackData.yReach,
-    width: attackData.xReach,
+    width: attackData.xReach + bonusReach,
     height: attackData.yReach * 2,
   };
 }
@@ -161,20 +192,26 @@ export function resolveAttack(attacker, defender) {
   const activeStart = attackData.startup;
   const activeEnd = attackData.startup + attackData.active;
 
+  const attackerIsPlayer = attacker.name === "Nova";
+  const hitboxBonus = attackerIsPlayer ? DIFFICULTY.playerHitboxBonus : 0;
+  const damageMultiplier = attackerIsPlayer ? DIFFICULTY.playerDamageMultiplier : DIFFICULTY.cpuDamageMultiplier;
+  const knockbackMultiplier = attackerIsPlayer ? DIFFICULTY.playerKnockbackMultiplier : DIFFICULTY.cpuKnockbackMultiplier;
+
   if (
     nextAttacker.attack.frame >= activeStart &&
     nextAttacker.attack.frame <= activeEnd &&
     !nextAttacker.attack.didHit &&
     nextDefender.invuln <= 0 &&
-    intersects(getAttackHitbox(nextAttacker, attackData), nextDefender)
+    intersects(getAttackHitbox(nextAttacker, attackData, hitboxBonus), nextDefender)
   ) {
-    const knockback = attackData.baseKnockback + nextDefender.damage * attackData.scale;
+    const scaledDamage = attackData.damage * damageMultiplier;
+    const knockback = (attackData.baseKnockback + nextDefender.damage * attackData.scale) * knockbackMultiplier;
     nextDefender = {
       ...nextDefender,
-      damage: nextDefender.damage + attackData.damage,
+      damage: nextDefender.damage + scaledDamage,
       vx: nextAttacker.face * knockback,
       vy: -Math.max(5, knockback * 0.72),
-      hitstun: Math.round(attackData.damage * 1.4),
+      hitstun: Math.round(scaledDamage * 1.4),
       grounded: false,
     };
     nextAttacker.attack = {
@@ -219,6 +256,7 @@ export function updateFighter(fighter) {
     attackCooldown: Math.max(0, fighter.attackCooldown - 1),
     hitstun: Math.max(0, fighter.hitstun - 1),
     invuln: Math.max(0, fighter.invuln - 1),
+    cpuCooldown: Math.max(0, fighter.cpuCooldown - 1),
     grounded: false,
   };
 
