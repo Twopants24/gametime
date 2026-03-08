@@ -61,8 +61,8 @@ export const SHIELD = {
   drainPerFrame: 1.1,
   regenPerFrame: 0.45,
   minToActivate: 8,
-  damageMultiplier: 0.18,
-  knockbackMultiplier: 0.2,
+  damageMultiplier: 0,
+  knockbackMultiplier: 0.08,
   hitstunMultiplier: 0.25,
 };
 

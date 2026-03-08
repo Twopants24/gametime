@@ -177,8 +177,13 @@ function drawFighter(fighter) {
   ctx.restore();
 
   if (fighter.shielding && fighter.shield > 0) {
-    ctx.strokeStyle = "rgba(125, 211, 252, 0.92)";
-    ctx.lineWidth = 5;
+    ctx.fillStyle = "rgba(125, 211, 252, 0.18)";
+    ctx.beginPath();
+    ctx.arc(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, 42, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(125, 211, 252, 0.98)";
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2, 42, 0, Math.PI * 2);
     ctx.stroke();
@@ -224,6 +229,7 @@ function tick() {
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
+  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
   if (event.code === "Space") {
     event.preventDefault();
     input.jabQueued = true;
@@ -232,15 +238,19 @@ window.addEventListener("keydown", (event) => {
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (event.key === "Shift") input.shield = true;
+  if (isShift) {
+    event.preventDefault();
+    input.shield = true;
+  }
   if (key === "r") resetMatch();
 });
 
 window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
+  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
-  if (event.key === "Shift") input.shield = false;
+  if (isShift) input.shield = false;
 });
 
 startButton.addEventListener("click", startMatch);

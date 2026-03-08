@@ -114,6 +114,6 @@ test("shielded defender takes reduced damage and loses shield meter", () => {
   defender.shielding = true;
 
   const resolved = resolveAttack(attacker, defender);
-  assert.ok(resolved.defender.damage < ATTACKS.smash.damage * DIFFICULTY.playerDamageMultiplier);
+  assert.equal(resolved.defender.damage, 0);
   assert.ok(resolved.defender.shield < SHIELD.max);
 });
