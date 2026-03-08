@@ -72,19 +72,16 @@ function getPlayerInput() {
 }
 
 function getCpuInput(cpu, target) {
-  if (cpu.cpuCooldown > 0) {
-    return { left: false, right: false, jump: false, attack: null };
-  }
-
   const deltaX = target.x - cpu.x;
   const deltaY = target.y - cpu.y;
   const shouldAttack = Math.abs(deltaX) < 74 && Math.abs(deltaY) < 38 && !cpu.attack && cpu.attackCooldown <= 0;
+  const recovering = cpu.y > 540 || Math.abs(deltaX) > 260;
 
   return {
-    left: deltaX < -44,
-    right: deltaX > 44,
+    left: deltaX < (recovering ? -12 : -44),
+    right: deltaX > (recovering ? 12 : 44),
     jump: (deltaY < -36 || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
-    attack: shouldAttack ? (cpu.damage > 90 ? "smash" : "jab") : null,
+    attack: shouldAttack && cpu.cpuCooldown === 0 ? (cpu.damage > 90 ? "smash" : "jab") : null,
   };
 }
 
@@ -177,11 +174,12 @@ function drawFrame() {
 function tick() {
   if (state.running) {
     const [p1, p2] = state.fighters;
+    const cpuInput = getCpuInput(p2, p1);
     state = stepState(state, {
       p1: getPlayerInput(),
-      p2: getCpuInput(p2, p1),
+      p2: cpuInput,
     });
-    if (!state.fighters[1].attack && state.fighters[1].cpuCooldown === 0) {
+    if (cpuInput.attack) {
       state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
     }
     updateHud();
