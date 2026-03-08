@@ -58,7 +58,7 @@ export const DIFFICULTY = {
 
 export const SHIELD = {
   max: 100,
-  drainPerFrame: 1.1,
+  drainPerFrame: 0,
   regenPerFrame: 0.45,
   minToActivate: 8,
   damageMultiplier: 0,
