@@ -5,6 +5,8 @@ const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const overlayMessage = document.getElementById("overlay-message");
 const startButton = document.getElementById("start-button");
+const speedDial = document.getElementById("speed-dial");
+const speedValue = document.getElementById("speed-value");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 
@@ -19,12 +21,15 @@ const hud = {
 };
 
 let state = createInitialState();
+let speedMultiplier = Number(speedDial.value);
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
   p2Damage: null,
   p2Stocks: null,
 };
+
+speedValue.textContent = `${speedMultiplier.toFixed(1)}x`;
 
 const input = {
   left: false,
@@ -212,14 +217,20 @@ function drawFrame() {
 
 function tick() {
   if (state.running) {
-    const [p1, p2] = state.fighters;
-    const cpuInput = getCpuInput(p2, p1);
-    state = stepState(state, {
-      p1: getPlayerInput(),
-      p2: cpuInput,
-    });
-    if (cpuInput.attack) {
-      state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
+    const wholeSteps = Math.max(1, Math.floor(speedMultiplier));
+    const extraStepChance = speedMultiplier - wholeSteps;
+    const stepCount = wholeSteps + (Math.random() < extraStepChance ? 1 : 0);
+
+    for (let i = 0; i < stepCount && state.running; i += 1) {
+      const [p1, p2] = state.fighters;
+      const cpuInput = getCpuInput(p2, p1);
+      state = stepState(state, {
+        p1: getPlayerInput(),
+        p2: cpuInput,
+      });
+      if (cpuInput.attack) {
+        state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
+      }
     }
     updateHud();
 
@@ -250,6 +261,11 @@ window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
+});
+
+speedDial.addEventListener("input", () => {
+  speedMultiplier = Number(speedDial.value);
+  speedValue.textContent = `${speedMultiplier.toFixed(1)}x`;
 });
 
 startButton.addEventListener("click", startMatch);
