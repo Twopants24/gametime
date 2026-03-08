@@ -14,6 +14,7 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `W`: jump
 - `Space`: jab
 - `S`: smash attack
+- `Shift`: shield
 - `R`: reset the full match
 
 ## Test
