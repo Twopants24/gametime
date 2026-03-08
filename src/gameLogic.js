@@ -11,11 +11,11 @@ export const STAGE = {
 };
 
 export const PHYSICS = {
-  gravity: 0.68,
-  maxFall: 17,
-  runSpeed: 1.08,
-  airDrift: 0.72,
-  jumpPower: 14,
+  gravity: 0.82,
+  maxFall: 19,
+  runSpeed: 1.4,
+  airDrift: 0.94,
+  jumpPower: 15.5,
   groundFriction: 0.8,
   airFriction: 0.98,
   maxJumps: 2,
@@ -23,9 +23,9 @@ export const PHYSICS = {
 
 export const ATTACKS = {
   jab: {
-    startup: 7,
-    active: 6,
-    recovery: 12,
+    startup: 5,
+    active: 5,
+    recovery: 9,
     damage: 7,
     baseKnockback: 5.5,
     scale: 0.11,
@@ -33,9 +33,9 @@ export const ATTACKS = {
     yReach: 18,
   },
   smash: {
-    startup: 18,
-    active: 8,
-    recovery: 22,
+    startup: 13,
+    active: 7,
+    recovery: 16,
     damage: 16,
     baseKnockback: 8.8,
     scale: 0.18,
@@ -52,7 +52,7 @@ export const DIFFICULTY = {
   playerKnockbackMultiplier: 1.15,
   cpuKnockbackMultiplier: 0.72,
   playerHitboxBonus: 14,
-  cpuReactionFrames: 14,
+  cpuReactionFrames: 10,
   playerInfiniteJumps: true,
 };
 
