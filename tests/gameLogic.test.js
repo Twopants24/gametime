@@ -31,6 +31,22 @@ test("fighter landing on a platform restores jumps", () => {
   assert.equal(fighter.jumpsLeft, PHYSICS.maxJumps);
 });
 
+test("player can still jump with no jumps left", () => {
+  const fighter = createInitialState().fighters[0];
+  fighter.jumpsLeft = 0;
+  fighter.vy = 0;
+
+  const jumped = stepState(
+    { running: true, winner: null, fighters: [fighter, createInitialState().fighters[1]] },
+    {
+      p1: { left: false, right: false, jump: true, attack: null },
+      p2: { left: false, right: false, jump: false, attack: null },
+    }
+  );
+
+  assert.ok(jumped.fighters[0].vy < 0);
+});
+
 test("crossing the blast zone removes a stock and respawns the fighter", () => {
   const initial = createInitialState();
   initial.running = true;

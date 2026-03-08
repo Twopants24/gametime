@@ -53,6 +53,7 @@ export const DIFFICULTY = {
   cpuKnockbackMultiplier: 0.72,
   playerHitboxBonus: 14,
   cpuReactionFrames: 14,
+  playerInfiniteJumps: true,
 };
 
 export function createFighter(options) {
@@ -146,6 +147,8 @@ export function startAttack(fighter, type) {
 
 export function applyInput(fighter, input) {
   const next = { ...fighter };
+  const fighterIsPlayer = next.name === "Nova";
+  const canInfiniteJump = fighterIsPlayer && DIFFICULTY.playerInfiniteJumps;
 
   if (next.hitstun > 0) {
     return next;
@@ -161,9 +164,11 @@ export function applyInput(fighter, input) {
     next.face = 1;
   }
 
-  if (input.jump && next.jumpsLeft > 0) {
+  if (input.jump && (next.jumpsLeft > 0 || canInfiniteJump)) {
     next.vy = -PHYSICS.jumpPower;
-    next.jumpsLeft -= 1;
+    if (!canInfiniteJump) {
+      next.jumpsLeft -= 1;
+    }
     next.grounded = false;
   }
 
