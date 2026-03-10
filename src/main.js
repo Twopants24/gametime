@@ -270,27 +270,39 @@ function drawImpact(fighter) {
   if (!fighter.impact) return;
 
   if (fighter.impact.type === "smoke") {
-    const maxTimer = 10;
+    const maxTimer = 14;
     const life = fighter.impact.timer / maxTimer;
-    const puffRadius = 20 * (1 - life) + 8;
+    const puffRadius = 28 * (1 - life) + 10;
     const puffs = [
-      [-10, -4, 0.9],
-      [10, -8, 0.75],
-      [0, 8, 1],
+      [-16, -6, 0.95],
+      [14, -10, 0.82],
+      [2, 10, 1.08],
+      [20, 2, 0.7],
     ];
 
     for (const [dx, dy, scale] of puffs) {
-      ctx.fillStyle = `rgba(226, 232, 240, ${0.35 * life})`;
+      ctx.fillStyle = `rgba(226, 232, 240, ${0.46 * life})`;
       ctx.beginPath();
       ctx.arc(
-        fighter.impact.x + dx * (1 - life * 0.4),
-        fighter.impact.y + dy * (1 - life * 0.25),
+        fighter.impact.x + fighter.impact.face * 8 * (1 - life) + dx * (1 - life * 0.35),
+        fighter.impact.y + dy * (1 - life * 0.22),
         puffRadius * scale,
         0,
         Math.PI * 2
       );
       ctx.fill();
     }
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.28 * life})`;
+    ctx.beginPath();
+    ctx.arc(
+      fighter.impact.x + fighter.impact.face * 6,
+      fighter.impact.y,
+      puffRadius * 0.62,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
     return;
   }
 

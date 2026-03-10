@@ -229,9 +229,10 @@ export function resolveAttack(attacker, defender) {
             }
           : {
               type: "smoke",
-              timer: 10,
+              timer: 14,
               x: nextDefender.x + nextDefender.width / 2,
               y: nextDefender.y + nextDefender.height / 2,
+              face: nextAttacker.face,
             },
     };
     nextAttacker.attack = {
