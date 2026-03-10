@@ -170,15 +170,49 @@ function drawAttack(fighter) {
   const activeEnd = attackData.startup + attackData.active;
   if (fighter.attack.frame < activeStart || fighter.attack.frame > activeEnd) return;
 
-  const hitbox = {
-    x: fighter.face === 1 ? fighter.x + fighter.width - 6 : fighter.x - attackData.xReach + 6,
-    y: fighter.y + fighter.height / 2 - attackData.yReach,
-    width: attackData.xReach,
-    height: attackData.yReach * 2,
-  };
+  const armBaseX = fighter.x + fighter.width / 2 + fighter.face * 18;
+  const armBaseY = fighter.y + fighter.height / 2 - 4;
+  const armLength = fighter.attack.type === "smash" ? 48 : 30;
+  const fistRadius = fighter.attack.type === "smash" ? 17 : 11;
+  const fistX = armBaseX + fighter.face * armLength;
+  const fistY = armBaseY;
 
-  ctx.fillStyle = fighter.attack.type === "smash" ? "rgba(251, 113, 133, 0.3)" : "rgba(255, 255, 255, 0.22)";
-  ctx.fillRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+  ctx.strokeStyle = fighter.attack.type === "smash" ? "#fb923c" : fighter.accent;
+  ctx.lineWidth = fighter.attack.type === "smash" ? 12 : 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(armBaseX, armBaseY);
+  ctx.lineTo(fistX, fistY);
+  ctx.stroke();
+
+  if (fighter.attack.type === "smash") {
+    const flameGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 30);
+    flameGradient.addColorStop(0, "rgba(255, 245, 157, 0.95)");
+    flameGradient.addColorStop(0.45, "rgba(251, 146, 60, 0.85)");
+    flameGradient.addColorStop(1, "rgba(239, 68, 68, 0)");
+    ctx.fillStyle = flameGradient;
+    ctx.beginPath();
+    ctx.arc(fistX, fistY, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fb923c";
+    ctx.beginPath();
+    ctx.moveTo(fistX + fighter.face * 26, fistY);
+    ctx.lineTo(fistX + fighter.face * 10, fistY - 13);
+    ctx.lineTo(fistX + fighter.face * 8, fistY + 13);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.fillStyle = fighter.attack.type === "smash" ? "#fff7ed" : "#f8fafc";
+  ctx.beginPath();
+  ctx.arc(fistX, fistY, fistRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.18)";
+  ctx.beginPath();
+  ctx.arc(fistX + fighter.face * 3, fistY + 2, Math.max(5, fistRadius - 4), 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawFighter(fighter) {
@@ -199,6 +233,26 @@ function drawFighter(fighter) {
   ctx.beginPath();
   ctx.arc(6, -10, 9, 0, Math.PI * 2);
   ctx.fill();
+
+  if (fighter.attack) {
+    const attackData = ATTACKS[fighter.attack.type];
+    const activeStart = attackData.startup;
+    const totalFrames = attackData.startup + attackData.active + attackData.recovery;
+    const extend = Math.min(1, fighter.attack.frame / Math.max(1, activeStart));
+    const retract = fighter.attack.frame > activeStart + attackData.active
+      ? 1 - (fighter.attack.frame - activeStart - attackData.active) / Math.max(1, totalFrames - activeStart - attackData.active)
+      : 1;
+    const armReach = Math.max(0, extend * retract);
+    const armLength = fighter.attack.type === "smash" ? 22 : 15;
+
+    ctx.strokeStyle = fighter.attack.type === "smash" ? "#fdba74" : fighter.accent;
+    ctx.lineWidth = fighter.attack.type === "smash" ? 10 : 7;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(14, 2);
+    ctx.lineTo(14 + armLength * armReach, 2);
+    ctx.stroke();
+  }
 
   ctx.fillStyle = "#08111f";
   ctx.fillRect(2, -8, 8, 3);
