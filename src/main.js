@@ -29,7 +29,7 @@ let lastHud = {
   p2Stocks: null,
 };
 
-speedValue.textContent = `${speedMultiplier.toFixed(1)}x`;
+speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
 
 const input = {
   left: false,
@@ -265,7 +265,7 @@ window.addEventListener("keyup", (event) => {
 
 speedDial.addEventListener("input", () => {
   speedMultiplier = Number(speedDial.value);
-  speedValue.textContent = `${speedMultiplier.toFixed(1)}x`;
+  speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
 });
 
 startButton.addEventListener("click", startMatch);
