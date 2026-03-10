@@ -16,6 +16,7 @@ stageCanvas.height = canvas.height;
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
   p1Stocks: document.getElementById("p1-stocks"),
+  p1Charge: document.getElementById("p1-charge"),
   p2Damage: document.getElementById("p2-damage"),
   p2Stocks: document.getElementById("p2-stocks"),
 };
@@ -28,6 +29,7 @@ let chargeReady = false;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
+  p1Charge: null,
   p2Damage: null,
   p2Stocks: null,
 };
@@ -54,12 +56,14 @@ function updateHud() {
   const nextHud = {
     p1Damage: `${Math.round(p1.damage)}%`,
     p1Stocks: String(p1.stocks),
+    p1Charge: chargeReady ? "CHARGED" : chargeStartedAt !== null ? "Charging" : "Building",
     p2Damage: `${Math.round(p2.damage)}%`,
     p2Stocks: String(p2.stocks),
   };
 
   if (nextHud.p1Damage !== lastHud.p1Damage) hud.p1Damage.textContent = nextHud.p1Damage;
   if (nextHud.p1Stocks !== lastHud.p1Stocks) hud.p1Stocks.textContent = nextHud.p1Stocks;
+  if (nextHud.p1Charge !== lastHud.p1Charge) hud.p1Charge.textContent = nextHud.p1Charge;
   if (nextHud.p2Damage !== lastHud.p2Damage) hud.p2Damage.textContent = nextHud.p2Damage;
   if (nextHud.p2Stocks !== lastHud.p2Stocks) hud.p2Stocks.textContent = nextHud.p2Stocks;
   lastHud = nextHud;
