@@ -24,6 +24,7 @@ let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
 let speedAccumulator = 0;
 let chargeStartedAt = null;
+let chargeReady = false;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -68,8 +69,9 @@ function resetMatch() {
   state = createInitialState();
   speedAccumulator = 0;
   chargeStartedAt = null;
+  chargeReady = false;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 3s for Charge Shot, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 3s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -79,6 +81,7 @@ function startMatch() {
   }
   speedAccumulator = 0;
   chargeStartedAt = null;
+  chargeReady = false;
   state.running = true;
   state.winner = null;
   overlay.classList.add("hidden");
@@ -88,7 +91,10 @@ function getPlayerInput() {
   let attack = null;
   if (input.jabQueued) attack = "jab";
   if (input.smashQueued) attack = "smash";
-  if (input.chargeQueued) attack = "charge";
+  if (input.chargeQueued) {
+    attack = "charge";
+    chargeReady = false;
+  }
 
   const next = {
     left: input.left,
@@ -232,15 +238,15 @@ function drawAttack(fighter) {
 }
 
 function drawChargingEffect(fighter) {
-  if (fighter.name !== "Nova" || chargeStartedAt === null || !state.running) return;
+  if (fighter.name !== "Nova" || (!chargeReady && chargeStartedAt === null) || !state.running) return;
 
-  const elapsed = Math.min(3000, performance.now() - chargeStartedAt);
+  const elapsed = chargeReady ? 3000 : Math.min(3000, performance.now() - chargeStartedAt);
   const charge = elapsed / 3000;
   const centerX = fighter.x + fighter.width / 2;
   const centerY = fighter.y + fighter.height / 2;
   const auraRadius = 34 + charge * 34;
   const pulse = 0.92 + Math.sin(performance.now() / 55) * 0.14;
-  const fullyCharged = charge > 0.96;
+  const fullyCharged = chargeReady || charge > 0.96;
   const gradient = ctx.createRadialGradient(
     centerX,
     centerY,
@@ -501,6 +507,11 @@ function drawFrame() {
 
 function tick() {
   if (state.running) {
+    if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= 3000) {
+      chargeReady = true;
+      chargeStartedAt = null;
+    }
+
     speedAccumulator += speedMultiplier;
     const stepCount = Math.floor(speedAccumulator);
     speedAccumulator -= stepCount;
@@ -539,7 +550,10 @@ window.addEventListener("keydown", (event) => {
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (isShift && chargeStartedAt === null) {
+  if (isShift && chargeReady) {
+    event.preventDefault();
+    input.chargeQueued = true;
+  } else if (isShift && chargeStartedAt === null) {
     event.preventDefault();
     chargeStartedAt = performance.now();
   }
@@ -548,16 +562,8 @@ window.addEventListener("keydown", (event) => {
 
 window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
-  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
-  if (isShift && chargeStartedAt !== null) {
-    const heldMs = performance.now() - chargeStartedAt;
-    if (heldMs >= 3000) {
-      input.chargeQueued = true;
-    }
-    chargeStartedAt = null;
-  }
 });
 
 speedDial.addEventListener("input", () => {
