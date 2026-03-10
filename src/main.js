@@ -266,10 +266,53 @@ function drawFighter(fighter) {
   drawAttack(fighter);
 }
 
+function drawImpact(fighter) {
+  if (!fighter.impact || fighter.impact.type !== "explosion") return;
+
+  const life = fighter.impact.timer / 12;
+  const outerRadius = 34 * (1 - life) + 10;
+  const innerRadius = outerRadius * 0.45;
+  const gradient = ctx.createRadialGradient(
+    fighter.impact.x,
+    fighter.impact.y,
+    innerRadius * 0.2,
+    fighter.impact.x,
+    fighter.impact.y,
+    outerRadius
+  );
+  gradient.addColorStop(0, `rgba(255, 251, 235, ${0.95 * life})`);
+  gradient.addColorStop(0.4, `rgba(251, 146, 60, ${0.9 * life})`);
+  gradient.addColorStop(0.72, `rgba(239, 68, 68, ${0.6 * life})`);
+  gradient.addColorStop(1, "rgba(239, 68, 68, 0)");
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = `rgba(255, 245, 157, ${0.8 * life})`;
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (Math.PI * 2 * i) / 6;
+    const inner = outerRadius * 0.55;
+    const outer = outerRadius + 10 * life;
+    ctx.beginPath();
+    ctx.moveTo(
+      fighter.impact.x + Math.cos(angle) * inner,
+      fighter.impact.y + Math.sin(angle) * inner
+    );
+    ctx.lineTo(
+      fighter.impact.x + Math.cos(angle) * outer,
+      fighter.impact.y + Math.sin(angle) * outer
+    );
+    ctx.stroke();
+  }
+}
+
 function drawFrame() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(stageCanvas, 0, 0);
   state.fighters.forEach(drawFighter);
+  state.fighters.forEach(drawImpact);
 }
 
 function tick() {

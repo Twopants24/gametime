@@ -79,6 +79,7 @@ export function createFighter(options) {
     invuln: 0,
     attack: null,
     cpuCooldown: 0,
+    impact: null,
   };
 }
 
@@ -218,6 +219,15 @@ export function resolveAttack(attacker, defender) {
       vy: -Math.max(5, knockback * 0.72),
       hitstun: Math.round(scaledDamage * 1.4),
       grounded: false,
+      impact:
+        nextAttacker.attack.type === "smash"
+          ? {
+              type: "explosion",
+              timer: 12,
+              x: nextDefender.x + nextDefender.width / 2,
+              y: nextDefender.y + nextDefender.height / 2,
+            }
+          : null,
     };
     nextAttacker.attack = {
       ...nextAttacker.attack,
@@ -332,6 +342,10 @@ export function updateFighter(fighter) {
     hitstun: Math.max(0, fighter.hitstun - 1),
     invuln: Math.max(0, fighter.invuln - 1),
     cpuCooldown: Math.max(0, fighter.cpuCooldown - 1),
+    impact:
+      fighter.impact && fighter.impact.timer > 1
+        ? { ...fighter.impact, timer: fighter.impact.timer - 1 }
+        : null,
     grounded: false,
   };
 
@@ -387,6 +401,7 @@ export function handleBlastZone(state, fighterIndex) {
       invuln: 120,
       jumpsLeft: PHYSICS.maxJumps,
       grounded: false,
+      impact: null,
     };
   });
 
