@@ -238,8 +238,9 @@ function drawChargingEffect(fighter) {
   const charge = elapsed / 3000;
   const centerX = fighter.x + fighter.width / 2;
   const centerY = fighter.y + fighter.height / 2;
-  const auraRadius = 24 + charge * 22;
-  const pulse = 0.82 + Math.sin(performance.now() / 80) * 0.08;
+  const auraRadius = 34 + charge * 34;
+  const pulse = 0.92 + Math.sin(performance.now() / 55) * 0.14;
+  const fullyCharged = charge > 0.96;
   const gradient = ctx.createRadialGradient(
     centerX,
     centerY,
@@ -248,23 +249,26 @@ function drawChargingEffect(fighter) {
     centerY,
     auraRadius
   );
-  gradient.addColorStop(0, `rgba(255,255,255,${0.18 + charge * 0.18})`);
-  gradient.addColorStop(0.4, `rgba(103, 232, 249, ${0.18 + charge * 0.34})`);
+  gradient.addColorStop(0, `rgba(255,255,255,${0.24 + charge * 0.28})`);
+  gradient.addColorStop(0.25, `rgba(186, 230, 253, ${0.2 + charge * 0.4})`);
+  gradient.addColorStop(0.5, `rgba(103, 232, 249, ${0.24 + charge * 0.48})`);
   gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(centerX, centerY, auraRadius * pulse, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = `rgba(186, 230, 253, ${0.35 + charge * 0.55})`;
-  ctx.lineWidth = 2 + charge * 2;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, (auraRadius + 6) * pulse, 0, Math.PI * 2);
-  ctx.stroke();
+  for (let ring = 0; ring < 2; ring += 1) {
+    ctx.strokeStyle = `rgba(186, 230, 253, ${0.28 + charge * 0.48 - ring * 0.1})`;
+    ctx.lineWidth = 2 + charge * 2.5 - ring * 0.5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, (auraRadius + 6 + ring * 10) * pulse, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
-  const sparkCount = 4 + Math.floor(charge * 5);
-  ctx.strokeStyle = `rgba(255,255,255,${0.25 + charge * 0.45})`;
-  ctx.lineWidth = 2;
+  const sparkCount = 6 + Math.floor(charge * 8);
+  ctx.strokeStyle = `rgba(255,255,255,${0.35 + charge * 0.5})`;
+  ctx.lineWidth = 2.5;
   for (let i = 0; i < sparkCount; i += 1) {
     const angle = performance.now() / 260 + (Math.PI * 2 * i) / sparkCount;
     const inner = auraRadius * 0.78;
@@ -273,6 +277,19 @@ function drawChargingEffect(fighter) {
     ctx.moveTo(centerX + Math.cos(angle) * inner, centerY + Math.sin(angle) * inner);
     ctx.lineTo(centerX + Math.cos(angle) * outer, centerY + Math.sin(angle) * outer);
     ctx.stroke();
+  }
+
+  if (fullyCharged) {
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, auraRadius + 20 + Math.sin(performance.now() / 40) * 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, auraRadius * 1.05, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
