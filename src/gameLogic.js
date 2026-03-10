@@ -227,7 +227,12 @@ export function resolveAttack(attacker, defender) {
               x: nextDefender.x + nextDefender.width / 2,
               y: nextDefender.y + nextDefender.height / 2,
             }
-          : null,
+          : {
+              type: "smoke",
+              timer: 10,
+              x: nextDefender.x + nextDefender.width / 2,
+              y: nextDefender.y + nextDefender.height / 2,
+            },
     };
     nextAttacker.attack = {
       ...nextAttacker.attack,
