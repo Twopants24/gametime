@@ -46,11 +46,11 @@ export const ATTACKS = {
     startup: 8,
     active: 6,
     recovery: 12,
-    damage: 28,
-    baseKnockback: 12.5,
-    scale: 0.24,
-    xReach: 96,
-    yReach: 34,
+    damage: 40,
+    baseKnockback: 17.5,
+    scale: 0.32,
+    xReach: 108,
+    yReach: 40,
   },
 };
 
