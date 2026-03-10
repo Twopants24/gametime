@@ -223,7 +223,7 @@ export function resolveAttack(attacker, defender) {
         nextAttacker.attack.type === "smash"
           ? {
               type: "explosion",
-              timer: 12,
+              timer: 16,
               x: nextDefender.x + nextDefender.width / 2,
               y: nextDefender.y + nextDefender.height / 2,
             }

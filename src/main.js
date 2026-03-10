@@ -269,9 +269,10 @@ function drawFighter(fighter) {
 function drawImpact(fighter) {
   if (!fighter.impact || fighter.impact.type !== "explosion") return;
 
-  const life = fighter.impact.timer / 12;
-  const outerRadius = 34 * (1 - life) + 10;
-  const innerRadius = outerRadius * 0.45;
+  const maxTimer = 16;
+  const life = fighter.impact.timer / maxTimer;
+  const outerRadius = 54 * (1 - life) + 18;
+  const innerRadius = outerRadius * 0.35;
   const gradient = ctx.createRadialGradient(
     fighter.impact.x,
     fighter.impact.y,
@@ -281,20 +282,27 @@ function drawImpact(fighter) {
     outerRadius
   );
   gradient.addColorStop(0, `rgba(255, 251, 235, ${0.95 * life})`);
-  gradient.addColorStop(0.4, `rgba(251, 146, 60, ${0.9 * life})`);
-  gradient.addColorStop(0.72, `rgba(239, 68, 68, ${0.6 * life})`);
+  gradient.addColorStop(0.25, `rgba(254, 215, 170, ${0.95 * life})`);
+  gradient.addColorStop(0.5, `rgba(251, 146, 60, ${0.9 * life})`);
+  gradient.addColorStop(0.78, `rgba(239, 68, 68, ${0.7 * life})`);
   gradient.addColorStop(1, "rgba(239, 68, 68, 0)");
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = `rgba(255, 245, 157, ${0.8 * life})`;
+  ctx.strokeStyle = `rgba(255, 247, 237, ${0.85 * life})`;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.08 + (1 - life) * 0.18), 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = `rgba(255, 245, 157, ${0.9 * life})`;
   ctx.lineWidth = 3;
-  for (let i = 0; i < 6; i += 1) {
-    const angle = (Math.PI * 2 * i) / 6;
-    const inner = outerRadius * 0.55;
-    const outer = outerRadius + 10 * life;
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (Math.PI * 2 * i) / 8;
+    const inner = outerRadius * 0.58;
+    const outer = outerRadius + 18 * life;
     ctx.beginPath();
     ctx.moveTo(
       fighter.impact.x + Math.cos(angle) * inner,
@@ -306,6 +314,11 @@ function drawImpact(fighter) {
     );
     ctx.stroke();
   }
+
+  ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * life})`;
+  ctx.beginPath();
+  ctx.arc(fighter.impact.x, fighter.impact.y, innerRadius * 0.55, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawFrame() {
