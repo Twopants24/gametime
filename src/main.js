@@ -26,6 +26,7 @@ let speedMultiplier = Number(speedDial.value);
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
+const CHARGE_TIME_MS = 1000;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -76,6 +77,7 @@ function resetMatch() {
   chargeReady = false;
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 3s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -244,8 +246,8 @@ function drawAttack(fighter) {
 function drawChargingEffect(fighter) {
   if (fighter.name !== "Nova" || (!chargeReady && chargeStartedAt === null) || !state.running) return;
 
-  const elapsed = chargeReady ? 3000 : Math.min(3000, performance.now() - chargeStartedAt);
-  const charge = elapsed / 3000;
+  const elapsed = chargeReady ? CHARGE_TIME_MS : Math.min(CHARGE_TIME_MS, performance.now() - chargeStartedAt);
+  const charge = elapsed / CHARGE_TIME_MS;
   const centerX = fighter.x + fighter.width / 2;
   const centerY = fighter.y + fighter.height / 2;
   const auraRadius = 34 + charge * 34;
@@ -511,7 +513,7 @@ function drawFrame() {
 
 function tick() {
   if (state.running) {
-    if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= 3000) {
+    if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= CHARGE_TIME_MS) {
       chargeReady = true;
       chargeStartedAt = null;
     }
