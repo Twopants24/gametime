@@ -42,6 +42,16 @@ export const ATTACKS = {
     xReach: 72,
     yReach: 24,
   },
+  charge: {
+    startup: 8,
+    active: 6,
+    recovery: 12,
+    damage: 28,
+    baseKnockback: 12.5,
+    scale: 0.24,
+    xReach: 96,
+    yReach: 34,
+  },
 };
 
 export const DIFFICULTY = {
@@ -220,7 +230,14 @@ export function resolveAttack(attacker, defender) {
       hitstun: Math.round(scaledDamage * 1.4),
       grounded: false,
       impact:
-        nextAttacker.attack.type === "smash"
+        nextAttacker.attack.type === "charge"
+          ? {
+              type: "nova",
+              timer: 22,
+              x: nextDefender.x + nextDefender.width / 2,
+              y: nextDefender.y + nextDefender.height / 2,
+            }
+          : nextAttacker.attack.type === "smash"
           ? {
               type: "explosion",
               timer: 16,
