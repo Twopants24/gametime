@@ -22,6 +22,7 @@ const hud = {
 
 let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
+let speedAccumulator = 0;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -63,6 +64,7 @@ function updateHud() {
 
 function resetMatch() {
   state = createInitialState();
+  speedAccumulator = 0;
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, R full reset.", "Start Match");
   updateHud();
@@ -72,6 +74,7 @@ function startMatch() {
   if (state.winner) {
     state = createInitialState();
   }
+  speedAccumulator = 0;
   state.running = true;
   state.winner = null;
   overlay.classList.add("hidden");
@@ -217,9 +220,9 @@ function drawFrame() {
 
 function tick() {
   if (state.running) {
-    const wholeSteps = Math.max(1, Math.floor(speedMultiplier));
-    const extraStepChance = speedMultiplier - wholeSteps;
-    const stepCount = wholeSteps + (Math.random() < extraStepChance ? 1 : 0);
+    speedAccumulator += speedMultiplier;
+    const stepCount = Math.floor(speedAccumulator);
+    speedAccumulator -= stepCount;
 
     for (let i = 0; i < stepCount && state.running; i += 1) {
       const [p1, p2] = state.fighters;
@@ -265,6 +268,7 @@ window.addEventListener("keyup", (event) => {
 
 speedDial.addEventListener("input", () => {
   speedMultiplier = Number(speedDial.value);
+  speedAccumulator = 0;
   speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
 });
 
