@@ -76,7 +76,6 @@ function resetMatch() {
   chargeStartedAt = null;
   chargeReady = false;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 3s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
   updateHud();
 }
