@@ -203,15 +203,73 @@ function drawAttack(fighter) {
   ctx.stroke();
 
   if (fighter.attack.type === "charge") {
-    const chargeGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 40);
-    chargeGradient.addColorStop(0, "rgba(255,255,255,0.98)");
-    chargeGradient.addColorStop(0.28, "rgba(103, 232, 249, 0.95)");
-    chargeGradient.addColorStop(0.6, "rgba(59, 130, 246, 0.7)");
-    chargeGradient.addColorStop(1, "rgba(59, 130, 246, 0)");
-    ctx.fillStyle = chargeGradient;
+    const flameLength = 96;
+    const outerFlame = ctx.createLinearGradient(fistX, fistY, fistX + fighter.face * flameLength, fistY);
+    outerFlame.addColorStop(0, "rgba(255,255,255,0.98)");
+    outerFlame.addColorStop(0.18, "rgba(255, 244, 214, 0.96)");
+    outerFlame.addColorStop(0.45, "rgba(251, 146, 60, 0.88)");
+    outerFlame.addColorStop(0.72, "rgba(239, 68, 68, 0.6)");
+    outerFlame.addColorStop(1, "rgba(239, 68, 68, 0)");
+    ctx.fillStyle = outerFlame;
     ctx.beginPath();
-    ctx.arc(fistX, fistY, 40, 0, Math.PI * 2);
+    ctx.moveTo(fistX - fighter.face * 6, fistY);
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 36,
+      fistY - 38,
+      fistX + fighter.face * flameLength,
+      fistY
+    );
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 36,
+      fistY + 38,
+      fistX - fighter.face * 6,
+      fistY
+    );
+    ctx.closePath();
     ctx.fill();
+
+    const coreFlame = ctx.createLinearGradient(fistX, fistY, fistX + fighter.face * (flameLength - 20), fistY);
+    coreFlame.addColorStop(0, "rgba(255,255,255,1)");
+    coreFlame.addColorStop(0.2, "rgba(255, 251, 235, 0.95)");
+    coreFlame.addColorStop(0.55, "rgba(253, 224, 71, 0.85)");
+    coreFlame.addColorStop(1, "rgba(253, 224, 71, 0)");
+    ctx.fillStyle = coreFlame;
+    ctx.beginPath();
+    ctx.moveTo(fistX, fistY);
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 26,
+      fistY - 20,
+      fistX + fighter.face * (flameLength - 20),
+      fistY
+    );
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 26,
+      fistY + 20,
+      fistX,
+      fistY
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    const muzzleGlow = ctx.createRadialGradient(fistX, fistY, 6, fistX, fistY, 34);
+    muzzleGlow.addColorStop(0, "rgba(255,255,255,1)");
+    muzzleGlow.addColorStop(0.4, "rgba(253, 224, 71, 0.9)");
+    muzzleGlow.addColorStop(1, "rgba(251, 146, 60, 0)");
+    ctx.fillStyle = muzzleGlow;
+    ctx.beginPath();
+    ctx.arc(fistX, fistY, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 251, 235, 0.85)";
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 3; i += 1) {
+      const tipX = fistX + fighter.face * (58 + i * 14);
+      const tipY = fistY + (i - 1) * 10;
+      ctx.beginPath();
+      ctx.moveTo(fistX + fighter.face * (18 + i * 4), fistY + (i - 1) * 4);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+    }
   } else if (fighter.attack.type === "smash") {
     const flameGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 30);
     flameGradient.addColorStop(0, "rgba(255, 245, 157, 0.95)");
