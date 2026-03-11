@@ -19,7 +19,7 @@ test("jab hit increases damage and launches defender", () => {
   assert.ok(resolved.defender.vy < 0);
 });
 
-test("charge hit is stronger than smash and creates a larger impact", () => {
+test("charge hit is stronger than smash and creates the zoom impact", () => {
   const state = createInitialState();
   let [attacker, defender] = state.fighters;
   attacker.x = 400;
@@ -31,21 +31,6 @@ test("charge hit is stronger than smash and creates a larger impact", () => {
 
   const resolved = resolveAttack(attacker, defender);
   assert.ok(resolved.defender.damage > ATTACKS.smash.damage * DIFFICULTY.playerDamageMultiplier);
-  assert.equal(resolved.defender.impact?.type, "nova");
-});
-
-test("charge hit on Volt at 100% creates a supernova impact", () => {
-  const state = createInitialState();
-  let [attacker, defender] = state.fighters;
-  attacker.x = 400;
-  attacker.y = 400;
-  attacker.face = 1;
-  attacker.attack = { type: "charge", frame: ATTACKS.charge.startup - 1, didHit: false };
-  defender.x = 448;
-  defender.y = 400;
-  defender.damage = 100;
-
-  const resolved = resolveAttack(attacker, defender);
   assert.equal(resolved.defender.impact?.type, "supernova");
   assert.equal(resolved.defender.impact?.timer, 30);
 });
