@@ -26,7 +26,10 @@ let speedMultiplier = Number(speedDial.value);
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
+let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
+const CHARGE_CAMERA_HOLD_MS = 500;
+const CHARGE_CAMERA_RELEASE_MS = 120;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -75,6 +78,7 @@ function resetMatch() {
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
+  cameraEffect = null;
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, R full reset.", "Start Match");
   updateHud();
@@ -87,6 +91,7 @@ function startMatch() {
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
+  cameraEffect = null;
   state.running = true;
   state.winner = null;
   overlay.classList.add("hidden");
@@ -670,31 +675,40 @@ function drawImpact(fighter) {
 }
 
 function drawFrame() {
-  const supernovaTarget = state.fighters.find((fighter) => fighter.impact?.type === "supernova");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (supernovaTarget) {
-    const life = supernovaTarget.impact.timer / 30;
-    const zoom = 1.18 + life * 0.32;
-    const focusX = supernovaTarget.impact.x;
-    const focusY = supernovaTarget.impact.y;
-    const shakeX = Math.sin(performance.now() / 18) * 10 * life;
-    const shakeY = Math.cos(performance.now() / 22) * 8 * life;
+  if (cameraEffect) {
+    const elapsed = performance.now() - cameraEffect.startedAt;
+    const activeWindow = CHARGE_CAMERA_HOLD_MS + CHARGE_CAMERA_RELEASE_MS;
+    if (elapsed >= activeWindow) {
+      cameraEffect = null;
+    }
+  }
+
+  if (cameraEffect) {
+    const elapsed = performance.now() - cameraEffect.startedAt;
+    const releaseProgress = elapsed <= CHARGE_CAMERA_HOLD_MS
+      ? 0
+      : Math.min(1, (elapsed - CHARGE_CAMERA_HOLD_MS) / CHARGE_CAMERA_RELEASE_MS);
+    const zoom = 1.42 - releaseProgress * 0.42;
+    const tilt = (cameraEffect.tilt ?? 0.095) * (1 - releaseProgress);
     ctx.save();
-    ctx.translate(canvas.width / 2 + shakeX, canvas.height / 2 + shakeY);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(tilt);
     ctx.scale(zoom, zoom);
-    ctx.translate(-focusX, -focusY);
+    ctx.translate(-cameraEffect.x, -cameraEffect.y);
   }
 
   ctx.drawImage(stageCanvas, 0, 0);
   state.fighters.forEach(drawFighter);
   state.fighters.forEach(drawImpact);
 
-  if (supernovaTarget) {
+  if (cameraEffect) {
     ctx.restore();
-
-    const life = supernovaTarget.impact.timer / 30;
-    const flash = Math.max(0, life - 0.25) * 0.42;
+    const elapsed = performance.now() - cameraEffect.startedAt;
+    const activeWindow = CHARGE_CAMERA_HOLD_MS + CHARGE_CAMERA_RELEASE_MS;
+    const normalized = 1 - Math.min(1, elapsed / activeWindow);
+    const flash = normalized * 0.22;
     ctx.fillStyle = `rgba(255,255,255,${flash})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = `rgba(96,165,250,${flash * 0.8})`;
@@ -720,6 +734,17 @@ function tick() {
         p1: getPlayerInput(),
         p2: cpuInput,
       });
+      const cinematicHit = state.fighters.find(
+        (fighter) => fighter.impact?.type === "supernova" && fighter.impact.timer === 30
+      );
+      if (cinematicHit) {
+        cameraEffect = {
+          startedAt: performance.now(),
+          x: cinematicHit.impact.x,
+          y: cinematicHit.impact.y,
+          tilt: cinematicHit.name === "Volt" ? -0.095 : 0.095,
+        };
+      }
       if (cpuInput.attack) {
         state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
       }
