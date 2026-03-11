@@ -204,114 +204,125 @@ function drawAttack(fighter) {
 
   if (fighter.attack.type === "charge") {
     const time = performance.now();
-    const sway = Math.sin(time / 52) * 8;
-    const pulse = 0.9 + (Math.sin(time / 70) + 1) * 0.18;
-    const flameLength = 160 + Math.sin(time / 80) * 10;
-    const flameTipX = fistX + fighter.face * flameLength;
-    const outerFlame = ctx.createLinearGradient(fistX, fistY, flameTipX, fistY);
-    outerFlame.addColorStop(0, "rgba(255,255,255,0.98)");
-    outerFlame.addColorStop(0.18, "rgba(224, 242, 254, 0.98)");
-    outerFlame.addColorStop(0.48, "rgba(56, 189, 248, 0.9)");
-    outerFlame.addColorStop(0.78, "rgba(37, 99, 235, 0.72)");
-    outerFlame.addColorStop(1, "rgba(29, 78, 216, 0)");
-    ctx.fillStyle = outerFlame;
+    const pulse = 0.92 + Math.sin(time / 90) * 0.08;
+    const wave = Math.sin(time / 65) * 6;
+    const length = 138 + Math.sin(time / 110) * 8;
+    const tipX = fistX + fighter.face * length;
+    const bodyWidth = 22 * pulse;
+    const shellWidth = 40 + Math.sin(time / 80) * 4;
+
+    const shellGradient = ctx.createLinearGradient(fistX, fistY, tipX, fistY);
+    shellGradient.addColorStop(0, "rgba(224, 242, 254, 0.9)");
+    shellGradient.addColorStop(0.25, "rgba(125, 211, 252, 0.95)");
+    shellGradient.addColorStop(0.7, "rgba(37, 99, 235, 0.82)");
+    shellGradient.addColorStop(1, "rgba(30, 64, 175, 0)");
+    ctx.fillStyle = shellGradient;
     ctx.beginPath();
-    ctx.moveTo(fistX - fighter.face * 10, fistY);
+    ctx.moveTo(fistX - fighter.face * 4, fistY - shellWidth * 0.55);
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 56,
-      fistY - (54 + sway),
-      flameTipX,
-      fistY - sway * 0.2
+      fistX + fighter.face * 42,
+      fistY - shellWidth - wave,
+      tipX,
+      fistY - 7
     );
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 56,
-      fistY + (54 - sway),
-      fistX - fighter.face * 10,
-      fistY
+      tipX + fighter.face * 22,
+      fistY,
+      tipX,
+      fistY + 7
+    );
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 42,
+      fistY + shellWidth + wave,
+      fistX - fighter.face * 4,
+      fistY + shellWidth * 0.55
     );
     ctx.closePath();
     ctx.fill();
 
-    const coreFlame = ctx.createLinearGradient(fistX, fistY, fistX + fighter.face * (flameLength - 24), fistY);
-    coreFlame.addColorStop(0, "rgba(255,255,255,1)");
-    coreFlame.addColorStop(0.22, "rgba(191, 219, 254, 0.98)");
-    coreFlame.addColorStop(0.58, "rgba(96, 165, 250, 0.92)");
-    coreFlame.addColorStop(1, "rgba(59, 130, 246, 0)");
-    ctx.fillStyle = coreFlame;
+    const coreGradient = ctx.createLinearGradient(fistX, fistY, tipX, fistY);
+    coreGradient.addColorStop(0, "rgba(255,255,255,1)");
+    coreGradient.addColorStop(0.22, "rgba(191, 219, 254, 0.98)");
+    coreGradient.addColorStop(0.6, "rgba(96, 165, 250, 0.94)");
+    coreGradient.addColorStop(1, "rgba(59, 130, 246, 0)");
+    ctx.fillStyle = coreGradient;
     ctx.beginPath();
-    ctx.moveTo(fistX, fistY);
+    ctx.moveTo(fistX, fistY - bodyWidth);
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 30,
-      fistY - (24 + sway * 0.4),
-      fistX + fighter.face * (flameLength - 20),
-      fistY - sway * 0.16
+      fistX + fighter.face * 34,
+      fistY - bodyWidth * 0.95 - wave * 0.55,
+      tipX,
+      fistY - 5
     );
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 30,
-      fistY + (24 - sway * 0.4),
+      tipX + fighter.face * 14,
+      fistY,
+      tipX,
+      fistY + 5
+    );
+    ctx.quadraticCurveTo(
+      fistX + fighter.face * 34,
+      fistY + bodyWidth * 0.95 + wave * 0.55,
       fistX,
-      fistY
+      fistY + bodyWidth
     );
     ctx.closePath();
     ctx.fill();
 
-    const fireballGlow = ctx.createRadialGradient(flameTipX, fistY - sway * 0.18, 8, flameTipX, fistY - sway * 0.18, 42 * pulse);
-    fireballGlow.addColorStop(0, "rgba(255,255,255,1)");
-    fireballGlow.addColorStop(0.22, "rgba(224, 242, 254, 0.98)");
-    fireballGlow.addColorStop(0.55, "rgba(56, 189, 248, 0.9)");
-    fireballGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
-    ctx.fillStyle = fireballGlow;
+    const tipGlow = ctx.createRadialGradient(tipX, fistY, 6, tipX, fistY, 30 * pulse);
+    tipGlow.addColorStop(0, "rgba(255,255,255,1)");
+    tipGlow.addColorStop(0.3, "rgba(186, 230, 253, 0.98)");
+    tipGlow.addColorStop(0.68, "rgba(56, 189, 248, 0.9)");
+    tipGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
+    ctx.fillStyle = tipGlow;
     ctx.beginPath();
-    ctx.arc(flameTipX, fistY - sway * 0.18, 42 * pulse, 0, Math.PI * 2);
+    ctx.arc(tipX, fistY, 30 * pulse, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.fillStyle = "rgba(255,255,255,0.98)";
     ctx.beginPath();
-    ctx.arc(flameTipX, fistY - sway * 0.18, 15 * pulse, 0, Math.PI * 2);
+    ctx.ellipse(tipX, fistY, 12 * pulse, 9 * pulse, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const muzzleGlow = ctx.createRadialGradient(fistX, fistY, 6, fistX, fistY, 34);
+    const muzzleGlow = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 28);
     muzzleGlow.addColorStop(0, "rgba(255,255,255,1)");
-    muzzleGlow.addColorStop(0.4, "rgba(125, 211, 252, 0.92)");
-    muzzleGlow.addColorStop(1, "rgba(59, 130, 246, 0)");
+    muzzleGlow.addColorStop(0.4, "rgba(147, 197, 253, 0.95)");
+    muzzleGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
     ctx.fillStyle = muzzleGlow;
     ctx.beginPath();
-    ctx.arc(fistX, fistY, 34, 0, Math.PI * 2);
+    ctx.arc(fistX, fistY, 28, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(224, 242, 254, 0.9)";
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 4; i += 1) {
-      const offset = Math.sin(time / 60 + i * 0.8) * 10;
-      const tipX = fistX + fighter.face * (80 + i * 20);
-      const tipY = fistY + (i - 1.5) * 12 + offset;
-      ctx.beginPath();
-      ctx.moveTo(fistX + fighter.face * (22 + i * 5), fistY + (i - 1.5) * 5 + offset * 0.35);
-      ctx.lineTo(tipX, tipY);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = "rgba(191, 219, 254, 0.7)";
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(fistX + fighter.face * 18, fistY - 16 - sway * 0.25);
+    ctx.moveTo(fistX + fighter.face * 10, fistY - 10);
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 72,
-      fistY - 34 - sway,
-      flameTipX,
-      fistY - 8 - sway * 0.3
+      fistX + fighter.face * 62,
+      fistY - 16 - wave * 0.45,
+      tipX - fighter.face * 8,
+      fistY - 3
     );
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(fistX + fighter.face * 18, fistY + 16 + sway * 0.25);
+    ctx.moveTo(fistX + fighter.face * 10, fistY + 10);
     ctx.quadraticCurveTo(
-      fistX + fighter.face * 72,
-      fistY + 34 + sway,
-      flameTipX,
-      fistY + 8 + sway * 0.3
+      fistX + fighter.face * 62,
+      fistY + 16 + wave * 0.45,
+      tipX - fighter.face * 8,
+      fistY + 3
     );
     ctx.stroke();
+
+    for (let i = 0; i < 3; i += 1) {
+      const sparkX = fistX + fighter.face * (28 + i * 26 + ((time / 10) % 18));
+      const sparkY = fistY + Math.sin(time / 70 + i * 1.7) * (8 + i * 3);
+      ctx.fillStyle = `rgba(191, 219, 254, ${0.55 - i * 0.12})`;
+      ctx.beginPath();
+      ctx.arc(sparkX, sparkY, 3 - i * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else if (fighter.attack.type === "smash") {
     const flameGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 30);
     flameGradient.addColorStop(0, "rgba(255, 245, 157, 0.95)");
@@ -460,6 +471,61 @@ function drawFighter(fighter) {
 function drawImpact(fighter) {
   if (!fighter.impact) return;
 
+  if (fighter.impact.type === "supernova") {
+    const maxTimer = 30;
+    const life = fighter.impact.timer / maxTimer;
+    const outerRadius = 132 * (1 - life) + 54;
+    const coreRadius = outerRadius * 0.34;
+    const shockRadius = outerRadius * (1.12 + (1 - life) * 0.35);
+    const gradient = ctx.createRadialGradient(
+      fighter.impact.x,
+      fighter.impact.y,
+      coreRadius * 0.08,
+      fighter.impact.x,
+      fighter.impact.y,
+      outerRadius
+    );
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${1 * life})`);
+    gradient.addColorStop(0.16, `rgba(224, 242, 254, ${1 * life})`);
+    gradient.addColorStop(0.38, `rgba(125, 211, 252, ${0.96 * life})`);
+    gradient.addColorStop(0.68, `rgba(59, 130, 246, ${0.82 * life})`);
+    gradient.addColorStop(1, "rgba(30, 64, 175, 0)");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.96 * life})`;
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.arc(fighter.impact.x, fighter.impact.y, shockRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(186, 230, 253, ${0.92 * life})`;
+    ctx.lineWidth = 5;
+    for (let i = 0; i < 14; i += 1) {
+      const angle = (Math.PI * 2 * i) / 14;
+      const inner = outerRadius * 0.42;
+      const outer = outerRadius + 42 * life;
+      ctx.beginPath();
+      ctx.moveTo(
+        fighter.impact.x + Math.cos(angle) * inner,
+        fighter.impact.y + Math.sin(angle) * inner
+      );
+      ctx.lineTo(
+        fighter.impact.x + Math.cos(angle) * outer,
+        fighter.impact.y + Math.sin(angle) * outer
+      );
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = `rgba(255,255,255,${0.98 * life})`;
+    ctx.beginPath();
+    ctx.arc(fighter.impact.x, fighter.impact.y, coreRadius, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
   if (fighter.impact.type === "nova") {
     const maxTimer = 22;
     const life = fighter.impact.timer / maxTimer;
@@ -604,10 +670,26 @@ function drawImpact(fighter) {
 }
 
 function drawFrame() {
+  const supernovaTarget = state.fighters.find((fighter) => fighter.impact?.type === "supernova");
+  if (supernovaTarget) {
+    const life = supernovaTarget.impact.timer / 30;
+    const zoom = 1.12 + life * 0.18;
+    const focusX = supernovaTarget.impact.x;
+    const focusY = supernovaTarget.impact.y;
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-focusX, -focusY);
+  }
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(stageCanvas, 0, 0);
   state.fighters.forEach(drawFighter);
   state.fighters.forEach(drawImpact);
+
+  if (supernovaTarget) {
+    ctx.restore();
+  }
 }
 
 function tick() {

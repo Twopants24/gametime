@@ -220,6 +220,10 @@ export function resolveAttack(attacker, defender) {
     nextDefender.invuln <= 0 &&
     intersects(getAttackHitbox(nextAttacker, attackData, hitboxBonus), nextDefender)
   ) {
+    const isSuperChargeHit =
+      nextAttacker.attack.type === "charge" &&
+      defender.name === "Volt" &&
+      defender.damage >= 100;
     const scaledDamage = attackData.damage * damageMultiplier;
     const knockback = (attackData.baseKnockback + nextDefender.damage * attackData.scale) * knockbackMultiplier;
     nextDefender = {
@@ -232,8 +236,8 @@ export function resolveAttack(attacker, defender) {
       impact:
         nextAttacker.attack.type === "charge"
           ? {
-              type: "nova",
-              timer: 22,
+              type: isSuperChargeHit ? "supernova" : "nova",
+              timer: isSuperChargeHit ? 30 : 22,
               x: nextDefender.x + nextDefender.width / 2,
               y: nextDefender.y + nextDefender.height / 2,
             }
