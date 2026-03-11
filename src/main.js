@@ -671,24 +671,34 @@ function drawImpact(fighter) {
 
 function drawFrame() {
   const supernovaTarget = state.fighters.find((fighter) => fighter.impact?.type === "supernova");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   if (supernovaTarget) {
     const life = supernovaTarget.impact.timer / 30;
-    const zoom = 1.12 + life * 0.18;
+    const zoom = 1.18 + life * 0.32;
     const focusX = supernovaTarget.impact.x;
     const focusY = supernovaTarget.impact.y;
+    const shakeX = Math.sin(performance.now() / 18) * 10 * life;
+    const shakeY = Math.cos(performance.now() / 22) * 8 * life;
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(canvas.width / 2 + shakeX, canvas.height / 2 + shakeY);
     ctx.scale(zoom, zoom);
     ctx.translate(-focusX, -focusY);
   }
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(stageCanvas, 0, 0);
   state.fighters.forEach(drawFighter);
   state.fighters.forEach(drawImpact);
 
   if (supernovaTarget) {
     ctx.restore();
+
+    const life = supernovaTarget.impact.timer / 30;
+    const flash = Math.max(0, life - 0.25) * 0.42;
+    ctx.fillStyle = `rgba(255,255,255,${flash})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = `rgba(96,165,250,${flash * 0.8})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 }
 
