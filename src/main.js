@@ -27,6 +27,7 @@ let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
 let blastStartedAt = null;
+let blastReady = false;
 let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
 const BLAST_CHARGE_TIME_MS = 1000;
@@ -82,6 +83,7 @@ function resetMatch() {
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
+  blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, hold E 1s for Blast, R full reset.", "Start Match");
@@ -96,6 +98,7 @@ function startMatch() {
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
+  blastReady = false;
   cameraEffect = null;
   state.running = true;
   state.winner = null;
@@ -112,6 +115,7 @@ function getPlayerInput() {
   }
   if (input.blastQueued) {
     attack = "blast";
+    blastReady = false;
   }
 
   const next = {
@@ -402,17 +406,19 @@ function drawAttack(fighter) {
 function drawChargingEffect(fighter) {
   if (fighter.name !== "Nova" || state.running === false) return;
 
-  if (blastStartedAt !== null) {
-    const elapsed = Math.min(BLAST_CHARGE_TIME_MS, performance.now() - blastStartedAt);
+  if (blastStartedAt !== null || blastReady) {
+    const elapsed = blastReady
+      ? BLAST_CHARGE_TIME_MS
+      : Math.min(BLAST_CHARGE_TIME_MS, performance.now() - blastStartedAt);
     const charge = elapsed / BLAST_CHARGE_TIME_MS;
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
     const radius = 34 + charge * 54;
     const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
     const glow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius * 1.2);
-    glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.14})`);
-    glow.addColorStop(0.28, `rgba(254, 215, 170, ${0.18 + charge * 0.32})`);
-    glow.addColorStop(0.65, `rgba(251, 146, 60, ${0.14 + charge * 0.34})`);
+    glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.18})`);
+    glow.addColorStop(0.28, `rgba(254, 215, 170, ${0.18 + charge * 0.38})`);
+    glow.addColorStop(0.65, `rgba(251, 146, 60, ${0.14 + charge * 0.4})`);
     glow.addColorStop(1, "rgba(239, 68, 68, 0)");
     ctx.fillStyle = glow;
     ctx.beginPath();
@@ -432,6 +438,14 @@ function drawChargingEffect(fighter) {
       ctx.beginPath();
       ctx.moveTo(centerX + Math.cos(angle) * (radius - 16), centerY + Math.sin(angle) * (radius - 16));
       ctx.lineTo(centerX + Math.cos(angle) * (radius + 16), centerY + Math.sin(angle) * (radius + 16));
+      ctx.stroke();
+    }
+
+    if (blastReady) {
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius + 20 + Math.sin(performance.now() / 36) * 6, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -863,8 +877,8 @@ function tick() {
       chargeStartedAt = null;
     }
 
-    if (blastStartedAt !== null && performance.now() - blastStartedAt >= BLAST_CHARGE_TIME_MS) {
-      input.blastQueued = true;
+    if (!blastReady && blastStartedAt !== null && performance.now() - blastStartedAt >= BLAST_CHARGE_TIME_MS) {
+      blastReady = true;
       blastStartedAt = null;
     }
 
@@ -920,7 +934,10 @@ window.addEventListener("keydown", (event) => {
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (key === "e" && blastStartedAt === null) {
+  if (key === "e" && blastReady) {
+    event.preventDefault();
+    input.blastQueued = true;
+  } else if (key === "e" && blastStartedAt === null) {
     event.preventDefault();
     blastStartedAt = performance.now();
   }
