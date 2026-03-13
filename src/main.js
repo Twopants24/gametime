@@ -348,15 +348,22 @@ function drawAttack(fighter) {
     }
   } else if (fighter.attack.type === "shot") {
     const muzzleX = fistX + fighter.face * 10;
-    const shotGradient = ctx.createRadialGradient(muzzleX, fistY, 2, muzzleX, fistY, 22);
+    const shotGradient = ctx.createRadialGradient(muzzleX, fistY, 3, muzzleX, fistY, 34);
     shotGradient.addColorStop(0, "rgba(255,255,255,0.98)");
     shotGradient.addColorStop(0.35, "rgba(167, 243, 208, 0.96)");
     shotGradient.addColorStop(0.75, "rgba(16, 185, 129, 0.7)");
     shotGradient.addColorStop(1, "rgba(16, 185, 129, 0)");
     ctx.fillStyle = shotGradient;
     ctx.beginPath();
-    ctx.arc(muzzleX, fistY, 22, 0, Math.PI * 2);
+    ctx.arc(muzzleX, fistY, 34, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.strokeStyle = "rgba(220, 252, 231, 0.85)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(muzzleX - fighter.face * 10, fistY);
+    ctx.lineTo(muzzleX + fighter.face * 24, fistY);
+    ctx.stroke();
   } else if (fighter.attack.type === "blast") {
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
@@ -732,11 +739,11 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "spark") {
     const maxTimer = 14;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 34 * (1 - life) + 10;
+    const outerRadius = 52 * (1 - life) + 16;
     ctx.strokeStyle = `rgba(167, 243, 208, ${0.9 * life})`;
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 6; i += 1) {
-      const angle = (Math.PI * 2 * i) / 6;
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 8; i += 1) {
+      const angle = (Math.PI * 2 * i) / 8;
       ctx.beginPath();
       ctx.moveTo(
         fighter.impact.x + Math.cos(angle) * outerRadius * 0.3,
@@ -750,7 +757,7 @@ function drawImpact(fighter) {
     }
     ctx.fillStyle = `rgba(255,255,255,${0.92 * life})`;
     ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 0.28, 0, Math.PI * 2);
+    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 0.34, 0, Math.PI * 2);
     ctx.fill();
     return;
   }
@@ -871,26 +878,26 @@ function drawProjectiles() {
   for (const projectile of state.projectiles ?? []) {
     const centerX = projectile.x + projectile.width / 2;
     const centerY = projectile.y + projectile.height / 2;
-    const glow = ctx.createRadialGradient(centerX, centerY, 2, centerX, centerY, projectile.width * 1.6);
+    const glow = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, projectile.width * 2.1);
     glow.addColorStop(0, "rgba(255,255,255,1)");
     glow.addColorStop(0.3, "rgba(167, 243, 208, 0.98)");
     glow.addColorStop(0.7, "rgba(16, 185, 129, 0.82)");
     glow.addColorStop(1, "rgba(16, 185, 129, 0)");
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, projectile.width * 1.3, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, projectile.width * 1.7, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#f0fdf4";
     ctx.beginPath();
-    ctx.arc(centerX, centerY, projectile.width * 0.45, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, projectile.width * 0.55, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = "rgba(110, 231, 183, 0.75)";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(centerX - projectile.face * projectile.width * 1.2, centerY);
-    ctx.lineTo(centerX - projectile.face * projectile.width * 0.2, centerY);
+    ctx.moveTo(centerX - projectile.face * projectile.width * 1.8, centerY);
+    ctx.lineTo(centerX - projectile.face * projectile.width * 0.25, centerY);
     ctx.stroke();
   }
 }
