@@ -413,16 +413,16 @@ function drawChargingEffect(fighter) {
     const charge = elapsed / BLAST_CHARGE_TIME_MS;
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
-    const radius = 54 + charge * 78;
+    const radius = 32 + charge * 44;
     const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
-    const glow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius * 1.08);
+    const glow = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, radius * 1.02);
     glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.18})`);
     glow.addColorStop(0.28, `rgba(254, 215, 170, ${0.18 + charge * 0.38})`);
     glow.addColorStop(0.65, `rgba(251, 146, 60, ${0.14 + charge * 0.4})`);
     glow.addColorStop(1, "rgba(239, 68, 68, 0)");
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 1.08 * pulse, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, radius * 1.02 * pulse, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = `rgba(251, 146, 60, ${0.55 + charge * 0.34})`;
@@ -436,8 +436,8 @@ function drawChargingEffect(fighter) {
     for (let i = 0; i < 10; i += 1) {
       const angle = performance.now() / 160 + (Math.PI * 2 * i) / 10;
       ctx.beginPath();
-      ctx.moveTo(centerX + Math.cos(angle) * (radius - 16), centerY + Math.sin(angle) * (radius - 16));
-      ctx.lineTo(centerX + Math.cos(angle) * (radius + 24), centerY + Math.sin(angle) * (radius + 24));
+      ctx.moveTo(centerX + Math.cos(angle) * (radius - 10), centerY + Math.sin(angle) * (radius - 10));
+      ctx.lineTo(centerX + Math.cos(angle) * (radius + 14), centerY + Math.sin(angle) * (radius + 14));
       ctx.stroke();
     }
 
@@ -445,7 +445,7 @@ function drawChargingEffect(fighter) {
       ctx.strokeStyle = "rgba(255,255,255,0.95)";
       ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 34 + Math.sin(performance.now() / 36) * 8, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius + 18 + Math.sin(performance.now() / 36) * 5, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
