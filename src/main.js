@@ -690,13 +690,14 @@ function drawFrame() {
     const releaseProgress = elapsed <= CHARGE_CAMERA_HOLD_MS
       ? 0
       : Math.min(1, (elapsed - CHARGE_CAMERA_HOLD_MS) / CHARGE_CAMERA_RELEASE_MS);
-    const zoom = 1.42 - releaseProgress * 0.42;
     const tilt = (cameraEffect.tilt ?? 0.095) * (1 - releaseProgress);
+    const shudder = (1 - releaseProgress) * 7;
+    const shudderX = Math.sin(performance.now() / 18) * shudder;
+    const shudderY = Math.cos(performance.now() / 23) * shudder * 0.7;
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(canvas.width / 2 + shudderX, canvas.height / 2 + shudderY);
     ctx.rotate(tilt);
-    ctx.scale(zoom, zoom);
-    ctx.translate(-cameraEffect.x, -cameraEffect.y);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
   ctx.drawImage(stageCanvas, 0, 0);
