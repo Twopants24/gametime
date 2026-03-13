@@ -141,7 +141,7 @@ test("crossing the blast zone removes a stock and respawns the fighter", () => {
   assert.equal(next.fighters[0].stocks, DIFFICULTY.playerStocks - 1);
   assert.equal(next.fighters[0].x, next.fighters[0].spawnX);
   assert.equal(next.fighters[0].damage, 0);
-  assert.ok(next.fighters[0].invuln > 0);
+  assert.equal(next.fighters[0].invuln, 0);
 });
 
 test("losing the final stock ends the match and declares a winner", () => {
