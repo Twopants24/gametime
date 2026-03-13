@@ -62,6 +62,19 @@ export const ATTACKS = {
     xReach: 360,
     yReach: 280,
   },
+  shot: {
+    startup: 4,
+    active: 2,
+    recovery: 10,
+    damage: 11,
+    baseKnockback: 7.5,
+    scale: 0.14,
+    xReach: 34,
+    yReach: 16,
+    projectileSpeed: 14,
+    projectileSize: 18,
+    projectileLifetime: 50,
+  },
 };
 
 export const DIFFICULTY = {
@@ -107,6 +120,7 @@ export function createInitialState() {
   return {
     running: false,
     winner: null,
+    projectiles: [],
     fighters: [
       createFighter({
         name: "Nova",
@@ -212,7 +226,7 @@ export function applyInput(fighter, input) {
 
 export function resolveAttack(attacker, defender) {
   if (!attacker.attack) {
-    return { attacker, defender };
+    return { attacker, defender, spawnedProjectile: null };
   }
 
   const nextAttacker = {
@@ -223,6 +237,7 @@ export function resolveAttack(attacker, defender) {
     },
   };
   let nextDefender = { ...defender };
+  let spawnedProjectile = null;
 
   const attackData = ATTACKS[nextAttacker.attack.type];
   const activeStart = attackData.startup;
@@ -234,6 +249,30 @@ export function resolveAttack(attacker, defender) {
   const knockbackMultiplier = attackerIsPlayer ? DIFFICULTY.playerKnockbackMultiplier : DIFFICULTY.cpuKnockbackMultiplier;
 
   if (
+    nextAttacker.attack.frame >= activeStart &&
+    nextAttacker.attack.frame <= activeEnd &&
+    !nextAttacker.attack.didHit &&
+    nextAttacker.attack.type === "shot"
+  ) {
+    spawnedProjectile = {
+      owner: attacker.name,
+      x: attacker.x + attacker.width / 2 + attacker.face * (attacker.width / 2 + 10),
+      y: attacker.y + attacker.height / 2 - 10,
+      vx: attacker.face * ATTACKS.shot.projectileSpeed,
+      vy: 0,
+      width: ATTACKS.shot.projectileSize,
+      height: ATTACKS.shot.projectileSize,
+      damage: ATTACKS.shot.damage * damageMultiplier,
+      baseKnockback: ATTACKS.shot.baseKnockback * knockbackMultiplier,
+      scale: ATTACKS.shot.scale * knockbackMultiplier,
+      face: attacker.face,
+      timer: ATTACKS.shot.projectileLifetime,
+    };
+    nextAttacker.attack = {
+      ...nextAttacker.attack,
+      didHit: true,
+    };
+  } else if (
     nextAttacker.attack.frame >= activeStart &&
     nextAttacker.attack.frame <= activeEnd &&
     !nextAttacker.attack.didHit &&
@@ -291,7 +330,66 @@ export function resolveAttack(attacker, defender) {
     nextAttacker.attackCooldown = 8;
   }
 
-  return { attacker: nextAttacker, defender: nextDefender };
+  return { attacker: nextAttacker, defender: nextDefender, spawnedProjectile };
+}
+
+export function updateProjectiles(projectiles, fighters) {
+  const nextProjectiles = [];
+  const nextFighters = fighters.map((fighter) => ({ ...fighter }));
+
+  for (const projectile of projectiles) {
+    const nextProjectile = {
+      ...projectile,
+      x: projectile.x + projectile.vx,
+      y: projectile.y + projectile.vy,
+      timer: projectile.timer - 1,
+    };
+
+    if (
+      nextProjectile.timer <= 0 ||
+      nextProjectile.x + nextProjectile.width < -STAGE.blastPadding ||
+      nextProjectile.x > STAGE.width + STAGE.blastPadding ||
+      nextProjectile.y + nextProjectile.height < -STAGE.blastPadding ||
+      nextProjectile.y > STAGE.height + STAGE.blastPadding
+    ) {
+      continue;
+    }
+
+    let hit = false;
+    for (let i = 0; i < nextFighters.length; i += 1) {
+      const fighter = nextFighters[i];
+      if (fighter.name === nextProjectile.owner || fighter.invuln > 0) continue;
+      if (!intersects(nextProjectile, fighter)) continue;
+
+      const knockback = nextProjectile.baseKnockback + fighter.damage * nextProjectile.scale;
+      nextFighters[i] = {
+        ...fighter,
+        damage: fighter.damage + nextProjectile.damage,
+        vx: nextProjectile.face * knockback,
+        vy: -Math.max(4, knockback * 0.55),
+        hitstun: Math.round(nextProjectile.damage * 1.2),
+        grounded: false,
+        impact: {
+          type: "spark",
+          timer: 14,
+          x: fighter.x + fighter.width / 2,
+          y: fighter.y + fighter.height / 2,
+          face: nextProjectile.face,
+        },
+      };
+      hit = true;
+      break;
+    }
+
+    if (!hit) {
+      nextProjectiles.push(nextProjectile);
+    }
+  }
+
+  return {
+    fighters: nextFighters,
+    projectiles: nextProjectiles,
+  };
 }
 
 export function resolvePlatformCollision(fighter, platform) {
@@ -470,18 +568,32 @@ export function handleBlastZone(state, fighterIndex) {
 
 export function stepState(state, inputs) {
   let [p1, p2] = state.fighters;
+  const spawnedProjectiles = [];
   p1 = applyInput(p1, inputs.p1);
   p2 = applyInput(p2, inputs.p2);
 
-  ({ attacker: p1, defender: p2 } = resolveAttack(p1, p2));
-  ({ attacker: p2, defender: p1 } = resolveAttack(p2, p1));
+  {
+    const resolved = resolveAttack(p1, p2);
+    p1 = resolved.attacker;
+    p2 = resolved.defender;
+    if (resolved.spawnedProjectile) spawnedProjectiles.push(resolved.spawnedProjectile);
+  }
+  {
+    const resolved = resolveAttack(p2, p1);
+    p2 = resolved.attacker;
+    p1 = resolved.defender;
+    if (resolved.spawnedProjectile) spawnedProjectiles.push(resolved.spawnedProjectile);
+  }
 
   p1 = updateFighter(p1);
   p2 = updateFighter(p2);
+  const projectileState = updateProjectiles([...(state.projectiles ?? []), ...spawnedProjectiles], [p1, p2]);
+  [p1, p2] = projectileState.fighters;
 
   let nextState = {
     ...state,
     fighters: [p1, p2],
+    projectiles: projectileState.projectiles,
   };
 
   nextState = handleBlastZone(nextState, 0);

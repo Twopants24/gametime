@@ -51,6 +51,32 @@ test("blast hits enemies around Nova and creates a burst impact", () => {
   assert.equal(resolved.defender.impact?.timer, 20);
 });
 
+test("shot spawns a projectile that damages at range", () => {
+  const state = createInitialState();
+  state.running = true;
+  state.fighters[0].x = 240;
+  state.fighters[0].y = 360;
+  state.fighters[0].face = 1;
+  state.fighters[1].x = 520;
+  state.fighters[1].y = 360;
+
+  let next = state;
+  next = stepState(next, {
+    p1: { left: false, right: false, jump: false, attack: "shot" },
+    p2: { left: false, right: false, jump: false, attack: null },
+  });
+
+  for (let i = 0; i < 20; i += 1) {
+    next = stepState(next, {
+      p1: { left: false, right: false, jump: false, attack: null },
+      p2: { left: false, right: false, jump: false, attack: null },
+    });
+  }
+
+  assert.ok(next.fighters[1].damage > 0);
+  assert.equal(next.fighters[1].impact?.type, "spark");
+});
+
 test("fighter landing on a platform restores jumps", () => {
   let fighter = createInitialState().fighters[0];
   fighter.x = STAGE.platforms[0].x + 40;
