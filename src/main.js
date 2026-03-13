@@ -407,20 +407,31 @@ function drawChargingEffect(fighter) {
     const charge = elapsed / BLAST_CHARGE_TIME_MS;
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
-    const radius = 26 + charge * 40;
-    ctx.strokeStyle = `rgba(251, 146, 60, ${0.45 + charge * 0.42})`;
-    ctx.lineWidth = 4;
+    const radius = 34 + charge * 54;
+    const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
+    const glow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius * 1.2);
+    glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.14})`);
+    glow.addColorStop(0.28, `rgba(254, 215, 170, ${0.18 + charge * 0.32})`);
+    glow.addColorStop(0.65, `rgba(251, 146, 60, ${0.14 + charge * 0.34})`);
+    glow.addColorStop(1, "rgba(239, 68, 68, 0)");
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, radius * 1.2 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(251, 146, 60, ${0.55 + charge * 0.34})`;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * pulse, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = `rgba(255, 247, 237, ${0.3 + charge * 0.4})`;
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 8; i += 1) {
-      const angle = performance.now() / 180 + (Math.PI * 2 * i) / 8;
+    ctx.strokeStyle = `rgba(255, 247, 237, ${0.45 + charge * 0.36})`;
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 10; i += 1) {
+      const angle = performance.now() / 160 + (Math.PI * 2 * i) / 10;
       ctx.beginPath();
-      ctx.moveTo(centerX + Math.cos(angle) * (radius - 10), centerY + Math.sin(angle) * (radius - 10));
-      ctx.lineTo(centerX + Math.cos(angle) * (radius + 10), centerY + Math.sin(angle) * (radius + 10));
+      ctx.moveTo(centerX + Math.cos(angle) * (radius - 16), centerY + Math.sin(angle) * (radius - 16));
+      ctx.lineTo(centerX + Math.cos(angle) * (radius + 16), centerY + Math.sin(angle) * (radius + 16));
       ctx.stroke();
     }
   }
@@ -693,8 +704,8 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "burst") {
     const maxTimer = 20;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 90 * (1 - life) + 26;
-    const innerRadius = outerRadius * 0.32;
+    const outerRadius = 118 * (1 - life) + 36;
+    const innerRadius = outerRadius * 0.34;
     const gradient = ctx.createRadialGradient(
       fighter.impact.x,
       fighter.impact.y,
@@ -713,18 +724,18 @@ function drawImpact(fighter) {
     ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = `rgba(255, 247, 237, ${0.9 * life})`;
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = `rgba(255, 247, 237, ${0.95 * life})`;
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.06 + (1 - life) * 0.16), 0, Math.PI * 2);
+    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.08 + (1 - life) * 0.2), 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = `rgba(255, 245, 157, ${0.86 * life})`;
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 10; i += 1) {
-      const angle = (Math.PI * 2 * i) / 10;
+    ctx.lineWidth = 5;
+    for (let i = 0; i < 12; i += 1) {
+      const angle = (Math.PI * 2 * i) / 12;
       const inner = outerRadius * 0.46;
-      const outer = outerRadius + 22 * life;
+      const outer = outerRadius + 32 * life;
       ctx.beginPath();
       ctx.moveTo(
         fighter.impact.x + Math.cos(angle) * inner,
@@ -736,6 +747,12 @@ function drawImpact(fighter) {
       );
       ctx.stroke();
     }
+
+    ctx.strokeStyle = `rgba(255,255,255,${0.6 * life})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 1.24, 0, Math.PI * 2);
+    ctx.stroke();
 
     ctx.fillStyle = `rgba(255,255,255,${0.92 * life})`;
     ctx.beginPath();
@@ -863,14 +880,17 @@ function tick() {
         p2: cpuInput,
       });
       const cinematicHit = state.fighters.find(
-        (fighter) => fighter.impact?.type === "supernova" && fighter.impact.timer === 30
+        (fighter) =>
+          (fighter.impact?.type === "supernova" && fighter.impact.timer === 30) ||
+          (fighter.impact?.type === "burst" && fighter.impact.timer === 20)
       );
       if (cinematicHit) {
+        const isBlastBurst = cinematicHit.impact.type === "burst";
         cameraEffect = {
           startedAt: performance.now(),
           x: cinematicHit.impact.x,
           y: cinematicHit.impact.y,
-          tilt: cinematicHit.name === "Volt" ? -0.095 : 0.095,
+          tilt: cinematicHit.name === "Volt" ? (isBlastBurst ? -0.06 : -0.095) : isBlastBurst ? 0.06 : 0.095,
         };
       }
       if (cpuInput.attack) {
