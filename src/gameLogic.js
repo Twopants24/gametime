@@ -52,6 +52,16 @@ export const ATTACKS = {
     xReach: 108,
     yReach: 40,
   },
+  blast: {
+    startup: 5,
+    active: 6,
+    recovery: 14,
+    damage: 24,
+    baseKnockback: 13.5,
+    scale: 0.26,
+    xReach: 108,
+    yReach: 86,
+  },
 };
 
 export const DIFFICULTY = {
@@ -121,6 +131,16 @@ export function createInitialState() {
 }
 
 export function getAttackHitbox(fighter, attackData, bonusReach = 0) {
+  if (fighter.attack?.type === "blast") {
+    const reach = attackData.xReach + bonusReach;
+    return {
+      x: fighter.x + fighter.width / 2 - reach,
+      y: fighter.y + fighter.height / 2 - attackData.yReach,
+      width: reach * 2,
+      height: attackData.yReach * 2,
+    };
+  }
+
   return {
     x:
       fighter.face === 1
@@ -236,6 +256,13 @@ export function resolveAttack(attacker, defender) {
               timer: 30,
               x: nextDefender.x + nextDefender.width / 2,
               y: nextDefender.y + nextDefender.height / 2,
+            }
+          : nextAttacker.attack.type === "blast"
+          ? {
+              type: "burst",
+              timer: 20,
+              x: nextAttacker.x + nextAttacker.width / 2,
+              y: nextAttacker.y + nextAttacker.height / 2,
             }
           : nextAttacker.attack.type === "smash"
           ? {

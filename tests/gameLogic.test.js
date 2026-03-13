@@ -35,6 +35,22 @@ test("charge hit is stronger than smash and creates the zoom impact", () => {
   assert.equal(resolved.defender.impact?.timer, 30);
 });
 
+test("blast hits enemies around Nova and creates a burst impact", () => {
+  const state = createInitialState();
+  let [attacker, defender] = state.fighters;
+  attacker.x = 400;
+  attacker.y = 400;
+  attacker.face = 1;
+  attacker.attack = { type: "blast", frame: ATTACKS.blast.startup - 1, didHit: false };
+  defender.x = 368;
+  defender.y = 396;
+
+  const resolved = resolveAttack(attacker, defender);
+  assert.ok(resolved.defender.damage > ATTACKS.smash.damage * 0.9 * DIFFICULTY.playerDamageMultiplier);
+  assert.equal(resolved.defender.impact?.type, "burst");
+  assert.equal(resolved.defender.impact?.timer, 20);
+});
+
 test("fighter landing on a platform restores jumps", () => {
   let fighter = createInitialState().fighters[0];
   fighter.x = STAGE.platforms[0].x + 40;
