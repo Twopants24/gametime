@@ -65,8 +65,9 @@ test("shot spawns a projectile that damages at range", () => {
     p1: { left: false, right: false, jump: false, attack: "shot" },
     p2: { left: false, right: false, jump: false, attack: null },
   });
+  assert.ok((next.projectiles?.length ?? 0) > 0);
 
-  for (let i = 0; i < 20; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     next = stepState(next, {
       p1: { left: false, right: false, jump: false, attack: null },
       p2: { left: false, right: false, jump: false, attack: null },
@@ -74,7 +75,7 @@ test("shot spawns a projectile that damages at range", () => {
   }
 
   assert.ok(next.fighters[1].damage > 0);
-  assert.equal(next.fighters[1].impact?.type, "spark");
+  assert.ok((next.projectiles?.length ?? 0) === 0);
 });
 
 test("fighter landing on a platform restores jumps", () => {
