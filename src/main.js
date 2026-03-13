@@ -28,6 +28,7 @@ let chargeStartedAt = null;
 let chargeReady = false;
 let blastStartedAt = null;
 let blastReady = false;
+let blastKeyHeld = false;
 let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
 const BLAST_CHARGE_TIME_MS = 1000;
@@ -84,6 +85,7 @@ function resetMatch() {
   chargeReady = false;
   blastStartedAt = null;
   blastReady = false;
+  blastKeyHeld = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, hold E 1s for Blast, R full reset.", "Start Match");
@@ -99,6 +101,7 @@ function startMatch() {
   chargeReady = false;
   blastStartedAt = null;
   blastReady = false;
+  blastKeyHeld = false;
   cameraEffect = null;
   state.running = true;
   state.winner = null;
@@ -934,11 +937,15 @@ window.addEventListener("keydown", (event) => {
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (key === "e" && blastReady) {
+  if (key === "e" && blastKeyHeld) {
     event.preventDefault();
+  } else if (key === "e" && blastReady) {
+    event.preventDefault();
+    blastKeyHeld = true;
     input.blastQueued = true;
   } else if (key === "e" && blastStartedAt === null) {
     event.preventDefault();
+    blastKeyHeld = true;
     blastStartedAt = performance.now();
   }
   if (isShift && chargeReady) {
@@ -957,6 +964,9 @@ window.addEventListener("keyup", (event) => {
   if (key === "d") input.right = false;
   if (key === "e" && blastStartedAt !== null) {
     blastStartedAt = null;
+  }
+  if (key === "e") {
+    blastKeyHeld = false;
   }
 });
 
