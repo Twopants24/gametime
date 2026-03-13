@@ -42,8 +42,8 @@ test("blast hits enemies around Nova and creates a burst impact", () => {
   attacker.y = 400;
   attacker.face = 1;
   attacker.attack = { type: "blast", frame: ATTACKS.blast.startup - 1, didHit: false };
-  defender.x = 368;
-  defender.y = 396;
+  defender.x = 182;
+  defender.y = 386;
 
   const resolved = resolveAttack(attacker, defender);
   assert.ok(resolved.defender.damage > ATTACKS.smash.damage * 0.9 * DIFFICULTY.playerDamageMultiplier);

@@ -348,8 +348,8 @@ function drawAttack(fighter) {
     const centerY = fighter.y + fighter.height / 2;
     const time = performance.now();
     const pulse = 1 + Math.sin(time / 45) * 0.08;
-    const outerRadius = 190 * pulse;
-    const innerRadius = 92 * pulse;
+    const outerRadius = 280 * pulse;
+    const innerRadius = 132 * pulse;
     const blastGradient = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, outerRadius);
     blastGradient.addColorStop(0, "rgba(255,255,255,0.98)");
     blastGradient.addColorStop(0.18, "rgba(254, 215, 170, 0.98)");
@@ -413,7 +413,7 @@ function drawChargingEffect(fighter) {
     const charge = elapsed / BLAST_CHARGE_TIME_MS;
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
-    const radius = 90 + charge * 150;
+    const radius = 128 + charge * 190;
     const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
     const glow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius * 1.2);
     glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.18})`);
