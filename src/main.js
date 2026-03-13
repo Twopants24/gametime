@@ -87,7 +87,7 @@ function resetMatch() {
   blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Q shot, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, tap E to start Blast charge, tap E again to fire, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, C shot, Space jab, S smash, hold Shift 1s to store Charge Shot, tap Shift to fire, tap E to start Blast charge, tap E again to fire, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -1009,7 +1009,7 @@ window.addEventListener("keydown", (event) => {
   if (key === "a") input.left = true;
   if (key === "d") input.right = true;
   if (key === "w") input.jumpQueued = true;
-  if (key === "q") input.shotQueued = true;
+  if (key === "c") input.shotQueued = true;
   if (key === "s") input.smashQueued = true;
   if (key === "e" && blastReady) {
     event.preventDefault();
