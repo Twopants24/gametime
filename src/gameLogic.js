@@ -59,8 +59,8 @@ export const ATTACKS = {
     damage: 24,
     baseKnockback: 13.5,
     scale: 0.26,
-    xReach: 180,
-    yReach: 140,
+    xReach: 260,
+    yReach: 210,
   },
 };
 

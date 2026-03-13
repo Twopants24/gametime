@@ -348,8 +348,8 @@ function drawAttack(fighter) {
     const centerY = fighter.y + fighter.height / 2;
     const time = performance.now();
     const pulse = 1 + Math.sin(time / 45) * 0.08;
-    const outerRadius = 132 * pulse;
-    const innerRadius = 64 * pulse;
+    const outerRadius = 190 * pulse;
+    const innerRadius = 92 * pulse;
     const blastGradient = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, outerRadius);
     blastGradient.addColorStop(0, "rgba(255,255,255,0.98)");
     blastGradient.addColorStop(0.18, "rgba(254, 215, 170, 0.98)");
@@ -413,7 +413,7 @@ function drawChargingEffect(fighter) {
     const charge = elapsed / BLAST_CHARGE_TIME_MS;
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
-    const radius = 62 + charge * 96;
+    const radius = 90 + charge * 150;
     const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
     const glow = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius * 1.2);
     glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.18})`);
@@ -436,8 +436,8 @@ function drawChargingEffect(fighter) {
     for (let i = 0; i < 10; i += 1) {
       const angle = performance.now() / 160 + (Math.PI * 2 * i) / 10;
       ctx.beginPath();
-      ctx.moveTo(centerX + Math.cos(angle) * (radius - 22), centerY + Math.sin(angle) * (radius - 22));
-      ctx.lineTo(centerX + Math.cos(angle) * (radius + 30), centerY + Math.sin(angle) * (radius + 30));
+      ctx.moveTo(centerX + Math.cos(angle) * (radius - 30), centerY + Math.sin(angle) * (radius - 30));
+      ctx.lineTo(centerX + Math.cos(angle) * (radius + 44), centerY + Math.sin(angle) * (radius + 44));
       ctx.stroke();
     }
 
@@ -445,7 +445,7 @@ function drawChargingEffect(fighter) {
       ctx.strokeStyle = "rgba(255,255,255,0.95)";
       ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 42 + Math.sin(performance.now() / 36) * 10, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius + 68 + Math.sin(performance.now() / 36) * 14, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -718,7 +718,7 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "burst") {
     const maxTimer = 20;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 196 * (1 - life) + 68;
+    const outerRadius = 280 * (1 - life) + 96;
     const innerRadius = outerRadius * 0.34;
     const gradient = ctx.createRadialGradient(
       fighter.impact.x,
@@ -739,17 +739,17 @@ function drawImpact(fighter) {
     ctx.fill();
 
     ctx.strokeStyle = `rgba(255, 247, 237, ${0.95 * life})`;
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 10;
     ctx.beginPath();
     ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.08 + (1 - life) * 0.2), 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.strokeStyle = `rgba(255, 245, 157, ${0.86 * life})`;
-    ctx.lineWidth = 7;
-    for (let i = 0; i < 16; i += 1) {
-      const angle = (Math.PI * 2 * i) / 16;
+    ctx.lineWidth = 8;
+    for (let i = 0; i < 18; i += 1) {
+      const angle = (Math.PI * 2 * i) / 18;
       const inner = outerRadius * 0.46;
-      const outer = outerRadius + 56 * life;
+      const outer = outerRadius + 86 * life;
       ctx.beginPath();
       ctx.moveTo(
         fighter.impact.x + Math.cos(angle) * inner,
@@ -763,7 +763,7 @@ function drawImpact(fighter) {
     }
 
     ctx.strokeStyle = `rgba(255,255,255,${0.6 * life})`;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 1.24, 0, Math.PI * 2);
     ctx.stroke();
