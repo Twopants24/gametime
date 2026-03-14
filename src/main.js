@@ -199,7 +199,13 @@ function getCpuInput(cpu, target) {
     !recovering &&
     cpu.grounded &&
     target.y + target.height < cpu.y - 34 &&
-    Math.abs(anchorDeltaX) < 120;
+    Math.abs(anchorDeltaX) < 58 &&
+    Math.abs(deltaX) < 92;
+  const wantsVerticalChase =
+    !recovering &&
+    !cpu.grounded &&
+    target.y + target.height < cpu.y - 42 &&
+    Math.abs(deltaX) < 54;
   const wantsRecoveryJump =
     recovering &&
     (cpu.y > anchor.y - 30 || Math.abs(anchorDeltaX) > 22);
@@ -210,7 +216,7 @@ function getCpuInput(cpu, target) {
     left: safeLeft && !forcedInwardLeft,
     right: safeRight && !forcedInwardRight,
     jump:
-      (wantsRecoveryJump || wantsJumpToPlatform || deltaY < (-26 - cpuDifficulty * 14) || cpu.y > 600) &&
+      (wantsRecoveryJump || wantsJumpToPlatform || wantsVerticalChase || cpu.y > 600) &&
       cpu.jumpsLeft > 0 &&
       cpu.hitstun === 0,
     attack: shouldAttack && cpu.cpuCooldown === 0 ? attackType : null,
