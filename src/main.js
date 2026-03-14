@@ -140,8 +140,37 @@ function getPlayerInput() {
   return next;
 }
 
+function getStageAnchor(target) {
+  const targetCenterX = target.x + target.width / 2;
+  const supportPlatform = STAGE.platforms.find(
+    (platform) =>
+      targetCenterX >= platform.x &&
+      targetCenterX <= platform.x + platform.width &&
+      target.y + target.height <= platform.y + 28
+  );
+
+  if (supportPlatform) {
+    return {
+      x: Math.min(
+        supportPlatform.x + supportPlatform.width - 28,
+        Math.max(supportPlatform.x + 28, targetCenterX)
+      ),
+      y: supportPlatform.y,
+    };
+  }
+
+  return {
+    x: Math.min(STAGE.width - 70, Math.max(70, targetCenterX)),
+    y: STAGE.platforms[0].y,
+  };
+}
+
 function getCpuInput(cpu, target) {
-  const deltaX = target.x - cpu.x;
+  const cpuCenterX = cpu.x + cpu.width / 2;
+  const targetCenterX = target.x + target.width / 2;
+  const anchor = getStageAnchor(target);
+  const anchorDeltaX = anchor.x - cpuCenterX;
+  const deltaX = targetCenterX - cpuCenterX;
   const deltaY = target.y - cpu.y;
   const horizontalAttackWindow = 52 + cpuDifficulty * 36;
   const verticalAttackWindow = 24 + cpuDifficulty * 18;
@@ -150,7 +179,8 @@ function getCpuInput(cpu, target) {
     Math.abs(deltaY) < verticalAttackWindow &&
     !cpu.attack &&
     cpu.attackCooldown <= 0;
-  const recovering = cpu.y > 540 || Math.abs(deltaX) > 220 + (1.2 - Math.min(1.2, cpuDifficulty)) * 120;
+  const offstage = cpuCenterX < 80 || cpuCenterX > STAGE.width - 80 || cpu.y > STAGE.height - 10;
+  const recovering = offstage || cpu.y > 540;
   const driftThreshold = Math.max(8, 52 - cpuDifficulty * 18);
   const recoverThreshold = Math.max(6, 18 - cpuDifficulty * 4);
   const attackType =
@@ -159,11 +189,30 @@ function getCpuInput(cpu, target) {
       : cpuDifficulty > 0.9
       ? (cpu.damage > 90 ? "smash" : "jab")
       : "jab";
+  const edgeBuffer = 64;
+  const tooCloseToLeftEdge = cpuCenterX < edgeBuffer;
+  const tooCloseToRightEdge = cpuCenterX > STAGE.width - edgeBuffer;
+  const forcedInwardLeft = tooCloseToLeftEdge && targetCenterX > cpuCenterX;
+  const forcedInwardRight = tooCloseToRightEdge && targetCenterX < cpuCenterX;
+  const pathDeltaX = recovering ? anchorDeltaX : Math.abs(deltaX) > 120 ? anchorDeltaX : deltaX;
+  const wantsJumpToPlatform =
+    !recovering &&
+    cpu.grounded &&
+    target.y + target.height < cpu.y - 34 &&
+    Math.abs(anchorDeltaX) < 120;
+  const wantsRecoveryJump =
+    recovering &&
+    (cpu.y > anchor.y - 30 || Math.abs(anchorDeltaX) > 22);
+  const safeLeft = forcedInwardRight ? true : pathDeltaX < -(recovering ? recoverThreshold : driftThreshold);
+  const safeRight = forcedInwardLeft ? true : pathDeltaX > (recovering ? recoverThreshold : driftThreshold);
 
   return {
-    left: deltaX < (recovering ? -recoverThreshold : -driftThreshold),
-    right: deltaX > (recovering ? recoverThreshold : driftThreshold),
-    jump: (deltaY < (-26 - cpuDifficulty * 14) || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
+    left: safeLeft && !forcedInwardLeft,
+    right: safeRight && !forcedInwardRight,
+    jump:
+      (wantsRecoveryJump || wantsJumpToPlatform || deltaY < (-26 - cpuDifficulty * 14) || cpu.y > 600) &&
+      cpu.jumpsLeft > 0 &&
+      cpu.hitstun === 0,
     attack: shouldAttack && cpu.cpuCooldown === 0 ? attackType : null,
   };
 }
