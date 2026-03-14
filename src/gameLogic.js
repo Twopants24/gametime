@@ -79,7 +79,7 @@ export const ATTACKS = {
 
 export const DIFFICULTY = {
   playerStocks: 4,
-  cpuStocks: 2,
+  cpuStocks: 4,
   playerDamageMultiplier: 1.15,
   cpuDamageMultiplier: 0.78,
   playerKnockbackMultiplier: 1.15,
