@@ -7,6 +7,8 @@ const overlayMessage = document.getElementById("overlay-message");
 const startButton = document.getElementById("start-button");
 const speedDial = document.getElementById("speed-dial");
 const speedValue = document.getElementById("speed-value");
+const cpuDifficultyDial = document.getElementById("cpu-difficulty");
+const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 
@@ -23,6 +25,7 @@ const hud = {
 
 let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
+let cpuDifficulty = Number(cpuDifficultyDial.value);
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
@@ -42,6 +45,7 @@ let lastHud = {
 };
 
 speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
+cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
 
 const input = {
   left: false,
@@ -139,14 +143,28 @@ function getPlayerInput() {
 function getCpuInput(cpu, target) {
   const deltaX = target.x - cpu.x;
   const deltaY = target.y - cpu.y;
-  const shouldAttack = Math.abs(deltaX) < 74 && Math.abs(deltaY) < 38 && !cpu.attack && cpu.attackCooldown <= 0;
-  const recovering = cpu.y > 540 || Math.abs(deltaX) > 260;
+  const horizontalAttackWindow = 52 + cpuDifficulty * 36;
+  const verticalAttackWindow = 24 + cpuDifficulty * 18;
+  const shouldAttack =
+    Math.abs(deltaX) < horizontalAttackWindow &&
+    Math.abs(deltaY) < verticalAttackWindow &&
+    !cpu.attack &&
+    cpu.attackCooldown <= 0;
+  const recovering = cpu.y > 540 || Math.abs(deltaX) > 220 + (1.2 - Math.min(1.2, cpuDifficulty)) * 120;
+  const driftThreshold = Math.max(8, 52 - cpuDifficulty * 18);
+  const recoverThreshold = Math.max(6, 18 - cpuDifficulty * 4);
+  const attackType =
+    cpuDifficulty > 1.35
+      ? (cpu.damage > 70 ? "smash" : "shot")
+      : cpuDifficulty > 0.9
+      ? (cpu.damage > 90 ? "smash" : "jab")
+      : "jab";
 
   return {
-    left: deltaX < (recovering ? -12 : -44),
-    right: deltaX > (recovering ? 12 : 44),
-    jump: (deltaY < -36 || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
-    attack: shouldAttack && cpu.cpuCooldown === 0 ? (cpu.damage > 90 ? "smash" : "jab") : null,
+    left: deltaX < (recovering ? -recoverThreshold : -driftThreshold),
+    right: deltaX > (recovering ? recoverThreshold : driftThreshold),
+    jump: (deltaY < (-26 - cpuDifficulty * 14) || cpu.y > 600) && cpu.jumpsLeft > 0 && cpu.hitstun === 0,
+    attack: shouldAttack && cpu.cpuCooldown === 0 ? attackType : null,
   };
 }
 
@@ -984,7 +1002,7 @@ function tick() {
         };
       }
       if (cpuInput.attack) {
-        state.fighters[1].cpuCooldown = DIFFICULTY.cpuReactionFrames;
+        state.fighters[1].cpuCooldown = Math.max(0, Math.round(DIFFICULTY.cpuReactionFrames / cpuDifficulty));
       }
     }
     updateHud();
@@ -1038,6 +1056,11 @@ speedDial.addEventListener("input", () => {
   speedMultiplier = Number(speedDial.value);
   speedAccumulator = 0;
   speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
+});
+
+cpuDifficultyDial.addEventListener("input", () => {
+  cpuDifficulty = Number(cpuDifficultyDial.value);
+  cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
 });
 
 startButton.addEventListener("click", startMatch);
