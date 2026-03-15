@@ -14,11 +14,59 @@ const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 const masterHandImage = new Image();
 let masterHandLoaded = false;
+let masterHandSprite = null;
 
 stageCanvas.width = canvas.width;
 stageCanvas.height = canvas.height;
 masterHandImage.src = "../assets/MasterHand.png";
 masterHandImage.addEventListener("load", () => {
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = masterHandImage.naturalWidth;
+  sourceCanvas.height = masterHandImage.naturalHeight;
+  const sourceCtx = sourceCanvas.getContext("2d");
+  sourceCtx.drawImage(masterHandImage, 0, 0);
+
+  const imageData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+  const { data, width, height } = imageData;
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    const pixelIndex = i / 4;
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    const isBackground = a > 0 && r < 24 && g < 24 && b < 24;
+
+    if (isBackground) {
+      data[i + 3] = 0;
+      continue;
+    }
+
+    if (data[i + 3] > 18) {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  sourceCtx.putImageData(imageData, 0, 0);
+
+  const cropWidth = Math.max(1, maxX - minX + 1);
+  const cropHeight = Math.max(1, maxY - minY + 1);
+  const croppedCanvas = document.createElement("canvas");
+  croppedCanvas.width = cropWidth;
+  croppedCanvas.height = cropHeight;
+  const croppedCtx = croppedCanvas.getContext("2d");
+  croppedCtx.imageSmoothingEnabled = false;
+  croppedCtx.drawImage(sourceCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+  masterHandSprite = croppedCanvas;
   masterHandLoaded = true;
 });
 
@@ -622,7 +670,6 @@ function drawFighter(fighter) {
 
   ctx.save();
   ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
-  ctx.scale(fighter.face, 1);
 
   const useMasterHand = fighter.name === "Nova" && playerAvatar === "master-hand";
 
@@ -633,7 +680,8 @@ function drawFighter(fighter) {
       ctx.ellipse(0, 30, 28, 12, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(masterHandImage, -42, -56, 84, 84);
+      const sprite = masterHandSprite ?? masterHandImage;
+      ctx.drawImage(sprite, -54, -64, 108, 108);
     } else {
       ctx.fillStyle = "rgba(14, 23, 42, 0.22)";
       ctx.beginPath();
@@ -664,6 +712,7 @@ function drawFighter(fighter) {
       ctx.fill();
     }
   } else {
+    ctx.scale(fighter.face, 1);
     ctx.fillStyle = fighter.color;
     ctx.beginPath();
     ctx.roundRect(-fighter.width / 2, -fighter.height / 2, fighter.width, fighter.height, 14);
@@ -687,6 +736,9 @@ function drawFighter(fighter) {
     const armLength = fighter.attack.type === "charge" ? 28 : fighter.attack.type === "smash" ? 22 : fighter.attack.type === "shot" ? 18 : fighter.attack.type === "blast" ? 0 : 15;
 
     if (fighter.attack.type !== "blast") {
+      if (useMasterHand) {
+        ctx.scale(fighter.face, 1);
+      }
       ctx.strokeStyle = fighter.attack.type === "charge" ? "#67e8f9" : fighter.attack.type === "smash" ? "#fdba74" : fighter.attack.type === "shot" ? "#34d399" : fighter.accent;
       ctx.lineWidth = fighter.attack.type === "charge" ? 12 : fighter.attack.type === "smash" ? 10 : fighter.attack.type === "shot" ? 8 : 7;
       ctx.lineCap = "round";
@@ -697,8 +749,10 @@ function drawFighter(fighter) {
     }
   }
 
-  ctx.fillStyle = "#08111f";
-  ctx.fillRect(2, -8, 8, 3);
+  if (!useMasterHand) {
+    ctx.fillStyle = "#08111f";
+    ctx.fillRect(2, -8, 8, 3);
+  }
   ctx.restore();
 
   ctx.fillStyle = "rgba(8, 17, 31, 0.76)";
