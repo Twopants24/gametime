@@ -18,7 +18,7 @@ let masterHandSprite = null;
 
 stageCanvas.width = canvas.width;
 stageCanvas.height = canvas.height;
-masterHandImage.src = "../assets/MasterHand.png";
+masterHandImage.src = new URL("../assets/MasterHand.png", import.meta.url).href;
 masterHandImage.addEventListener("load", () => {
   const sourceCanvas = document.createElement("canvas");
   sourceCanvas.width = masterHandImage.naturalWidth;
