@@ -12,9 +12,15 @@ const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
+const masterHandImage = new Image();
+let masterHandLoaded = false;
 
 stageCanvas.width = canvas.width;
 stageCanvas.height = canvas.height;
+masterHandImage.src = "../assets/MasterHand.png";
+masterHandImage.addEventListener("load", () => {
+  masterHandLoaded = true;
+});
 
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
@@ -621,33 +627,42 @@ function drawFighter(fighter) {
   const useMasterHand = fighter.name === "Nova" && playerAvatar === "master-hand";
 
   if (useMasterHand) {
-    ctx.fillStyle = "rgba(14, 23, 42, 0.22)";
-    ctx.beginPath();
-    ctx.ellipse(0, 24, 26, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (masterHandLoaded) {
+      ctx.fillStyle = "rgba(14, 23, 42, 0.24)";
+      ctx.beginPath();
+      ctx.ellipse(0, 30, 28, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(masterHandImage, -42, -56, 84, 84);
+    } else {
+      ctx.fillStyle = "rgba(14, 23, 42, 0.22)";
+      ctx.beginPath();
+      ctx.ellipse(0, 24, 26, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.fillStyle = "#f8fafc";
-    ctx.beginPath();
-    ctx.roundRect(-16, -6, 32, 54, 14);
-    ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.beginPath();
+      ctx.roundRect(-16, -6, 32, 54, 14);
+      ctx.fill();
 
-    ctx.beginPath();
-    ctx.roundRect(-28, -14, 18, 26, 12);
-    ctx.roundRect(-10, -20, 18, 32, 12);
-    ctx.roundRect(8, -18, 18, 30, 12);
-    ctx.roundRect(22, -10, 16, 24, 10);
-    ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(-28, -14, 18, 26, 12);
+      ctx.roundRect(-10, -20, 18, 32, 12);
+      ctx.roundRect(8, -18, 18, 30, 12);
+      ctx.roundRect(22, -10, 16, 24, 10);
+      ctx.fill();
 
-    ctx.beginPath();
-    ctx.roundRect(-14, 40, 12, 26, 10);
-    ctx.roundRect(2, 40, 12, 26, 10);
-    ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(-14, 40, 12, 26, 10);
+      ctx.roundRect(2, 40, 12, 26, 10);
+      ctx.fill();
 
-    ctx.fillStyle = "#cbd5e1";
-    ctx.beginPath();
-    ctx.arc(-6, 8, 3.5, 0, Math.PI * 2);
-    ctx.arc(8, 6, 3, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = "#cbd5e1";
+      ctx.beginPath();
+      ctx.arc(-6, 8, 3.5, 0, Math.PI * 2);
+      ctx.arc(8, 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else {
     ctx.fillStyle = fighter.color;
     ctx.beginPath();
