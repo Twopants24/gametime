@@ -613,7 +613,7 @@ function drawMasterHand(fighter) {
 
   ctx.fillStyle = "rgba(15, 23, 42, 0.2)";
   ctx.beginPath();
-  ctx.ellipse(0, 35, 30, 10, 0, 0, Math.PI * 2);
+  ctx.ellipse(1, 34, 28, 9, 0, 0, Math.PI * 2);
   ctx.fill();
 
   const gloveGradient = ctx.createLinearGradient(-34, -52, 28, 64);
@@ -621,52 +621,65 @@ function drawMasterHand(fighter) {
   gloveGradient.addColorStop(0.5, "#f3f6fb");
   gloveGradient.addColorStop(1, "#d8dee8");
 
-  const drawCapsule = (x, y, width, height, radius, rotation, fillStyle = gloveGradient) => {
+  const drawFinger = (x, y, width, height, radius, rotation) => {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
-    ctx.fillStyle = fillStyle;
+    ctx.fillStyle = gloveGradient;
     ctx.beginPath();
     ctx.roundRect(-width / 2, -height / 2, width, height, radius);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(148, 163, 184, 0.22)";
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.18, -height * 0.36, width * 0.22, height * 0.58, Math.max(3, radius * 0.55));
     ctx.fill();
     ctx.restore();
   };
 
-  drawCapsule(-11, 8, 25, 48, 13, -0.5);
-  drawCapsule(-2, -12, 18, 57, 11, -0.08);
-  drawCapsule(11, -15, 17, 64, 10, 0.06);
-  drawCapsule(25, -7, 16, 54, 10, 0.17);
-  drawCapsule(37, 8, 14, 39, 9, 0.28);
+  drawFinger(-11, 7, 16, 44, 7, -0.58);
+  drawFinger(-1, -12, 13, 58, 6, -0.1);
+  drawFinger(12, -17, 12, 66, 6, 0.04);
+  drawFinger(25, -10, 11, 57, 6, 0.12);
+  drawFinger(37, 5, 10, 39, 5, 0.2);
 
   ctx.fillStyle = gloveGradient;
   ctx.beginPath();
-  ctx.ellipse(4, 13, 26, 30, -0.08, 0, Math.PI * 2);
+  ctx.moveTo(-18, 7);
+  ctx.bezierCurveTo(-18, -3, -10, -13, 4, -14);
+  ctx.bezierCurveTo(18, -14, 28, -5, 31, 11);
+  ctx.bezierCurveTo(32, 28, 24, 40, 10, 43);
+  ctx.bezierCurveTo(-3, 46, -15, 41, -20, 28);
+  ctx.bezierCurveTo(-23, 20, -23, 12, -18, 7);
+  ctx.closePath();
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(-17, 39);
-  ctx.bezierCurveTo(-12, 23, -10, 12, -7, 7);
-  ctx.bezierCurveTo(2, 24, 9, 36, 11, 50);
-  ctx.bezierCurveTo(1, 58, -11, 55, -17, 39);
+  ctx.moveTo(-18, 38);
+  ctx.bezierCurveTo(-12, 24, -9, 13, -6, 8);
+  ctx.bezierCurveTo(2, 19, 8, 34, 9, 48);
+  ctx.bezierCurveTo(0, 56, -12, 53, -18, 38);
   ctx.closePath();
   ctx.fill();
 
   ctx.fillStyle = "rgba(148, 163, 184, 0.24)";
   ctx.beginPath();
-  ctx.ellipse(-7, 9, 7, 19, -0.32, 0, Math.PI * 2);
-  ctx.ellipse(7, 2, 5, 21, -0.08, 0, Math.PI * 2);
-  ctx.ellipse(20, 4, 4.5, 18, 0.08, 0, Math.PI * 2);
-  ctx.ellipse(32, 14, 4, 12, 0.2, 0, Math.PI * 2);
+  ctx.moveTo(-10, 8);
+  ctx.bezierCurveTo(-5, 2, 3, 0, 11, 2);
+  ctx.bezierCurveTo(18, 6, 21, 15, 18, 25);
+  ctx.bezierCurveTo(10, 24, 1, 23, -8, 21);
+  ctx.bezierCurveTo(-11, 17, -12, 12, -10, 8);
+  ctx.closePath();
   ctx.fill();
 
   ctx.strokeStyle = "rgba(148, 163, 184, 0.54)";
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 1.6;
   ctx.lineCap = "round";
   for (const [startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY] of [
-    [-5, -4, -4, -18, -3, -30, -1, -42],
-    [8, -4, 9, -20, 11, -33, 12, -46],
-    [20, 1, 23, -13, 25, -24, 27, -35],
-    [31, 13, 37, 11, 42, 12, 47, 14],
+    [-4, -7, -3, -18, -2, -29, 0, -39],
+    [9, -8, 10, -23, 12, -35, 13, -48],
+    [21, -3, 23, -16, 25, -27, 27, -39],
+    [32, 10, 36, 9, 41, 10, 45, 12],
   ]) {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
@@ -674,9 +687,16 @@ function drawMasterHand(fighter) {
     ctx.stroke();
   }
 
+  ctx.strokeStyle = "rgba(255,255,255,0.92)";
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(-13, 9);
+  ctx.bezierCurveTo(-10, -1, -1, -10, 11, -12);
+  ctx.stroke();
+
   ctx.fillStyle = "#eef2f7";
   ctx.beginPath();
-  ctx.roundRect(-14, 48, 25, 13, 6);
+  ctx.roundRect(-13, 47, 24, 13, 5);
   ctx.fill();
 
   ctx.strokeStyle = "rgba(148, 163, 184, 0.74)";
