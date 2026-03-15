@@ -18,7 +18,6 @@ let masterHandSprite = null;
 
 stageCanvas.width = canvas.width;
 stageCanvas.height = canvas.height;
-masterHandImage.src = new URL("../assets/MasterHand.png", import.meta.url).href;
 masterHandImage.addEventListener("load", () => {
   const sourceCanvas = document.createElement("canvas");
   sourceCanvas.width = masterHandImage.naturalWidth;
@@ -69,6 +68,11 @@ masterHandImage.addEventListener("load", () => {
   masterHandSprite = croppedCanvas;
   masterHandLoaded = true;
 });
+masterHandImage.addEventListener("error", () => {
+  masterHandLoaded = false;
+  masterHandSprite = null;
+});
+masterHandImage.src = new URL("../assets/MasterHand.png", import.meta.url).href;
 
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
