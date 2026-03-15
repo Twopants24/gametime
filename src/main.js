@@ -613,81 +613,60 @@ function drawMasterHand(fighter) {
 
   ctx.fillStyle = "rgba(15, 23, 42, 0.2)";
   ctx.beginPath();
-  ctx.ellipse(4, 34, 36, 12, -0.08, 0, Math.PI * 2);
+  ctx.ellipse(0, 35, 30, 10, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  const gloveGradient = ctx.createLinearGradient(-36, -48, 34, 62);
+  const gloveGradient = ctx.createLinearGradient(-34, -52, 28, 64);
   gloveGradient.addColorStop(0, "#ffffff");
-  gloveGradient.addColorStop(0.55, "#f8fafc");
-  gloveGradient.addColorStop(1, "#d5dbe6");
+  gloveGradient.addColorStop(0.5, "#f3f6fb");
+  gloveGradient.addColorStop(1, "#d8dee8");
+
+  const drawCapsule = (x, y, width, height, radius, rotation, fillStyle = gloveGradient) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = fillStyle;
+    ctx.beginPath();
+    ctx.roundRect(-width / 2, -height / 2, width, height, radius);
+    ctx.fill();
+    ctx.restore();
+  };
+
+  drawCapsule(-11, 8, 25, 48, 13, -0.5);
+  drawCapsule(-2, -12, 18, 57, 11, -0.08);
+  drawCapsule(11, -15, 17, 64, 10, 0.06);
+  drawCapsule(25, -7, 16, 54, 10, 0.17);
+  drawCapsule(37, 8, 14, 39, 9, 0.28);
+
   ctx.fillStyle = gloveGradient;
-
   ctx.beginPath();
-  ctx.moveTo(-6, 50);
-  ctx.bezierCurveTo(-19, 43, -20, 18, -15, 4);
-  ctx.bezierCurveTo(-31, -2, -35, -17, -30, -32);
-  ctx.bezierCurveTo(-23, -48, -10, -56, -2, -45);
-  ctx.bezierCurveTo(-1, -60, 7, -74, 18, -70);
-  ctx.bezierCurveTo(28, -66, 28, -48, 24, -35);
-  ctx.bezierCurveTo(35, -50, 48, -55, 54, -43);
-  ctx.bezierCurveTo(59, -33, 52, -17, 40, -6);
-  ctx.bezierCurveTo(54, -9, 66, -5, 67, 8);
-  ctx.bezierCurveTo(68, 20, 56, 29, 41, 28);
-  ctx.bezierCurveTo(30, 28, 21, 22, 18, 12);
-  ctx.bezierCurveTo(18, 27, 12, 41, 3, 49);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(148, 163, 184, 0.34)";
-  ctx.beginPath();
-  ctx.moveTo(-12, -1);
-  ctx.bezierCurveTo(-18, -9, -19, -23, -15, -32);
-  ctx.bezierCurveTo(-11, -40, -6, -45, -2, -45);
-  ctx.bezierCurveTo(-8, -27, -8, -10, -12, -1);
-  ctx.closePath();
+  ctx.ellipse(4, 13, 26, 30, -0.08, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(8, -8);
-  ctx.bezierCurveTo(11, -28, 13, -47, 18, -62);
-  ctx.bezierCurveTo(24, -59, 24, -43, 22, -31);
-  ctx.bezierCurveTo(19, -21, 14, -12, 8, -8);
+  ctx.moveTo(-17, 39);
+  ctx.bezierCurveTo(-12, 23, -10, 12, -7, 7);
+  ctx.bezierCurveTo(2, 24, 9, 36, 11, 50);
+  ctx.bezierCurveTo(1, 58, -11, 55, -17, 39);
   ctx.closePath();
   ctx.fill();
 
+  ctx.fillStyle = "rgba(148, 163, 184, 0.24)";
   ctx.beginPath();
-  ctx.moveTo(27, -5);
-  ctx.bezierCurveTo(35, -19, 40, -31, 48, -39);
-  ctx.bezierCurveTo(52, -34, 48, -20, 37, -8);
-  ctx.bezierCurveTo(34, -6, 30, -4, 27, -5);
-  ctx.closePath();
+  ctx.ellipse(-7, 9, 7, 19, -0.32, 0, Math.PI * 2);
+  ctx.ellipse(7, 2, 5, 21, -0.08, 0, Math.PI * 2);
+  ctx.ellipse(20, 4, 4.5, 18, 0.08, 0, Math.PI * 2);
+  ctx.ellipse(32, 14, 4, 12, 0.2, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.moveTo(30, 11);
-  ctx.bezierCurveTo(40, 8, 50, 8, 57, 11);
-  ctx.bezierCurveTo(54, 18, 45, 22, 35, 20);
-  ctx.bezierCurveTo(33, 18, 31, 15, 30, 11);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(203, 213, 225, 0.86)";
-  ctx.beginPath();
-  ctx.moveTo(-8, 48);
-  ctx.bezierCurveTo(-13, 40, -11, 20, -8, 10);
-  ctx.bezierCurveTo(-3, 21, 1, 33, 5, 48);
-  ctx.bezierCurveTo(0, 53, -4, 54, -8, 48);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.62)";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.54)";
+  ctx.lineWidth = 1.8;
   ctx.lineCap = "round";
   for (const [startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY] of [
-    [2, -5, 1, -16, 1, -27, 4, -39],
-    [13, -2, 15, -14, 18, -26, 21, -36],
-    [24, 1, 30, -8, 34, -17, 37, -25],
-    [31, 13, 39, 12, 46, 13, 53, 15],
+    [-5, -4, -4, -18, -3, -30, -1, -42],
+    [8, -4, 9, -20, 11, -33, 12, -46],
+    [20, 1, 23, -13, 25, -24, 27, -35],
+    [31, 13, 37, 11, 42, 12, 47, 14],
   ]) {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
@@ -695,25 +674,18 @@ function drawMasterHand(fighter) {
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
-  ctx.lineWidth = 1.5;
+  ctx.fillStyle = "#eef2f7";
   ctx.beginPath();
-  ctx.moveTo(-11, 10);
-  ctx.bezierCurveTo(-6, -15, 8, -45, 22, -52);
-  ctx.stroke();
-
-  ctx.fillStyle = "#edf2f7";
-  ctx.beginPath();
-  ctx.roundRect(-16, 49, 31, 12, 6);
+  ctx.roundRect(-14, 48, 25, 13, 6);
   ctx.fill();
 
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.78)";
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.74)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(-10, 52);
-  ctx.lineTo(7, 52);
-  ctx.moveTo(-8, 57);
-  ctx.lineTo(5, 57);
+  ctx.moveTo(-8, 52);
+  ctx.lineTo(4, 52);
+  ctx.moveTo(-7, 57);
+  ctx.lineTo(3, 57);
   ctx.stroke();
 
   ctx.restore();
