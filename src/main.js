@@ -9,6 +9,7 @@ const speedDial = document.getElementById("speed-dial");
 const speedValue = document.getElementById("speed-value");
 const cpuDifficultyDial = document.getElementById("cpu-difficulty");
 const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
+const avatarSelect = document.getElementById("avatar-select");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 
@@ -26,6 +27,7 @@ const hud = {
 let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
 let cpuDifficulty = Number(cpuDifficultyDial.value);
+let playerAvatar = avatarSelect.value;
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
@@ -616,15 +618,47 @@ function drawFighter(fighter) {
   ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
   ctx.scale(fighter.face, 1);
 
-  ctx.fillStyle = fighter.color;
-  ctx.beginPath();
-  ctx.roundRect(-fighter.width / 2, -fighter.height / 2, fighter.width, fighter.height, 14);
-  ctx.fill();
+  const useMasterHand = fighter.name === "Nova" && playerAvatar === "master-hand";
 
-  ctx.fillStyle = fighter.accent;
-  ctx.beginPath();
-  ctx.arc(6, -10, 9, 0, Math.PI * 2);
-  ctx.fill();
+  if (useMasterHand) {
+    ctx.fillStyle = "rgba(14, 23, 42, 0.22)";
+    ctx.beginPath();
+    ctx.ellipse(0, 24, 26, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.beginPath();
+    ctx.roundRect(-16, -6, 32, 54, 14);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(-28, -14, 18, 26, 12);
+    ctx.roundRect(-10, -20, 18, 32, 12);
+    ctx.roundRect(8, -18, 18, 30, 12);
+    ctx.roundRect(22, -10, 16, 24, 10);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(-14, 40, 12, 26, 10);
+    ctx.roundRect(2, 40, 12, 26, 10);
+    ctx.fill();
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.arc(-6, 8, 3.5, 0, Math.PI * 2);
+    ctx.arc(8, 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = fighter.color;
+    ctx.beginPath();
+    ctx.roundRect(-fighter.width / 2, -fighter.height / 2, fighter.width, fighter.height, 14);
+    ctx.fill();
+
+    ctx.fillStyle = fighter.accent;
+    ctx.beginPath();
+    ctx.arc(6, -10, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   if (fighter.attack) {
     const attackData = ATTACKS[fighter.attack.type];
@@ -1116,6 +1150,10 @@ speedDial.addEventListener("input", () => {
 cpuDifficultyDial.addEventListener("input", () => {
   cpuDifficulty = Number(cpuDifficultyDial.value);
   cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
+});
+
+avatarSelect.addEventListener("input", () => {
+  playerAvatar = avatarSelect.value;
 });
 
 startButton.addEventListener("click", startMatch);
