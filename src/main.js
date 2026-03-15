@@ -12,67 +12,9 @@ const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
-const masterHandImage = new Image();
-let masterHandLoaded = false;
-let masterHandSprite = null;
 
 stageCanvas.width = canvas.width;
 stageCanvas.height = canvas.height;
-masterHandImage.addEventListener("load", () => {
-  const sourceCanvas = document.createElement("canvas");
-  sourceCanvas.width = masterHandImage.naturalWidth;
-  sourceCanvas.height = masterHandImage.naturalHeight;
-  const sourceCtx = sourceCanvas.getContext("2d");
-  sourceCtx.drawImage(masterHandImage, 0, 0);
-
-  const imageData = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-  const { data, width, height } = imageData;
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const a = data[i + 3];
-    const pixelIndex = i / 4;
-    const x = pixelIndex % width;
-    const y = Math.floor(pixelIndex / width);
-    const isBackground = a > 0 && r < 24 && g < 24 && b < 24;
-
-    if (isBackground) {
-      data[i + 3] = 0;
-      continue;
-    }
-
-    if (data[i + 3] > 18) {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
-    }
-  }
-
-  sourceCtx.putImageData(imageData, 0, 0);
-
-  const cropWidth = Math.max(1, maxX - minX + 1);
-  const cropHeight = Math.max(1, maxY - minY + 1);
-  const croppedCanvas = document.createElement("canvas");
-  croppedCanvas.width = cropWidth;
-  croppedCanvas.height = cropHeight;
-  const croppedCtx = croppedCanvas.getContext("2d");
-  croppedCtx.imageSmoothingEnabled = false;
-  croppedCtx.drawImage(sourceCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-  masterHandSprite = croppedCanvas;
-  masterHandLoaded = true;
-});
-masterHandImage.addEventListener("error", () => {
-  masterHandLoaded = false;
-  masterHandSprite = null;
-});
-masterHandImage.src = "data:image/png;base64,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";
 
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
@@ -93,7 +35,7 @@ let blastStartedAt = null;
 let blastReady = false;
 let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
-const BLAST_CHARGE_TIME_MS = 1000;
+const BLAST_CHARGE_TIME_MS = 100;
 const CHARGE_CAMERA_HOLD_MS = 500;
 const CHARGE_CAMERA_RELEASE_MS = 120;
 let lastHud = {
@@ -665,6 +607,118 @@ function drawChargingEffect(fighter) {
   }
 }
 
+function drawMasterHand(fighter) {
+  ctx.save();
+  ctx.scale(fighter.face, 1);
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.2)";
+  ctx.beginPath();
+  ctx.ellipse(4, 34, 36, 12, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  const gloveGradient = ctx.createLinearGradient(-36, -48, 34, 62);
+  gloveGradient.addColorStop(0, "#ffffff");
+  gloveGradient.addColorStop(0.55, "#f8fafc");
+  gloveGradient.addColorStop(1, "#d5dbe6");
+  ctx.fillStyle = gloveGradient;
+
+  ctx.beginPath();
+  ctx.moveTo(-6, 50);
+  ctx.bezierCurveTo(-19, 43, -20, 18, -15, 4);
+  ctx.bezierCurveTo(-31, -2, -35, -17, -30, -32);
+  ctx.bezierCurveTo(-23, -48, -10, -56, -2, -45);
+  ctx.bezierCurveTo(-1, -60, 7, -74, 18, -70);
+  ctx.bezierCurveTo(28, -66, 28, -48, 24, -35);
+  ctx.bezierCurveTo(35, -50, 48, -55, 54, -43);
+  ctx.bezierCurveTo(59, -33, 52, -17, 40, -6);
+  ctx.bezierCurveTo(54, -9, 66, -5, 67, 8);
+  ctx.bezierCurveTo(68, 20, 56, 29, 41, 28);
+  ctx.bezierCurveTo(30, 28, 21, 22, 18, 12);
+  ctx.bezierCurveTo(18, 27, 12, 41, 3, 49);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(148, 163, 184, 0.34)";
+  ctx.beginPath();
+  ctx.moveTo(-12, -1);
+  ctx.bezierCurveTo(-18, -9, -19, -23, -15, -32);
+  ctx.bezierCurveTo(-11, -40, -6, -45, -2, -45);
+  ctx.bezierCurveTo(-8, -27, -8, -10, -12, -1);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(8, -8);
+  ctx.bezierCurveTo(11, -28, 13, -47, 18, -62);
+  ctx.bezierCurveTo(24, -59, 24, -43, 22, -31);
+  ctx.bezierCurveTo(19, -21, 14, -12, 8, -8);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(27, -5);
+  ctx.bezierCurveTo(35, -19, 40, -31, 48, -39);
+  ctx.bezierCurveTo(52, -34, 48, -20, 37, -8);
+  ctx.bezierCurveTo(34, -6, 30, -4, 27, -5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(30, 11);
+  ctx.bezierCurveTo(40, 8, 50, 8, 57, 11);
+  ctx.bezierCurveTo(54, 18, 45, 22, 35, 20);
+  ctx.bezierCurveTo(33, 18, 31, 15, 30, 11);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(203, 213, 225, 0.86)";
+  ctx.beginPath();
+  ctx.moveTo(-8, 48);
+  ctx.bezierCurveTo(-13, 40, -11, 20, -8, 10);
+  ctx.bezierCurveTo(-3, 21, 1, 33, 5, 48);
+  ctx.bezierCurveTo(0, 53, -4, 54, -8, 48);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.62)";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  for (const [startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY] of [
+    [2, -5, 1, -16, 1, -27, 4, -39],
+    [13, -2, 15, -14, 18, -26, 21, -36],
+    [24, 1, 30, -8, 34, -17, 37, -25],
+    [31, 13, 39, 12, 46, 13, 53, 15],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-11, 10);
+  ctx.bezierCurveTo(-6, -15, 8, -45, 22, -52);
+  ctx.stroke();
+
+  ctx.fillStyle = "#edf2f7";
+  ctx.beginPath();
+  ctx.roundRect(-16, 49, 31, 12, 6);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.78)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-10, 52);
+  ctx.lineTo(7, 52);
+  ctx.moveTo(-8, 57);
+  ctx.lineTo(5, 57);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawFighter(fighter) {
   if (fighter.invuln > 0 && Math.floor(fighter.invuln / 6) % 2 === 0) {
     return;
@@ -678,43 +732,7 @@ function drawFighter(fighter) {
   const useMasterHand = fighter.name === "Nova" && playerAvatar === "master-hand";
 
   if (useMasterHand) {
-    if (masterHandLoaded) {
-      ctx.fillStyle = "rgba(14, 23, 42, 0.24)";
-      ctx.beginPath();
-      ctx.ellipse(0, 30, 28, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.imageSmoothingEnabled = false;
-      const sprite = masterHandSprite ?? masterHandImage;
-      ctx.drawImage(sprite, -54, -64, 108, 108);
-    } else {
-      ctx.fillStyle = "rgba(14, 23, 42, 0.22)";
-      ctx.beginPath();
-      ctx.ellipse(0, 24, 26, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#f8fafc";
-      ctx.beginPath();
-      ctx.roundRect(-16, -6, 32, 54, 14);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.roundRect(-28, -14, 18, 26, 12);
-      ctx.roundRect(-10, -20, 18, 32, 12);
-      ctx.roundRect(8, -18, 18, 30, 12);
-      ctx.roundRect(22, -10, 16, 24, 10);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.roundRect(-14, 40, 12, 26, 10);
-      ctx.roundRect(2, 40, 12, 26, 10);
-      ctx.fill();
-
-      ctx.fillStyle = "#cbd5e1";
-      ctx.beginPath();
-      ctx.arc(-6, 8, 3.5, 0, Math.PI * 2);
-      ctx.arc(8, 6, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    drawMasterHand(fighter);
   } else {
     ctx.scale(fighter.face, 1);
     ctx.fillStyle = fighter.color;
