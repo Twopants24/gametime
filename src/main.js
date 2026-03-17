@@ -127,7 +127,7 @@ function resetMatch() {
   blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, C shot, Shift charge, E blast, R plus arrows for specials, T full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift charge, R plus arrows for specials, T full reset.", "Start Match");
   updateHud();
 }
 
@@ -1348,7 +1348,6 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowUp") input.arrowUp = true;
   if (event.key === "ArrowDown") input.arrowDown = true;
   if (key === "w") input.jumpQueued = true;
-  if (key === "c") input.shotQueued = true;
   if (key === "s") input.smashQueued = true;
   if (key === "r") {
     event.preventDefault();
@@ -1359,13 +1358,6 @@ window.addEventListener("keydown", (event) => {
   if (input.specialHeld && event.key.startsWith("Arrow")) {
     event.preventDefault();
     queueDirectionalSpecial();
-  }
-  if (key === "e" && blastReady) {
-    event.preventDefault();
-    input.blastQueued = true;
-  } else if (key === "e" && blastStartedAt === null) {
-    event.preventDefault();
-    blastStartedAt = performance.now();
   }
   if (isShift && chargeReady) {
     event.preventDefault();

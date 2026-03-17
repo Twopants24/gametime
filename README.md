@@ -12,11 +12,9 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 
 - `A` / `D`: move
 - `W`: jump
-- `C`: ranged shot
 - `Space`: jab
 - `S`: smash attack
 - `Shift`: charge shot
-- `E`: blast
 - `R`: neutral special
 - `R` + `Left` / `Right`: side special
 - `R` + `Up`: up special
