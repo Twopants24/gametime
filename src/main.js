@@ -65,6 +65,7 @@ const input = {
   chargeQueued: false,
   blastQueued: false,
   specialQueued: null,
+  specialFace: null,
 };
 
 function queueDirectionalSpecial() {
@@ -83,8 +84,7 @@ function queueDirectionalSpecial() {
   }
 
   if (input.arrowLeft || input.arrowRight) {
-    if (input.arrowLeft) input.left = true;
-    if (input.arrowRight) input.right = true;
+    input.specialFace = input.arrowLeft ? -1 : 1;
     input.specialQueued = "sideSpecial";
     input.specialNeutralPending = false;
     return;
@@ -165,6 +165,7 @@ function getPlayerInput() {
     right: input.right,
     jump: input.jumpQueued,
     attack,
+    specialFace: input.specialFace,
   };
 
   input.jumpQueued = false;
@@ -174,6 +175,7 @@ function getPlayerInput() {
   input.chargeQueued = false;
   input.blastQueued = false;
   input.specialQueued = null;
+  input.specialFace = null;
   return next;
 }
 

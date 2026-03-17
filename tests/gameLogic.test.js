@@ -87,10 +87,12 @@ test("side special gives Nova a horizontal burst", () => {
     right: false,
     jump: false,
     attack: "sideSpecial",
+    specialFace: -1,
   });
 
   assert.equal(specialed.attack?.type, "sideSpecial");
-  assert.ok(specialed.vx > 10);
+  assert.equal(specialed.face, -1);
+  assert.ok(specialed.vx < -10);
 });
 
 test("up special launches Nova upward and hits above", () => {

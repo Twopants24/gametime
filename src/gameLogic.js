@@ -247,6 +247,10 @@ export function applyInput(fighter, input) {
   }
 
   if (input.attack) {
+    if (input.attack === "sideSpecial" && input.specialFace) {
+      next.face = input.specialFace;
+    }
+
     const attacked = startAttack(next, input.attack);
     if (attacked === next) {
       return next;
