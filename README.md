@@ -15,11 +15,11 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `Space`: jab
 - `S`: smash attack
 - `Shift`: charge shot
-- `R`: `Pulse Shot`
-- `R` + `Left` / `Right`: `Nova Rush`
-- `R` + `Up`: `Skybreak`
-- `R` + `Down`: `Burst Field`
-- `T`: reset the full match
+- `E`: `Pulse Shot`
+- `E` + `Left` / `Right`: `Nova Rush`
+- `E` + `Up`: `Skybreak`
+- `E` + `Down`: `Burst Field`
+- `R`: reset the full match
 
 ## Test
 

@@ -127,7 +127,7 @@ function resetMatch() {
   blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, R specials: Pulse Shot, Nova Rush, Skybreak, Burst Field. T full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, E specials: Pulse Shot, Nova Rush, Skybreak, Burst Field. R full reset.", "Start Match");
   updateHud();
 }
 
@@ -1317,7 +1317,7 @@ function tick() {
 
     if (state.winner) {
       overlay.classList.remove("hidden");
-      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or T for a full reset.", "Rematch");
+      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or R for a full reset.", "Rematch");
     }
   }
 
@@ -1349,7 +1349,7 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowDown") input.arrowDown = true;
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (key === "r") {
+  if (key === "e") {
     event.preventDefault();
     input.specialHeld = true;
     input.specialNeutralPending = true;
@@ -1366,7 +1366,7 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     chargeStartedAt = performance.now();
   }
-  if (key === "t") resetMatch();
+  if (key === "r") resetMatch();
 });
 
 window.addEventListener("keyup", (event) => {
@@ -1377,7 +1377,7 @@ window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") input.arrowRight = false;
   if (event.key === "ArrowUp") input.arrowUp = false;
   if (event.key === "ArrowDown") input.arrowDown = false;
-  if (key === "r") {
+  if (key === "e") {
     if (input.specialNeutralPending) {
       input.specialQueued = "shot";
     }
