@@ -127,7 +127,7 @@ function resetMatch() {
   blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift charge, R plus arrows for specials, T full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, R specials: Pulse Shot, Nova Rush, Skybreak, Burst Field. T full reset.", "Start Match");
   updateHud();
 }
 
