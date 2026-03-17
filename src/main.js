@@ -10,6 +10,7 @@ const speedValue = document.getElementById("speed-value");
 const cpuDifficultyDial = document.getElementById("cpu-difficulty");
 const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
+const trainingModeToggle = document.getElementById("training-mode");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 
@@ -28,6 +29,7 @@ let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
 let cpuDifficulty = Number(cpuDifficultyDial.value);
 let playerAvatar = avatarSelect.value;
+let trainingMode = trainingModeToggle.checked;
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
@@ -144,6 +146,24 @@ function startMatch() {
   state.running = true;
   state.winner = null;
   overlay.classList.add("hidden");
+}
+
+function freezeTrainingDummy() {
+  const dummy = state.fighters[1];
+  if (!dummy) return;
+
+  state.fighters[1] = {
+    ...dummy,
+    x: dummy.spawnX,
+    y: dummy.spawnY,
+    vx: 0,
+    vy: 0,
+    grounded: false,
+    hitstun: 0,
+    attack: null,
+    attackCooldown: 0,
+    cpuCooldown: 0,
+  };
 }
 
 function getPlayerInput() {
@@ -1290,11 +1310,16 @@ function tick() {
 
     for (let i = 0; i < stepCount && state.running; i += 1) {
       const [p1, p2] = state.fighters;
-      const cpuInput = getCpuInput(p2, p1);
+      const cpuInput = trainingMode
+        ? { left: false, right: false, jump: false, attack: null }
+        : getCpuInput(p2, p1);
       state = stepState(state, {
         p1: getPlayerInput(),
         p2: cpuInput,
       });
+      if (trainingMode) {
+        freezeTrainingDummy();
+      }
       const cinematicHit = state.fighters.find(
         (fighter) =>
           (fighter.impact?.type === "supernova" && fighter.impact.timer === 30) ||
@@ -1399,6 +1424,14 @@ cpuDifficultyDial.addEventListener("input", () => {
 
 avatarSelect.addEventListener("input", () => {
   playerAvatar = avatarSelect.value;
+});
+
+trainingModeToggle.addEventListener("input", () => {
+  trainingMode = trainingModeToggle.checked;
+  if (trainingMode) {
+    freezeTrainingDummy();
+    updateHud();
+  }
 });
 
 startButton.addEventListener("click", startMatch);
