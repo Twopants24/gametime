@@ -57,6 +57,7 @@ const input = {
   arrowUp: false,
   arrowDown: false,
   specialHeld: false,
+  specialNeutralPending: false,
   jumpQueued: false,
   jabQueued: false,
   smashQueued: false,
@@ -71,11 +72,13 @@ function queueDirectionalSpecial() {
 
   if (input.arrowUp) {
     input.specialQueued = "upSpecial";
+    input.specialNeutralPending = false;
     return;
   }
 
   if (input.arrowDown) {
     input.specialQueued = "blast";
+    input.specialNeutralPending = false;
     return;
   }
 
@@ -83,10 +86,9 @@ function queueDirectionalSpecial() {
     if (input.arrowLeft) input.left = true;
     if (input.arrowRight) input.right = true;
     input.specialQueued = "sideSpecial";
+    input.specialNeutralPending = false;
     return;
   }
-
-  input.specialQueued = "shot";
 }
 
 function setOverlay(title, message, buttonText) {
@@ -1319,6 +1321,7 @@ window.addEventListener("keydown", (event) => {
   if (key === "z") {
     event.preventDefault();
     input.specialHeld = true;
+    input.specialNeutralPending = true;
     queueDirectionalSpecial();
   }
   if (input.specialHeld && event.key.startsWith("Arrow")) {
@@ -1350,7 +1353,13 @@ window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") input.arrowRight = false;
   if (event.key === "ArrowUp") input.arrowUp = false;
   if (event.key === "ArrowDown") input.arrowDown = false;
-  if (key === "z") input.specialHeld = false;
+  if (key === "z") {
+    if (input.specialNeutralPending) {
+      input.specialQueued = "shot";
+    }
+    input.specialHeld = false;
+    input.specialNeutralPending = false;
+  }
 });
 
 speedDial.addEventListener("input", () => {
