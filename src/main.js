@@ -56,6 +56,7 @@ const input = {
   arrowRight: false,
   arrowUp: false,
   arrowDown: false,
+  specialHeld: false,
   jumpQueued: false,
   jabQueued: false,
   smashQueued: false,
@@ -64,6 +65,29 @@ const input = {
   blastQueued: false,
   specialQueued: null,
 };
+
+function queueDirectionalSpecial() {
+  if (!input.specialHeld) return;
+
+  if (input.arrowUp) {
+    input.specialQueued = "upSpecial";
+    return;
+  }
+
+  if (input.arrowDown) {
+    input.specialQueued = "blast";
+    return;
+  }
+
+  if (input.arrowLeft || input.arrowRight) {
+    if (input.arrowLeft) input.left = true;
+    if (input.arrowRight) input.right = true;
+    input.specialQueued = "sideSpecial";
+    return;
+  }
+
+  input.specialQueued = "shot";
+}
 
 function setOverlay(title, message, buttonText) {
   overlay.querySelector("h2").textContent = title;
@@ -1294,17 +1318,12 @@ window.addEventListener("keydown", (event) => {
   if (key === "s") input.smashQueued = true;
   if (key === "z") {
     event.preventDefault();
-    if (input.arrowUp) {
-      input.specialQueued = "upSpecial";
-    } else if (input.arrowDown) {
-      input.specialQueued = "blast";
-    } else if (input.arrowLeft || input.arrowRight) {
-      if (input.arrowLeft) input.left = true;
-      if (input.arrowRight) input.right = true;
-      input.specialQueued = "sideSpecial";
-    } else {
-      input.specialQueued = "shot";
-    }
+    input.specialHeld = true;
+    queueDirectionalSpecial();
+  }
+  if (input.specialHeld && event.key.startsWith("Arrow")) {
+    event.preventDefault();
+    queueDirectionalSpecial();
   }
   if (key === "e" && blastReady) {
     event.preventDefault();
@@ -1331,6 +1350,7 @@ window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") input.arrowRight = false;
   if (event.key === "ArrowUp") input.arrowUp = false;
   if (event.key === "ArrowDown") input.arrowDown = false;
+  if (key === "z") input.specialHeld = false;
 });
 
 speedDial.addEventListener("input", () => {
