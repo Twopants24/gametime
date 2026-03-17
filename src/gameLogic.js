@@ -52,6 +52,26 @@ export const ATTACKS = {
     xReach: 108,
     yReach: 40,
   },
+  sideSpecial: {
+    startup: 4,
+    active: 8,
+    recovery: 12,
+    damage: 18,
+    baseKnockback: 10.5,
+    scale: 0.22,
+    xReach: 88,
+    yReach: 30,
+  },
+  upSpecial: {
+    startup: 3,
+    active: 10,
+    recovery: 14,
+    damage: 16,
+    baseKnockback: 9.6,
+    scale: 0.2,
+    xReach: 34,
+    yReach: 74,
+  },
   blast: {
     startup: 5,
     active: 6,
@@ -155,6 +175,15 @@ export function getAttackHitbox(fighter, attackData, bonusReach = 0) {
     };
   }
 
+  if (fighter.attack?.type === "upSpecial") {
+    return {
+      x: fighter.x + fighter.width / 2 - (attackData.xReach + bonusReach),
+      y: fighter.y - attackData.yReach + 8,
+      width: (attackData.xReach + bonusReach) * 2,
+      height: attackData.yReach + fighter.height / 2,
+    };
+  }
+
   return {
     x:
       fighter.face === 1
@@ -218,7 +247,24 @@ export function applyInput(fighter, input) {
   }
 
   if (input.attack) {
-    return startAttack(next, input.attack);
+    const attacked = startAttack(next, input.attack);
+    if (attacked === next) {
+      return next;
+    }
+
+    if (input.attack === "sideSpecial") {
+      attacked.vx = attacked.face * 15;
+      attacked.vy = Math.min(attacked.vy, -3.5);
+      attacked.grounded = false;
+    }
+
+    if (input.attack === "upSpecial") {
+      attacked.vx *= 0.35;
+      attacked.vy = -24;
+      attacked.grounded = false;
+    }
+
+    return attacked;
   }
 
   return next;
@@ -302,6 +348,13 @@ export function resolveAttack(attacker, defender) {
               timer: 20,
               x: nextAttacker.x + nextAttacker.width / 2,
               y: nextAttacker.y + nextAttacker.height / 2,
+            }
+          : nextAttacker.attack.type === "upSpecial" || nextAttacker.attack.type === "sideSpecial"
+          ? {
+              type: "nova",
+              timer: 22,
+              x: nextDefender.x + nextDefender.width / 2,
+              y: nextDefender.y + nextDefender.height / 2,
             }
           : nextAttacker.attack.type === "smash"
           ? {

@@ -12,8 +12,15 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 
 - `A` / `D`: move
 - `W`: jump
+- `C`: ranged shot
 - `Space`: jab
 - `S`: smash attack
+- `Shift`: charge shot
+- `E`: blast
+- `Z`: neutral special
+- `Z` + `Left` / `Right`: side special
+- `Z` + `Up`: up special
+- `Z` + `Down`: down special
 - `R`: reset the full match
 
 ## Test

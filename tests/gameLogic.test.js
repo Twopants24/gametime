@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ATTACKS, DIFFICULTY, PHYSICS, STAGE, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
+import { ATTACKS, DIFFICULTY, PHYSICS, STAGE, applyInput, createInitialState, resolveAttack, stepState, updateFighter } from "../src/gameLogic.js";
 
 test("jab hit increases damage and launches defender", () => {
   const state = createInitialState();
@@ -76,6 +76,44 @@ test("shot spawns a projectile that damages at range", () => {
 
   assert.ok(next.fighters[1].damage > 0);
   assert.ok((next.projectiles?.length ?? 0) === 0);
+});
+
+test("side special gives Nova a horizontal burst", () => {
+  const fighter = createInitialState().fighters[0];
+  fighter.face = 1;
+
+  const specialed = applyInput(fighter, {
+    left: false,
+    right: false,
+    jump: false,
+    attack: "sideSpecial",
+  });
+
+  assert.equal(specialed.attack?.type, "sideSpecial");
+  assert.ok(specialed.vx > 10);
+});
+
+test("up special launches Nova upward and hits above", () => {
+  const attacker = createInitialState().fighters[0];
+  const defender = createInitialState().fighters[1];
+  attacker.x = 420;
+  attacker.y = 380;
+  defender.x = 420;
+  defender.y = 332;
+
+  const jumped = applyInput(attacker, {
+    left: false,
+    right: false,
+    jump: false,
+    attack: "upSpecial",
+  });
+  assert.equal(jumped.attack?.type, "upSpecial");
+  assert.ok(jumped.vy < -20);
+
+  jumped.attack = { type: "upSpecial", frame: ATTACKS.upSpecial.startup - 1, didHit: false };
+  const resolved = resolveAttack(jumped, defender);
+  assert.equal(resolved.defender.impact?.type, "nova");
+  assert.ok(resolved.defender.damage > 0);
 });
 
 test("fighter landing on a platform restores jumps", () => {
