@@ -645,30 +645,30 @@ function drawMasterHand(fighter) {
 
   ctx.fillStyle = gloveGradient;
   ctx.beginPath();
-  ctx.moveTo(-18, 7);
-  ctx.bezierCurveTo(-18, -3, -10, -13, 4, -14);
-  ctx.bezierCurveTo(18, -14, 28, -5, 31, 11);
-  ctx.bezierCurveTo(32, 28, 24, 40, 10, 43);
-  ctx.bezierCurveTo(-3, 46, -15, 41, -20, 28);
-  ctx.bezierCurveTo(-23, 20, -23, 12, -18, 7);
+  ctx.moveTo(-15, 8);
+  ctx.bezierCurveTo(-15, -1, -8, -10, 3, -11);
+  ctx.bezierCurveTo(15, -11, 23, -4, 26, 9);
+  ctx.bezierCurveTo(28, 24, 21, 34, 9, 37);
+  ctx.bezierCurveTo(-1, 39, -11, 36, -16, 25);
+  ctx.bezierCurveTo(-19, 18, -19, 12, -15, 8);
   ctx.closePath();
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(-18, 38);
-  ctx.bezierCurveTo(-12, 24, -9, 13, -6, 8);
-  ctx.bezierCurveTo(2, 19, 8, 34, 9, 48);
-  ctx.bezierCurveTo(0, 56, -12, 53, -18, 38);
+  ctx.moveTo(-15, 33);
+  ctx.bezierCurveTo(-10, 21, -8, 12, -5, 9);
+  ctx.bezierCurveTo(1, 18, 6, 30, 7, 42);
+  ctx.bezierCurveTo(0, 48, -10, 45, -15, 33);
   ctx.closePath();
   ctx.fill();
 
   ctx.fillStyle = "rgba(148, 163, 184, 0.24)";
   ctx.beginPath();
-  ctx.moveTo(-10, 8);
-  ctx.bezierCurveTo(-5, 2, 3, 0, 11, 2);
-  ctx.bezierCurveTo(18, 6, 21, 15, 18, 25);
-  ctx.bezierCurveTo(10, 24, 1, 23, -8, 21);
-  ctx.bezierCurveTo(-11, 17, -12, 12, -10, 8);
+  ctx.moveTo(-8, 9);
+  ctx.bezierCurveTo(-4, 4, 2, 2, 9, 4);
+  ctx.bezierCurveTo(15, 7, 17, 15, 15, 22);
+  ctx.bezierCurveTo(8, 22, 1, 21, -6, 19);
+  ctx.bezierCurveTo(-9, 16, -10, 12, -8, 9);
   ctx.closePath();
   ctx.fill();
 
@@ -690,13 +690,13 @@ function drawMasterHand(fighter) {
   ctx.strokeStyle = "rgba(255,255,255,0.92)";
   ctx.lineWidth = 1.3;
   ctx.beginPath();
-  ctx.moveTo(-13, 9);
-  ctx.bezierCurveTo(-10, -1, -1, -10, 11, -12);
+  ctx.moveTo(-10, 10);
+  ctx.bezierCurveTo(-7, 1, 0, -6, 10, -8);
   ctx.stroke();
 
   ctx.fillStyle = "#eef2f7";
   ctx.beginPath();
-  ctx.roundRect(-13, 47, 24, 13, 5);
+  ctx.roundRect(-11, 41, 20, 12, 5);
   ctx.fill();
 
   ctx.strokeStyle = "rgba(148, 163, 184, 0.74)";
