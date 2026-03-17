@@ -124,7 +124,7 @@ function resetMatch() {
   blastReady = false;
   cameraEffect = null;
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, C shot, Shift charge, E blast, Z plus arrows for specials, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, C shot, Shift charge, E blast, R plus arrows for specials, T full reset.", "Start Match");
   updateHud();
 }
 
@@ -1323,6 +1323,9 @@ function tick() {
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
   const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
+  if (event.key.startsWith("Arrow")) {
+    event.preventDefault();
+  }
   if (event.code === "Space") {
     event.preventDefault();
     input.jabQueued = true;
@@ -1336,7 +1339,7 @@ window.addEventListener("keydown", (event) => {
   if (key === "w") input.jumpQueued = true;
   if (key === "c") input.shotQueued = true;
   if (key === "s") input.smashQueued = true;
-  if (key === "z") {
+  if (key === "r") {
     event.preventDefault();
     input.specialHeld = true;
     input.specialNeutralPending = true;
@@ -1360,7 +1363,7 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     chargeStartedAt = performance.now();
   }
-  if (key === "r") resetMatch();
+  if (key === "t") resetMatch();
 });
 
 window.addEventListener("keyup", (event) => {
@@ -1371,7 +1374,7 @@ window.addEventListener("keyup", (event) => {
   if (event.key === "ArrowRight") input.arrowRight = false;
   if (event.key === "ArrowUp") input.arrowUp = false;
   if (event.key === "ArrowDown") input.arrowDown = false;
-  if (key === "z") {
+  if (key === "r") {
     if (input.specialNeutralPending) {
       input.specialQueued = "shot";
     }

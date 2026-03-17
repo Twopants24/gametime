@@ -17,11 +17,11 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `S`: smash attack
 - `Shift`: charge shot
 - `E`: blast
-- `Z`: neutral special
-- `Z` + `Left` / `Right`: side special
-- `Z` + `Up`: up special
-- `Z` + `Down`: down special
-- `R`: reset the full match
+- `R`: neutral special
+- `R` + `Left` / `Right`: side special
+- `R` + `Up`: up special
+- `R` + `Down`: down special
+- `T`: reset the full match
 
 ## Test
 
