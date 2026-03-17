@@ -66,6 +66,7 @@ const input = {
   blastQueued: false,
   specialQueued: null,
   specialFace: null,
+  lastSpecialHorizontal: null,
 };
 
 function queueDirectionalSpecial() {
@@ -84,7 +85,7 @@ function queueDirectionalSpecial() {
   }
 
   if (input.arrowLeft || input.arrowRight) {
-    input.specialFace = input.arrowLeft ? -1 : 1;
+    input.specialFace = input.lastSpecialHorizontal ?? (input.arrowLeft ? -1 : 1);
     input.specialQueued = "sideSpecial";
     input.specialNeutralPending = false;
     return;
@@ -1336,8 +1337,14 @@ window.addEventListener("keydown", (event) => {
   }
   if (key === "a") input.left = true;
   if (key === "d") input.right = true;
-  if (event.key === "ArrowLeft") input.arrowLeft = true;
-  if (event.key === "ArrowRight") input.arrowRight = true;
+  if (event.key === "ArrowLeft") {
+    input.arrowLeft = true;
+    input.lastSpecialHorizontal = -1;
+  }
+  if (event.key === "ArrowRight") {
+    input.arrowRight = true;
+    input.lastSpecialHorizontal = 1;
+  }
   if (event.key === "ArrowUp") input.arrowUp = true;
   if (event.key === "ArrowDown") input.arrowDown = true;
   if (key === "w") input.jumpQueued = true;

@@ -95,6 +95,32 @@ test("side special gives Nova a horizontal burst", () => {
   assert.ok(specialed.vx < -10);
 });
 
+test("normal movement input is not stuck on by side special direction", () => {
+  const fighter = createInitialState().fighters[0];
+
+  const specialed = applyInput(fighter, {
+    left: false,
+    right: false,
+    jump: false,
+    attack: "sideSpecial",
+    specialFace: 1,
+  });
+
+  const next = applyInput(
+    { ...specialed, attack: null, vx: 0, vy: 0, hitstun: 0, attackCooldown: 0 },
+    {
+      left: false,
+      right: false,
+      jump: false,
+      attack: null,
+      specialFace: null,
+    }
+  );
+
+  assert.equal(next.face, 1);
+  assert.equal(next.vx, 0);
+});
+
 test("up special launches Nova upward and hits above", () => {
   const attacker = createInitialState().fighters[0];
   const defender = createInitialState().fighters[1];
