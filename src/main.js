@@ -123,15 +123,16 @@ function updateHud() {
 
 function resetMatch() {
   state = createInitialState();
-  trainingDummyAnchor = trainingMode
-    ? { x: state.fighters[1].x, y: state.fighters[1].y }
-    : null;
+  trainingDummyAnchor = null;
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
   blastReady = false;
   cameraEffect = null;
+  if (trainingMode) {
+    freezeTrainingDummy();
+  }
   overlay.classList.remove("hidden");
   setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, E specials: Pulse Shot, Nova Rush, Skybreak, Burst Field. R full reset.", "Start Match");
   updateHud();
@@ -141,15 +142,16 @@ function startMatch() {
   if (state.winner) {
     state = createInitialState();
   }
-  trainingDummyAnchor = trainingMode
-    ? { x: state.fighters[1].x, y: state.fighters[1].y }
-    : null;
+  trainingDummyAnchor = null;
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
   blastReady = false;
   cameraEffect = null;
+  if (trainingMode) {
+    freezeTrainingDummy();
+  }
   state.running = true;
   state.winner = null;
   overlay.classList.add("hidden");
@@ -159,35 +161,11 @@ function freezeTrainingDummy() {
   const dummy = state.fighters[1];
   if (!dummy) return;
   const floor = STAGE.platforms[0];
-  const floorY = floor.y - dummy.height;
-  const onMainFloor =
-    dummy.grounded &&
-    Math.abs(dummy.y - floorY) < 1 &&
-    dummy.x + dummy.width > floor.x &&
-    dummy.x < floor.x + floor.width;
-
   if (!trainingDummyAnchor) {
-    if (!onMainFloor) {
-      const standingOnUpperPlatform = STAGE.platforms.slice(1).some((platform) => {
-        const platformTop = platform.y - dummy.height;
-        return (
-          dummy.grounded &&
-          Math.abs(dummy.y - platformTop) < 1 &&
-          dummy.x + dummy.width > platform.x &&
-          dummy.x < platform.x + platform.width
-        );
-      });
-
-      state.fighters[1] = {
-        ...dummy,
-        x: Math.min(floor.x + floor.width - dummy.width - 12, Math.max(floor.x + 12, dummy.x)),
-        y: standingOnUpperPlatform ? dummy.y + 2 : dummy.y,
-        vy: standingOnUpperPlatform ? Math.max(2, dummy.vy) : dummy.vy,
-        grounded: false,
-      };
-      return;
-    }
-    trainingDummyAnchor = { x: dummy.x, y: dummy.y };
+    trainingDummyAnchor = {
+      x: floor.x + floor.width - dummy.width - 88,
+      y: floor.y - dummy.height,
+    };
   }
 
   state.fighters[1] = {
@@ -1468,6 +1446,7 @@ trainingModeToggle.addEventListener("input", () => {
   trainingMode = trainingModeToggle.checked;
   if (trainingMode) {
     trainingDummyAnchor = null;
+    freezeTrainingDummy();
     updateHud();
   } else {
     trainingDummyAnchor = null;
