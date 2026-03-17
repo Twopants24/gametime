@@ -311,58 +311,61 @@ function renderStaticStage() {
 
 function drawAttack(fighter) {
   if (!fighter.attack) return;
-  const attackData = ATTACKS[fighter.attack.type];
-  const activeStart = attackData.startup;
-  const activeEnd = attackData.startup + attackData.active;
-  if (fighter.attack.frame < activeStart || fighter.attack.frame > activeEnd) return;
 
-  const armBaseX = fighter.x + fighter.width / 2 + fighter.face * 18;
-  const armBaseY = fighter.y + fighter.height / 2 - 4;
-  const armLength =
-    fighter.attack.type === "charge"
-      ? 62
-      : fighter.attack.type === "sideSpecial"
-      ? 54
-      : fighter.attack.type === "smash"
-      ? 48
-      : fighter.attack.type === "shot"
-      ? 34
-      : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
-      ? 0
-      : 30;
-  const fistRadius =
-    fighter.attack.type === "charge"
-      ? 20
-      : fighter.attack.type === "sideSpecial"
-      ? 14
-      : fighter.attack.type === "smash"
-      ? 17
-      : fighter.attack.type === "shot"
-      ? 10
-      : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
-      ? 0
-      : 11;
-  const fistX = armBaseX + fighter.face * armLength;
-  const fistY = armBaseY;
+  try {
+    const attackData = ATTACKS[fighter.attack.type];
+    if (!attackData) return;
+    const activeStart = attackData.startup;
+    const activeEnd = attackData.startup + attackData.active;
+    if (fighter.attack.frame < activeStart || fighter.attack.frame > activeEnd) return;
 
-  if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
-    ctx.strokeStyle =
+    const armBaseX = fighter.x + fighter.width / 2 + fighter.face * 18;
+    const armBaseY = fighter.y + fighter.height / 2 - 4;
+    const armLength =
       fighter.attack.type === "charge"
-        ? "#67e8f9"
+        ? 62
         : fighter.attack.type === "sideSpecial"
-        ? "#38bdf8"
+        ? 54
         : fighter.attack.type === "smash"
-        ? "#fb923c"
-        : fighter.accent;
-    ctx.lineWidth = fighter.attack.type === "charge" ? 14 : fighter.attack.type === "sideSpecial" ? 11 : fighter.attack.type === "smash" ? 12 : 8;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(armBaseX, armBaseY);
-    ctx.lineTo(fistX, fistY);
-    ctx.stroke();
-  }
+        ? 48
+        : fighter.attack.type === "shot"
+        ? 34
+        : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
+        ? 0
+        : 30;
+    const fistRadius =
+      fighter.attack.type === "charge"
+        ? 20
+        : fighter.attack.type === "sideSpecial"
+        ? 14
+        : fighter.attack.type === "smash"
+        ? 17
+        : fighter.attack.type === "shot"
+        ? 10
+        : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
+        ? 0
+        : 11;
+    const fistX = armBaseX + fighter.face * armLength;
+    const fistY = armBaseY;
 
-  if (fighter.attack.type === "sideSpecial") {
+    if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
+      ctx.strokeStyle =
+        fighter.attack.type === "charge"
+          ? "#67e8f9"
+          : fighter.attack.type === "sideSpecial"
+          ? "#38bdf8"
+          : fighter.attack.type === "smash"
+          ? "#fb923c"
+          : fighter.accent;
+      ctx.lineWidth = fighter.attack.type === "charge" ? 14 : fighter.attack.type === "sideSpecial" ? 11 : fighter.attack.type === "smash" ? 12 : 8;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(armBaseX, armBaseY);
+      ctx.lineTo(fistX, fistY);
+      ctx.stroke();
+    }
+
+    if (fighter.attack.type === "sideSpecial") {
     const streakX = fistX + fighter.face * 86;
     const flare = ctx.createLinearGradient(fistX, fistY, streakX, fistY);
     flare.addColorStop(0, "rgba(224, 242, 254, 0.95)");
@@ -376,7 +379,7 @@ function drawAttack(fighter) {
     ctx.quadraticCurveTo(streakX - fighter.face * 22, fistY + 24, fistX - fighter.face * 6, fistY + 18);
     ctx.closePath();
     ctx.fill();
-  } else if (fighter.attack.type === "charge") {
+    } else if (fighter.attack.type === "charge") {
     const time = performance.now();
     const pulse = 0.92 + Math.sin(time / 90) * 0.08;
     const wave = Math.sin(time / 65) * 6;
@@ -497,7 +500,7 @@ function drawAttack(fighter) {
       ctx.arc(sparkX, sparkY, 3 - i * 0.5, 0, Math.PI * 2);
       ctx.fill();
     }
-  } else if (fighter.attack.type === "shot") {
+    } else if (fighter.attack.type === "shot") {
     const muzzleX = fistX + fighter.face * 10;
     const shotGradient = ctx.createRadialGradient(muzzleX, fistY, 3, muzzleX, fistY, 34);
     shotGradient.addColorStop(0, "rgba(255,255,255,0.98)");
@@ -515,7 +518,7 @@ function drawAttack(fighter) {
     ctx.moveTo(muzzleX - fighter.face * 10, fistY);
     ctx.lineTo(muzzleX + fighter.face * 24, fistY);
     ctx.stroke();
-  } else if (fighter.attack.type === "blast") {
+    } else if (fighter.attack.type === "blast") {
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2;
     const time = performance.now();
@@ -543,7 +546,7 @@ function drawAttack(fighter) {
     ctx.beginPath();
     ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
     ctx.fill();
-  } else if (fighter.attack.type === "upSpecial") {
+    } else if (fighter.attack.type === "upSpecial") {
     const centerX = fighter.x + fighter.width / 2;
     const centerY = fighter.y + fighter.height / 2 - 20;
     const time = performance.now();
@@ -563,7 +566,7 @@ function drawAttack(fighter) {
     ctx.beginPath();
     ctx.arc(centerX, centerY - 12, 22 + Math.sin(time / 55) * 3, Math.PI * 0.2, Math.PI * 0.8);
     ctx.stroke();
-  } else if (fighter.attack.type === "smash") {
+    } else if (fighter.attack.type === "smash") {
     const flameGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 30);
     flameGradient.addColorStop(0, "rgba(255, 245, 157, 0.95)");
     flameGradient.addColorStop(0.45, "rgba(251, 146, 60, 0.85)");
@@ -582,16 +585,19 @@ function drawAttack(fighter) {
     ctx.fill();
   }
 
-  if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
-    ctx.fillStyle = fighter.attack.type === "charge" ? "#e0f2fe" : fighter.attack.type === "smash" ? "#fff7ed" : fighter.attack.type === "shot" ? "#dcfce7" : "#f8fafc";
-    ctx.beginPath();
-    ctx.arc(fistX, fistY, fistRadius, 0, Math.PI * 2);
-    ctx.fill();
+    if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
+      ctx.fillStyle = fighter.attack.type === "charge" ? "#e0f2fe" : fighter.attack.type === "smash" ? "#fff7ed" : fighter.attack.type === "shot" ? "#dcfce7" : "#f8fafc";
+      ctx.beginPath();
+      ctx.arc(fistX, fistY, fistRadius, 0, Math.PI * 2);
+      ctx.fill();
 
-    ctx.fillStyle = "rgba(15, 23, 42, 0.18)";
-    ctx.beginPath();
-    ctx.arc(fistX + fighter.face * 3, fistY + 2, Math.max(5, fistRadius - 4), 0, Math.PI * 2);
-    ctx.fill();
+      ctx.fillStyle = "rgba(15, 23, 42, 0.18)";
+      ctx.beginPath();
+      ctx.arc(fistX + fighter.face * 3, fistY + 2, Math.max(5, fistRadius - 4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } catch (error) {
+    console.error("drawAttack failed", error);
   }
 }
 
