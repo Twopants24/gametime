@@ -158,8 +158,21 @@ function startMatch() {
 function freezeTrainingDummy() {
   const dummy = state.fighters[1];
   if (!dummy) return;
+  const floor = STAGE.platforms[0];
+  const floorY = floor.y - dummy.height;
+  const onMainFloor =
+    dummy.grounded &&
+    Math.abs(dummy.y - floorY) < 1 &&
+    dummy.x + dummy.width > floor.x &&
+    dummy.x < floor.x + floor.width;
+
   if (!trainingDummyAnchor) {
-    if (!dummy.grounded) {
+    if (!onMainFloor) {
+      state.fighters[1] = {
+        ...dummy,
+        x: Math.min(floor.x + floor.width - dummy.width - 12, Math.max(floor.x + 12, dummy.x)),
+        grounded: false,
+      };
       return;
     }
     trainingDummyAnchor = { x: dummy.x, y: dummy.y };
