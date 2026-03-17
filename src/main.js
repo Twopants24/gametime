@@ -168,9 +168,21 @@ function freezeTrainingDummy() {
 
   if (!trainingDummyAnchor) {
     if (!onMainFloor) {
+      const standingOnUpperPlatform = STAGE.platforms.slice(1).some((platform) => {
+        const platformTop = platform.y - dummy.height;
+        return (
+          dummy.grounded &&
+          Math.abs(dummy.y - platformTop) < 1 &&
+          dummy.x + dummy.width > platform.x &&
+          dummy.x < platform.x + platform.width
+        );
+      });
+
       state.fighters[1] = {
         ...dummy,
         x: Math.min(floor.x + floor.width - dummy.width - 12, Math.max(floor.x + 12, dummy.x)),
+        y: standingOnUpperPlatform ? dummy.y + 2 : dummy.y,
+        vy: standingOnUpperPlatform ? Math.max(2, dummy.vy) : dummy.vy,
         grounded: false,
       };
       return;
