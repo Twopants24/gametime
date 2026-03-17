@@ -89,6 +89,8 @@ function queueDirectionalSpecial() {
     input.specialNeutralPending = false;
     return;
   }
+
+  input.specialQueued = "shot";
 }
 
 function setOverlay(title, message, buttonText) {
@@ -1312,7 +1314,7 @@ function tick() {
 
     if (state.winner) {
       overlay.classList.remove("hidden");
-      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or R for a full reset.", "Rematch");
+      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or T for a full reset.", "Rematch");
     }
   }
 
