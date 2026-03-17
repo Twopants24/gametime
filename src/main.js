@@ -159,6 +159,9 @@ function freezeTrainingDummy() {
   const dummy = state.fighters[1];
   if (!dummy) return;
   if (!trainingDummyAnchor) {
+    if (!dummy.grounded) {
+      return;
+    }
     trainingDummyAnchor = { x: dummy.x, y: dummy.y };
   }
 
@@ -1439,9 +1442,7 @@ avatarSelect.addEventListener("input", () => {
 trainingModeToggle.addEventListener("input", () => {
   trainingMode = trainingModeToggle.checked;
   if (trainingMode) {
-    const dummy = state.fighters[1];
-    trainingDummyAnchor = dummy ? { x: dummy.x, y: dummy.y } : null;
-    freezeTrainingDummy();
+    trainingDummyAnchor = null;
     updateHud();
   } else {
     trainingDummyAnchor = null;
