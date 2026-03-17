@@ -16,9 +16,9 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `S`: smash attack
 - `Shift`: charge shot
 - `E`: `Pulse Shot`
-- `E` + `Left` / `Right`: `Nova Rush`
-- `E` + `Up`: `Skybreak`
-- `E` + `Down`: `Burst Field`
+- `Left` / `Right`: `Nova Rush`
+- `Up`: `Skybreak`
+- `Down`: `Burst Field`
 - `R`: reset the full match
 
 ## Test

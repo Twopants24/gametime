@@ -55,12 +55,6 @@ cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
 const input = {
   left: false,
   right: false,
-  arrowLeft: false,
-  arrowRight: false,
-  arrowUp: false,
-  arrowDown: false,
-  specialHeld: false,
-  specialNeutralPending: false,
   jumpQueued: false,
   jabQueued: false,
   smashQueued: false,
@@ -69,33 +63,7 @@ const input = {
   blastQueued: false,
   specialQueued: null,
   specialFace: null,
-  lastSpecialHorizontal: null,
 };
-
-function queueDirectionalSpecial() {
-  if (!input.specialHeld) return;
-
-  if (input.arrowUp) {
-    input.specialQueued = "upSpecial";
-    input.specialNeutralPending = false;
-    return;
-  }
-
-  if (input.arrowDown) {
-    input.specialQueued = "blast";
-    input.specialNeutralPending = false;
-    return;
-  }
-
-  if (input.arrowLeft || input.arrowRight) {
-    input.specialFace = input.lastSpecialHorizontal ?? (input.arrowLeft ? -1 : 1);
-    input.specialQueued = "sideSpecial";
-    input.specialNeutralPending = false;
-    return;
-  }
-
-  input.specialQueued = "shot";
-}
 
 function setOverlay(title, message, buttonText) {
   overlay.querySelector("h2").textContent = title;
@@ -134,7 +102,7 @@ function resetMatch() {
     freezeTrainingDummy();
   }
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, E specials: Pulse Shot, Nova Rush, Skybreak, Burst Field. R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, E Pulse Shot, arrow keys specials, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -1379,26 +1347,20 @@ window.addEventListener("keydown", (event) => {
   if (key === "a") input.left = true;
   if (key === "d") input.right = true;
   if (event.key === "ArrowLeft") {
-    input.arrowLeft = true;
-    input.lastSpecialHorizontal = -1;
+    input.specialFace = -1;
+    input.specialQueued = "sideSpecial";
   }
   if (event.key === "ArrowRight") {
-    input.arrowRight = true;
-    input.lastSpecialHorizontal = 1;
+    input.specialFace = 1;
+    input.specialQueued = "sideSpecial";
   }
-  if (event.key === "ArrowUp") input.arrowUp = true;
-  if (event.key === "ArrowDown") input.arrowDown = true;
+  if (event.key === "ArrowUp") input.specialQueued = "upSpecial";
+  if (event.key === "ArrowDown") input.specialQueued = "blast";
   if (key === "w") input.jumpQueued = true;
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
-    input.specialHeld = true;
-    input.specialNeutralPending = true;
-    queueDirectionalSpecial();
-  }
-  if (input.specialHeld && event.key.startsWith("Arrow")) {
-    event.preventDefault();
-    queueDirectionalSpecial();
+    input.shotQueued = true;
   }
   if (isShift && chargeReady) {
     event.preventDefault();
@@ -1414,17 +1376,6 @@ window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
-  if (event.key === "ArrowLeft") input.arrowLeft = false;
-  if (event.key === "ArrowRight") input.arrowRight = false;
-  if (event.key === "ArrowUp") input.arrowUp = false;
-  if (event.key === "ArrowDown") input.arrowDown = false;
-  if (key === "e") {
-    if (input.specialNeutralPending) {
-      input.specialQueued = "shot";
-    }
-    input.specialHeld = false;
-    input.specialNeutralPending = false;
-  }
 });
 
 speedDial.addEventListener("input", () => {
