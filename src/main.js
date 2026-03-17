@@ -30,6 +30,7 @@ let speedMultiplier = Number(speedDial.value);
 let cpuDifficulty = Number(cpuDifficultyDial.value);
 let playerAvatar = avatarSelect.value;
 let trainingMode = trainingModeToggle.checked;
+let trainingDummyAnchor = null;
 let speedAccumulator = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
@@ -122,6 +123,9 @@ function updateHud() {
 
 function resetMatch() {
   state = createInitialState();
+  trainingDummyAnchor = trainingMode
+    ? { x: state.fighters[1].x, y: state.fighters[1].y }
+    : null;
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
@@ -137,6 +141,9 @@ function startMatch() {
   if (state.winner) {
     state = createInitialState();
   }
+  trainingDummyAnchor = trainingMode
+    ? { x: state.fighters[1].x, y: state.fighters[1].y }
+    : null;
   speedAccumulator = 0;
   chargeStartedAt = null;
   chargeReady = false;
@@ -151,14 +158,17 @@ function startMatch() {
 function freezeTrainingDummy() {
   const dummy = state.fighters[1];
   if (!dummy) return;
+  if (!trainingDummyAnchor) {
+    trainingDummyAnchor = { x: dummy.x, y: dummy.y };
+  }
 
   state.fighters[1] = {
     ...dummy,
-    x: dummy.spawnX,
-    y: dummy.spawnY,
+    x: trainingDummyAnchor.x,
+    y: trainingDummyAnchor.y,
     vx: 0,
     vy: 0,
-    grounded: false,
+    grounded: true,
     hitstun: 0,
     attack: null,
     attackCooldown: 0,
@@ -1429,8 +1439,12 @@ avatarSelect.addEventListener("input", () => {
 trainingModeToggle.addEventListener("input", () => {
   trainingMode = trainingModeToggle.checked;
   if (trainingMode) {
+    const dummy = state.fighters[1];
+    trainingDummyAnchor = dummy ? { x: dummy.x, y: dummy.y } : null;
     freezeTrainingDummy();
     updateHud();
+  } else {
+    trainingDummyAnchor = null;
   }
 });
 
