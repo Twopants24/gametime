@@ -330,6 +330,18 @@ function drawAttack(fighter) {
       : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
       ? 0
       : 30;
+  const fistRadius =
+    fighter.attack.type === "charge"
+      ? 20
+      : fighter.attack.type === "sideSpecial"
+      ? 14
+      : fighter.attack.type === "smash"
+      ? 17
+      : fighter.attack.type === "shot"
+      ? 10
+      : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
+      ? 0
+      : 11;
   const fistX = armBaseX + fighter.face * armLength;
   const fistY = armBaseY;
 
@@ -570,7 +582,7 @@ function drawAttack(fighter) {
     ctx.fill();
   }
 
-  if (fighter.attack.type !== "blast") {
+  if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
     ctx.fillStyle = fighter.attack.type === "charge" ? "#e0f2fe" : fighter.attack.type === "smash" ? "#fff7ed" : fighter.attack.type === "shot" ? "#dcfce7" : "#f8fafc";
     ctx.beginPath();
     ctx.arc(fistX, fistY, fistRadius, 0, Math.PI * 2);
