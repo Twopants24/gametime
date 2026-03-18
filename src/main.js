@@ -1434,6 +1434,7 @@ function tick() {
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
   const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
+  const now = performance.now();
   if (event.key.startsWith("Arrow")) {
     event.preventDefault();
   }
@@ -1457,10 +1458,10 @@ window.addEventListener("keydown", (event) => {
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
-    if (!event.repeat && performance.now() >= pulseCooldownUntil) {
+    if (!pulseHeld && now >= pulseCooldownUntil) {
       pulseHeld = true;
-      pulseStartedAt = performance.now();
-      pulseLastFiredAt = 0;
+      pulseStartedAt = now;
+      pulseLastFiredAt = now - PULSE_FIRE_INTERVAL_MAX;
     }
   }
   if (isShift && chargeReady) {
@@ -1468,7 +1469,7 @@ window.addEventListener("keydown", (event) => {
     input.chargeQueued = true;
   } else if (isShift && chargeStartedAt === null) {
     event.preventDefault();
-    chargeStartedAt = performance.now();
+    chargeStartedAt = now;
   }
   if (key === "r") resetMatch();
 });
@@ -1481,6 +1482,13 @@ window.addEventListener("keyup", (event) => {
     pulseHeld = false;
     pulseStartedAt = null;
   }
+});
+
+window.addEventListener("blur", () => {
+  input.left = false;
+  input.right = false;
+  pulseHeld = false;
+  pulseStartedAt = null;
 });
 
 speedDial.addEventListener("input", () => {
