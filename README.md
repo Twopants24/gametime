@@ -1,6 +1,6 @@
 # GameTime Clash
 
-GameTime Clash is a compact browser-based platform fighter inspired by the feel of Super Smash Bros.
+GameTime Clash is a compact browser-based platform fighter prototype.
 
 The current tuning is intentionally beginner-friendly: the player has 4 stocks, the CPU has 2, player attacks get a small reach boost, and the player has infinite jumps.
 

@@ -832,7 +832,7 @@ function drawFighter(fighter) {
   ctx.save();
   ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
 
-  const useMasterHand = fighter.name === "Nova" && playerAvatar === "master-hand";
+  const useMasterHand = false;
 
   if (useMasterHand) {
     drawMasterHand(fighter);
