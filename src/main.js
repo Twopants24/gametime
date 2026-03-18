@@ -922,6 +922,54 @@ function drawMasterHand(fighter) {
   ctx.restore();
 }
 
+function drawPulseHeatBar(fighter) {
+  if (!fighter.isPlayer || !state.running) return;
+
+  const now = performance.now();
+  const coolingDown = pulseCooldownUntil > now;
+  const ratio = coolingDown
+    ? Math.max(0, Math.min(1, (pulseCooldownUntil - now) / PULSE_LOCKOUT_MS))
+    : Math.max(0, Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS));
+  const barWidth = 76;
+  const barHeight = 8;
+  const x = fighter.x + fighter.width / 2 - barWidth / 2;
+  const y = fighter.y - 36;
+
+  ctx.fillStyle = "rgba(8, 17, 31, 0.72)";
+  ctx.beginPath();
+  ctx.roundRect(x - 3, y - 3, barWidth + 6, barHeight + 6, 7);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.beginPath();
+  ctx.roundRect(x, y, barWidth, barHeight, 5);
+  ctx.fill();
+
+  if (ratio > 0) {
+    const fillGradient = coolingDown
+      ? ctx.createLinearGradient(x, y, x + barWidth, y)
+      : ctx.createLinearGradient(x, y, x + barWidth, y);
+    if (coolingDown) {
+      fillGradient.addColorStop(0, "#f8fafc");
+      fillGradient.addColorStop(1, "#94a3b8");
+    } else {
+      fillGradient.addColorStop(0, "#34d399");
+      fillGradient.addColorStop(0.55, "#facc15");
+      fillGradient.addColorStop(1, "#f97316");
+    }
+    ctx.fillStyle = fillGradient;
+    ctx.beginPath();
+    ctx.roundRect(x, y, Math.max(6, barWidth * ratio), barHeight, 5);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = coolingDown ? "rgba(226,232,240,0.8)" : "rgba(255,255,255,0.72)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.roundRect(x, y, barWidth, barHeight, 5);
+  ctx.stroke();
+}
+
 function drawFighter(fighter) {
   if (fighter.invuln > 0 && Math.floor(fighter.invuln / 6) % 2 === 0) {
     return;
@@ -1013,6 +1061,7 @@ function drawFighter(fighter) {
   ctx.font = "700 18px Space Grotesk";
   ctx.textAlign = "center";
   ctx.fillText(fighter.name, fighter.x + fighter.width / 2, fighter.y - 14);
+  drawPulseHeatBar(fighter);
 
   drawAttack(fighter);
 }
