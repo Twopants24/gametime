@@ -1353,7 +1353,7 @@ function tick() {
           startedAt: performance.now(),
           x: cinematicHit.impact.x,
           y: cinematicHit.impact.y,
-          tilt: cinematicHit.name === "Volt" ? (isBlastBurst ? -0.06 : -0.095) : isBlastBurst ? 0.06 : 0.095,
+          tilt: cinematicHit.isPlayer ? (isBlastBurst ? 0.06 : 0.095) : isBlastBurst ? -0.06 : -0.095,
         };
       }
       if (cpuInput.attack) {
