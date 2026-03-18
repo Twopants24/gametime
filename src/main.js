@@ -5,12 +5,14 @@ const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
 const overlayMessage = document.getElementById("overlay-message");
 const startButton = document.getElementById("start-button");
+const fullscreenButton = document.getElementById("fullscreen-button");
 const speedDial = document.getElementById("speed-dial");
 const speedValue = document.getElementById("speed-value");
 const cpuDifficultyDial = document.getElementById("cpu-difficulty");
 const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
 const trainingModeToggle = document.getElementById("training-mode");
+const arenaShell = document.querySelector(".arena-shell");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
 
@@ -1402,6 +1404,19 @@ trainingModeToggle.addEventListener("input", () => {
   } else {
     trainingDummyAnchor = null;
   }
+});
+
+fullscreenButton.addEventListener("click", async () => {
+  if (document.fullscreenElement === arenaShell) {
+    await document.exitFullscreen();
+    return;
+  }
+
+  await arenaShell.requestFullscreen();
+});
+
+document.addEventListener("fullscreenchange", () => {
+  fullscreenButton.textContent = document.fullscreenElement === arenaShell ? "Exit Fullscreen" : "Fullscreen";
 });
 
 startButton.addEventListener("click", startMatch);

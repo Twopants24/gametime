@@ -114,6 +114,43 @@ body {
   box-shadow: 0 32px 90px rgba(0, 0, 0, 0.36);
 }
 
+.fullscreen-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(8, 17, 31, 0.78);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+}
+
+.fullscreen-button:hover {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.arena-shell:fullscreen {
+  display: grid;
+  place-items: center;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(34, 211, 238, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 80%, rgba(251, 146, 60, 0.18), transparent 26%),
+    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+}
+
+.arena-shell:fullscreen #game {
+  width: min(100vw, calc(100vh * 1.7778));
+  max-height: 100vh;
+}
+
 #game {
   display: block;
   width: 100%;
