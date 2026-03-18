@@ -231,19 +231,21 @@ function triggerPulseOverheat(now) {
   const player = state.fighters[0];
   if (!player) return;
 
+  const centerX = player.x + player.width / 2;
+  const centerY = player.y + player.height / 2;
   state.fighters[0] = {
     ...player,
-    x: -STAGE.blastPadding - player.width - 24,
-    vx: 0,
-    vy: 0,
-    hitstun: 0,
+    damage: player.damage + 28,
+    vx: player.face * -12,
+    vy: -16,
+    hitstun: 22,
     attack: null,
     grounded: false,
     impact: {
       type: "burst",
       timer: 20,
-      x: player.x + player.width / 2,
-      y: player.y + player.height / 2,
+      x: centerX,
+      y: centerY,
     },
   };
 }
