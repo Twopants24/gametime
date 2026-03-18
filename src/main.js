@@ -41,9 +41,10 @@ let chargeReady = false;
 let blastStartedAt = null;
 let blastReady = false;
 let pulseHeld = false;
-let pulseStartedAt = null;
 let pulseLastFiredAt = 0;
 let pulseCooldownUntil = 0;
+let pulseHeatMs = 0;
+let pulseLastTickAt = 0;
 let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
 const BLAST_CHARGE_TIME_MS = 100;
@@ -117,10 +118,25 @@ function setOverlay(title, message, buttonText) {
 
 function updateHud() {
   const [p1, p2] = state.fighters;
+  const now = performance.now();
+  let pulseStatus = "Building";
+  if (pulseCooldownUntil > now) {
+    pulseStatus = `Overheat ${((pulseCooldownUntil - now) / 1000).toFixed(1)}s`;
+  } else if (pulseHeld || pulseHeatMs > 0) {
+    const ratio = Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS);
+    pulseStatus = `Pulse ${Math.round(ratio * 100)}%`;
+  }
   const nextHud = {
     p1Damage: `${Math.round(p1.damage)}%`,
     p1Stocks: String(p1.stocks),
-    p1Charge: chargeReady ? "CHARGED" : chargeStartedAt !== null ? "Charging" : "Building",
+    p1Charge:
+      pulseStatus !== "Building"
+        ? pulseStatus
+        : chargeReady
+        ? "CHARGED"
+        : chargeStartedAt !== null
+        ? "Charging"
+        : "Building",
     p2Damage: `${Math.round(p2.damage)}%`,
     p2Stocks: String(p2.stocks),
   };
@@ -139,9 +155,10 @@ function resetMatch() {
   trainingDummyAnchor = null;
   speedAccumulator = 0;
   pulseHeld = false;
-  pulseStartedAt = null;
   pulseLastFiredAt = 0;
   pulseCooldownUntil = 0;
+  pulseHeatMs = 0;
+  pulseLastTickAt = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
@@ -163,9 +180,10 @@ function startMatch() {
   trainingDummyAnchor = null;
   speedAccumulator = 0;
   pulseHeld = false;
-  pulseStartedAt = null;
   pulseLastFiredAt = 0;
   pulseCooldownUntil = 0;
+  pulseHeatMs = 0;
+  pulseLastTickAt = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
@@ -206,8 +224,8 @@ function freezeTrainingDummy() {
 
 function triggerPulseOverheat(now) {
   pulseHeld = false;
-  pulseStartedAt = null;
   pulseCooldownUntil = now + PULSE_LOCKOUT_MS;
+  pulseHeatMs = 0;
   input.shotQueued = false;
 
   const player = state.fighters[0];
@@ -1359,13 +1377,19 @@ function drawFrame() {
 function tick() {
   if (state.running) {
     const now = performance.now();
+    const elapsedSinceLastTick = pulseLastTickAt === 0 ? 16.67 : now - pulseLastTickAt;
+    pulseLastTickAt = now;
 
-    if (pulseHeld && pulseStartedAt !== null && now >= pulseCooldownUntil) {
-      const elapsed = now - pulseStartedAt;
-      if (elapsed >= PULSE_OVERHEAT_MS) {
+    if (pulseCooldownUntil > now) {
+      pulseHeld = false;
+    }
+
+    if (pulseHeld && now >= pulseCooldownUntil) {
+      pulseHeatMs = Math.min(PULSE_OVERHEAT_MS, pulseHeatMs + elapsedSinceLastTick);
+      if (pulseHeatMs >= PULSE_OVERHEAT_MS) {
         triggerPulseOverheat(now);
       } else {
-        const progress = elapsed / PULSE_OVERHEAT_MS;
+        const progress = pulseHeatMs / PULSE_OVERHEAT_MS;
         const interval =
           PULSE_FIRE_INTERVAL_MAX - (PULSE_FIRE_INTERVAL_MAX - PULSE_FIRE_INTERVAL_MIN) * progress;
         if (now - pulseLastFiredAt >= interval) {
@@ -1373,6 +1397,8 @@ function tick() {
           pulseLastFiredAt = now;
         }
       }
+    } else if (pulseHeatMs > 0 && now >= pulseCooldownUntil) {
+      pulseHeatMs = Math.max(0, pulseHeatMs - elapsedSinceLastTick * 1.4);
     }
 
     if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= CHARGE_TIME_MS) {
@@ -1460,7 +1486,6 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
     if (!pulseHeld && now >= pulseCooldownUntil) {
       pulseHeld = true;
-      pulseStartedAt = now;
       pulseLastFiredAt = now - PULSE_FIRE_INTERVAL_MAX;
     }
   }
@@ -1480,7 +1505,6 @@ window.addEventListener("keyup", (event) => {
   if (key === "d") input.right = false;
   if (key === "e") {
     pulseHeld = false;
-    pulseStartedAt = null;
   }
 });
 
@@ -1488,7 +1512,6 @@ window.addEventListener("blur", () => {
   input.left = false;
   input.right = false;
   pulseHeld = false;
-  pulseStartedAt = null;
 });
 
 speedDial.addEventListener("input", () => {
