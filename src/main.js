@@ -40,11 +40,19 @@ let chargeStartedAt = null;
 let chargeReady = false;
 let blastStartedAt = null;
 let blastReady = false;
+let pulseHeld = false;
+let pulseStartedAt = null;
+let pulseLastFiredAt = 0;
+let pulseCooldownUntil = 0;
 let cameraEffect = null;
 const CHARGE_TIME_MS = 1000;
 const BLAST_CHARGE_TIME_MS = 100;
 const CHARGE_CAMERA_HOLD_MS = 500;
 const CHARGE_CAMERA_RELEASE_MS = 120;
+const PULSE_OVERHEAT_MS = 4500;
+const PULSE_LOCKOUT_MS = 2000;
+const PULSE_FIRE_INTERVAL_MAX = 260;
+const PULSE_FIRE_INTERVAL_MIN = 70;
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -130,6 +138,10 @@ function resetMatch() {
   configureRoster();
   trainingDummyAnchor = null;
   speedAccumulator = 0;
+  pulseHeld = false;
+  pulseStartedAt = null;
+  pulseLastFiredAt = 0;
+  pulseCooldownUntil = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
@@ -139,7 +151,7 @@ function resetMatch() {
     freezeTrainingDummy();
   }
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Shift Charge Shot, E Pulse Shot, arrow keys specials, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -150,6 +162,10 @@ function startMatch() {
   }
   trainingDummyAnchor = null;
   speedAccumulator = 0;
+  pulseHeld = false;
+  pulseStartedAt = null;
+  pulseLastFiredAt = 0;
+  pulseCooldownUntil = 0;
   chargeStartedAt = null;
   chargeReady = false;
   blastStartedAt = null;
@@ -185,6 +201,32 @@ function freezeTrainingDummy() {
     attack: null,
     attackCooldown: 0,
     cpuCooldown: 0,
+  };
+}
+
+function triggerPulseOverheat(now) {
+  pulseHeld = false;
+  pulseStartedAt = null;
+  pulseCooldownUntil = now + PULSE_LOCKOUT_MS;
+  input.shotQueued = false;
+
+  const player = state.fighters[0];
+  if (!player) return;
+
+  state.fighters[0] = {
+    ...player,
+    x: -STAGE.blastPadding - player.width - 24,
+    vx: 0,
+    vy: 0,
+    hitstun: 0,
+    attack: null,
+    grounded: false,
+    impact: {
+      type: "burst",
+      timer: 20,
+      x: player.x + player.width / 2,
+      y: player.y + player.height / 2,
+    },
   };
 }
 
@@ -1316,6 +1358,23 @@ function drawFrame() {
 
 function tick() {
   if (state.running) {
+    const now = performance.now();
+
+    if (pulseHeld && pulseStartedAt !== null && now >= pulseCooldownUntil) {
+      const elapsed = now - pulseStartedAt;
+      if (elapsed >= PULSE_OVERHEAT_MS) {
+        triggerPulseOverheat(now);
+      } else {
+        const progress = elapsed / PULSE_OVERHEAT_MS;
+        const interval =
+          PULSE_FIRE_INTERVAL_MAX - (PULSE_FIRE_INTERVAL_MAX - PULSE_FIRE_INTERVAL_MIN) * progress;
+        if (now - pulseLastFiredAt >= interval) {
+          input.shotQueued = true;
+          pulseLastFiredAt = now;
+        }
+      }
+    }
+
     if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= CHARGE_TIME_MS) {
       chargeReady = true;
       chargeStartedAt = null;
@@ -1398,7 +1457,11 @@ window.addEventListener("keydown", (event) => {
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
-    input.shotQueued = true;
+    if (!event.repeat && performance.now() >= pulseCooldownUntil) {
+      pulseHeld = true;
+      pulseStartedAt = performance.now();
+      pulseLastFiredAt = 0;
+    }
   }
   if (isShift && chargeReady) {
     event.preventDefault();
@@ -1414,6 +1477,10 @@ window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
+  if (key === "e") {
+    pulseHeld = false;
+    pulseStartedAt = null;
+  }
 });
 
 speedDial.addEventListener("input", () => {
