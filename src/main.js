@@ -11,6 +11,8 @@ const speedValue = document.getElementById("speed-value");
 const cpuDifficultyDial = document.getElementById("cpu-difficulty");
 const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
+const playerNameHeading = document.querySelector(".scorecard-player h2");
+const cpuNameHeading = document.querySelector(".scorecard-cpu h2");
 const trainingModeToggle = document.getElementById("training-mode");
 const arenaShell = document.querySelector(".arena-shell");
 const stageCanvas = document.createElement("canvas");
@@ -30,7 +32,7 @@ const hud = {
 let state = createInitialState();
 let speedMultiplier = Number(speedDial.value);
 let cpuDifficulty = Number(cpuDifficultyDial.value);
-let playerAvatar = avatarSelect.value;
+let playerCharacter = avatarSelect.value;
 let trainingMode = trainingModeToggle.checked;
 let trainingDummyAnchor = null;
 let speedAccumulator = 0;
@@ -67,6 +69,38 @@ const input = {
   specialFace: null,
 };
 
+const CHARACTER_LOADOUTS = {
+  nova: {
+    name: "Nova",
+    color: "#fb923c",
+    accent: "#fed7aa",
+  },
+  volt: {
+    name: "Volt",
+    color: "#22d3ee",
+    accent: "#a5f3fc",
+  },
+};
+
+function configureRoster() {
+  const playerLoadout = CHARACTER_LOADOUTS[playerCharacter] ?? CHARACTER_LOADOUTS.nova;
+  const cpuLoadout = playerCharacter === "volt" ? CHARACTER_LOADOUTS.nova : CHARACTER_LOADOUTS.volt;
+
+  state.fighters[0] = {
+    ...state.fighters[0],
+    ...playerLoadout,
+    isPlayer: true,
+  };
+  state.fighters[1] = {
+    ...state.fighters[1],
+    ...cpuLoadout,
+    isPlayer: false,
+  };
+
+  playerNameHeading.textContent = playerLoadout.name;
+  cpuNameHeading.textContent = cpuLoadout.name;
+}
+
 function setOverlay(title, message, buttonText) {
   overlay.querySelector("h2").textContent = title;
   overlayMessage.textContent = message;
@@ -93,6 +127,7 @@ function updateHud() {
 
 function resetMatch() {
   state = createInitialState();
+  configureRoster();
   trainingDummyAnchor = null;
   speedAccumulator = 0;
   chargeStartedAt = null;
@@ -111,6 +146,7 @@ function resetMatch() {
 function startMatch() {
   if (state.winner) {
     state = createInitialState();
+    configureRoster();
   }
   trainingDummyAnchor = null;
   speedAccumulator = 0;
@@ -1392,7 +1428,9 @@ cpuDifficultyDial.addEventListener("input", () => {
 });
 
 avatarSelect.addEventListener("input", () => {
-  playerAvatar = avatarSelect.value;
+  playerCharacter = avatarSelect.value;
+  configureRoster();
+  updateHud();
 });
 
 trainingModeToggle.addEventListener("input", () => {

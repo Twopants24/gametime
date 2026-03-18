@@ -111,6 +111,7 @@ export const DIFFICULTY = {
 
 export function createFighter(options) {
   return {
+    isPlayer: options.isPlayer ?? false,
     name: options.name,
     color: options.color,
     accent: options.accent,
@@ -143,6 +144,7 @@ export function createInitialState() {
     projectiles: [],
     fighters: [
       createFighter({
+        isPlayer: true,
         name: "Nova",
         color: "#fb923c",
         accent: "#fed7aa",
@@ -152,6 +154,7 @@ export function createInitialState() {
         stocks: DIFFICULTY.playerStocks,
       }),
       createFighter({
+        isPlayer: false,
         name: "Volt",
         color: "#22d3ee",
         accent: "#a5f3fc",
@@ -221,7 +224,7 @@ export function startAttack(fighter, type) {
 
 export function applyInput(fighter, input) {
   const next = { ...fighter };
-  const fighterIsPlayer = next.name === "Nova";
+  const fighterIsPlayer = next.isPlayer;
   const canInfiniteJump = fighterIsPlayer && DIFFICULTY.playerInfiniteJumps;
 
   if (next.hitstun > 0) {
@@ -293,7 +296,7 @@ export function resolveAttack(attacker, defender) {
   const activeStart = attackData.startup;
   const activeEnd = attackData.startup + attackData.active;
 
-  const attackerIsPlayer = attacker.name === "Nova";
+  const attackerIsPlayer = attacker.isPlayer;
   const hitboxBonus = attackerIsPlayer ? DIFFICULTY.playerHitboxBonus : 0;
   const damageMultiplier = attackerIsPlayer ? DIFFICULTY.playerDamageMultiplier : DIFFICULTY.cpuDamageMultiplier;
   const knockbackMultiplier = attackerIsPlayer ? DIFFICULTY.playerKnockbackMultiplier : DIFFICULTY.cpuKnockbackMultiplier;
