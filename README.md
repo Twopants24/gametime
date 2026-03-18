@@ -15,7 +15,7 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `Space`: jab
 - `S`: smash attack
 - `Shift`: charge shot
-- Hold `E`: `Pulse Shot` that speeds up while held, overheats into a self-destruct, and locks out for 2 seconds
+- Hold `E`: `Pulse Shot` that ramps up quickly, overheats into an explosion on you, and locks out for 2 seconds
 - `Left` / `Right`: `Nova Rush`
 - `Up`: `Skybreak`
 - `Down`: `Burst Field`

@@ -84,8 +84,8 @@ export const ATTACKS = {
   },
   shot: {
     startup: 0,
-    active: 2,
-    recovery: 2,
+    active: 1,
+    recovery: 1,
     damage: 13,
     baseKnockback: 8.5,
     scale: 0.16,
@@ -386,8 +386,9 @@ export function resolveAttack(attacker, defender) {
 
   const totalFrames = attackData.startup + attackData.active + attackData.recovery;
   if (nextAttacker.attack.frame >= totalFrames) {
+    const cooldownFrames = nextAttacker.attack.type === "shot" ? 1 : 8;
     nextAttacker.attack = null;
-    nextAttacker.attackCooldown = 8;
+    nextAttacker.attackCooldown = cooldownFrames;
   }
 
   return { attacker: nextAttacker, defender: nextDefender, spawnedProjectile };
