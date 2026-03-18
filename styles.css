@@ -22,6 +22,7 @@ body {
 
 body {
   font-family: "Space Grotesk", sans-serif;
+  background-color: #0b1220;
   color: var(--text);
   background:
     radial-gradient(circle at 10% 10%, rgba(34, 211, 238, 0.16), transparent 28%),
