@@ -931,7 +931,7 @@ function getPulseVisualState() {
     : Math.max(0, Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS));
 
   if (coolingDown) {
-    return { coolingDown, ratio, core: "#f8fafc", mid: "#cbd5e1", glow: "#94a3b8", trail: "#e2e8f0" };
+    return { coolingDown, ratio, core: "#fff1f2", mid: "#fb7185", glow: "#dc2626", trail: "#ffe4e6" };
   }
 
   const lerp = (a, b, t) => Math.round(a + (b - a) * t);
