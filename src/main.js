@@ -610,18 +610,19 @@ function drawAttack(fighter) {
       ctx.fill();
     }
     } else if (fighter.attack.type === "shot") {
+    const pulseVisual = getPulseVisualState();
     const muzzleX = fistX + fighter.face * 10;
     const shotGradient = ctx.createRadialGradient(muzzleX, fistY, 3, muzzleX, fistY, 34);
     shotGradient.addColorStop(0, "rgba(255,255,255,0.98)");
-    shotGradient.addColorStop(0.35, "rgba(167, 243, 208, 0.96)");
-    shotGradient.addColorStop(0.75, "rgba(16, 185, 129, 0.7)");
-    shotGradient.addColorStop(1, "rgba(16, 185, 129, 0)");
+    shotGradient.addColorStop(0.35, `${pulseVisual.mid}f5`);
+    shotGradient.addColorStop(0.75, `${pulseVisual.glow}b3`);
+    shotGradient.addColorStop(1, `${pulseVisual.glow}00`);
     ctx.fillStyle = shotGradient;
     ctx.beginPath();
     ctx.arc(muzzleX, fistY, 34, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(220, 252, 231, 0.85)";
+    ctx.strokeStyle = pulseVisual.trail;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(muzzleX - fighter.face * 10, fistY);
@@ -922,14 +923,31 @@ function drawMasterHand(fighter) {
   ctx.restore();
 }
 
-function drawPulseHeatBar(fighter) {
-  if (!fighter.isPlayer || !state.running) return;
-
+function getPulseVisualState() {
   const now = performance.now();
   const coolingDown = pulseCooldownUntil > now;
   const ratio = coolingDown
     ? Math.max(0, Math.min(1, (pulseCooldownUntil - now) / PULSE_LOCKOUT_MS))
     : Math.max(0, Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS));
+
+  if (coolingDown) {
+    return { coolingDown, ratio, core: "#f8fafc", mid: "#cbd5e1", glow: "#94a3b8", trail: "#e2e8f0" };
+  }
+  if (ratio < 0.45) {
+    return { coolingDown, ratio, core: "#f0fdf4", mid: "#86efac", glow: "#22c55e", trail: "#dcfce7" };
+  }
+  if (ratio < 0.8) {
+    return { coolingDown, ratio, core: "#fefce8", mid: "#fde047", glow: "#eab308", trail: "#fef9c3" };
+  }
+  return { coolingDown, ratio, core: "#fff7ed", mid: "#fb923c", glow: "#f97316", trail: "#ffedd5" };
+}
+
+function drawPulseHeatBar(fighter) {
+  if (!fighter.isPlayer || !state.running) return;
+
+  const pulseVisual = getPulseVisualState();
+  const { coolingDown, ratio } = pulseVisual;
+  if (ratio <= 0) return;
   const barWidth = 76;
   const barHeight = 8;
   const x = fighter.x + fighter.width / 2 - barWidth / 2;
@@ -946,17 +964,10 @@ function drawPulseHeatBar(fighter) {
   ctx.fill();
 
   if (ratio > 0) {
-    const fillGradient = coolingDown
-      ? ctx.createLinearGradient(x, y, x + barWidth, y)
-      : ctx.createLinearGradient(x, y, x + barWidth, y);
-    if (coolingDown) {
-      fillGradient.addColorStop(0, "#f8fafc");
-      fillGradient.addColorStop(1, "#94a3b8");
-    } else {
-      fillGradient.addColorStop(0, "#34d399");
-      fillGradient.addColorStop(0.55, "#facc15");
-      fillGradient.addColorStop(1, "#f97316");
-    }
+    const fillGradient = ctx.createLinearGradient(x, y, x + barWidth, y);
+    fillGradient.addColorStop(0, pulseVisual.core);
+    fillGradient.addColorStop(0.6, pulseVisual.mid);
+    fillGradient.addColorStop(1, pulseVisual.glow);
     ctx.fillStyle = fillGradient;
     ctx.beginPath();
     ctx.roundRect(x, y, Math.max(6, barWidth * ratio), barHeight, 5);
@@ -1355,24 +1366,25 @@ function drawImpact(fighter) {
 
 function drawProjectiles() {
   for (const projectile of state.projectiles ?? []) {
+    const pulseVisual = getPulseVisualState();
     const centerX = projectile.x + projectile.width / 2;
     const centerY = projectile.y + projectile.height / 2;
     const glow = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, projectile.width * 2.1);
     glow.addColorStop(0, "rgba(255,255,255,1)");
-    glow.addColorStop(0.3, "rgba(167, 243, 208, 0.98)");
-    glow.addColorStop(0.7, "rgba(16, 185, 129, 0.82)");
-    glow.addColorStop(1, "rgba(16, 185, 129, 0)");
+    glow.addColorStop(0.3, `${pulseVisual.mid}fa`);
+    glow.addColorStop(0.7, `${pulseVisual.glow}d1`);
+    glow.addColorStop(1, `${pulseVisual.glow}00`);
     ctx.fillStyle = glow;
     ctx.beginPath();
     ctx.arc(centerX, centerY, projectile.width * 1.7, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#f0fdf4";
+    ctx.fillStyle = pulseVisual.core;
     ctx.beginPath();
     ctx.arc(centerX, centerY, projectile.width * 0.55, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(110, 231, 183, 0.75)";
+    ctx.strokeStyle = pulseVisual.trail;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(centerX - projectile.face * projectile.width * 1.8, centerY);
