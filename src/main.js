@@ -933,13 +933,22 @@ function getPulseVisualState() {
   if (coolingDown) {
     return { coolingDown, ratio, core: "#f8fafc", mid: "#cbd5e1", glow: "#94a3b8", trail: "#e2e8f0" };
   }
-  if (ratio < 0.45) {
-    return { coolingDown, ratio, core: "#f0fdf4", mid: "#86efac", glow: "#22c55e", trail: "#dcfce7" };
-  }
-  if (ratio < 0.8) {
-    return { coolingDown, ratio, core: "#fefce8", mid: "#fde047", glow: "#eab308", trail: "#fef9c3" };
-  }
-  return { coolingDown, ratio, core: "#fff7ed", mid: "#fb923c", glow: "#f97316", trail: "#ffedd5" };
+
+  const lerp = (a, b, t) => Math.round(a + (b - a) * t);
+  const toHex = (r, g, b) => `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+  const mix = (from, to, t) => {
+    const a = from.match(/\w\w/g).map((value) => Number.parseInt(value, 16));
+    const b = to.match(/\w\w/g).map((value) => Number.parseInt(value, 16));
+    return toHex(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t));
+  };
+
+  const low = "#34d399";
+  const mid = "#facc15";
+  const high = "#f97316";
+  const glow = ratio < 0.55 ? mix(low, mid, ratio / 0.55) : mix(mid, high, (ratio - 0.55) / 0.45);
+  const core = ratio < 0.55 ? "#f0fdf4" : ratio < 0.85 ? "#fefce8" : "#fff7ed";
+  const trail = ratio < 0.55 ? "#dcfce7" : ratio < 0.85 ? "#fef9c3" : "#ffedd5";
+  return { coolingDown, ratio, core, mid: glow, glow, trail };
 }
 
 function drawPulseHeatBar(fighter) {
@@ -965,9 +974,9 @@ function drawPulseHeatBar(fighter) {
 
   if (ratio > 0) {
     const fillGradient = ctx.createLinearGradient(x, y, x + barWidth, y);
-    fillGradient.addColorStop(0, pulseVisual.core);
-    fillGradient.addColorStop(0.6, pulseVisual.mid);
-    fillGradient.addColorStop(1, pulseVisual.glow);
+    fillGradient.addColorStop(0, "#34d399");
+    fillGradient.addColorStop(0.55, "#facc15");
+    fillGradient.addColorStop(1, "#f97316");
     ctx.fillStyle = fillGradient;
     ctx.beginPath();
     ctx.roundRect(x, y, Math.max(6, barWidth * ratio), barHeight, 5);
