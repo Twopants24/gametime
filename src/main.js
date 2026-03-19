@@ -68,6 +68,7 @@ cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
 const input = {
   left: false,
   right: false,
+  shield: false,
   jumpQueued: false,
   jabQueued: false,
   smashQueued: false,
@@ -168,7 +169,7 @@ function resetMatch() {
     freezeTrainingDummy();
   }
   overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.", "Start Match");
+  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Q shield, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.", "Start Match");
   updateHud();
 }
 
@@ -268,6 +269,7 @@ function getPlayerInput() {
   const next = {
     left: input.left,
     right: input.right,
+    shield: input.shield,
     jump: input.jumpQueued,
     attack,
     specialFace: input.specialFace,
@@ -364,6 +366,7 @@ function getCpuInput(cpu, target) {
       cpu.jumpsLeft > 0 &&
       cpu.hitstun === 0,
     attack: shouldAttack && cpu.cpuCooldown === 0 ? attackType : null,
+    shield: false,
   };
 }
 
@@ -1002,6 +1005,24 @@ function drawFighter(fighter) {
   }
 
   drawChargingEffect(fighter);
+  if (fighter.shielding) {
+    const centerX = fighter.x + fighter.width / 2;
+    const centerY = fighter.y + fighter.height / 2;
+    const shieldGradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 44);
+    shieldGradient.addColorStop(0, "rgba(255,255,255,0.12)");
+    shieldGradient.addColorStop(0.6, "rgba(96,165,250,0.18)");
+    shieldGradient.addColorStop(1, "rgba(37,99,235,0.02)");
+    ctx.fillStyle = shieldGradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 42, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(191,219,254,0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 36, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   ctx.save();
   ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
@@ -1559,6 +1580,7 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowUp") input.specialQueued = "upSpecial";
   if (event.key === "ArrowDown") input.specialQueued = "blast";
   if (key === "w") input.jumpQueued = true;
+  if (key === "q") input.shield = true;
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
@@ -1581,6 +1603,7 @@ window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
   if (key === "a") input.left = false;
   if (key === "d") input.right = false;
+  if (key === "q") input.shield = false;
   if (key === "e") {
     pulseHeld = false;
   }
@@ -1589,6 +1612,7 @@ window.addEventListener("keyup", (event) => {
 window.addEventListener("blur", () => {
   input.left = false;
   input.right = false;
+  input.shield = false;
   pulseHeld = false;
 });
 

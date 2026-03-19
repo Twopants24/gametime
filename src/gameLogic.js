@@ -131,6 +131,7 @@ export function createFighter(options) {
     attackCooldown: 0,
     hitstun: 0,
     invuln: 0,
+    shielding: false,
     attack: null,
     cpuCooldown: 0,
     impact: null,
@@ -228,8 +229,11 @@ export function applyInput(fighter, input) {
   const canInfiniteJump = fighterIsPlayer && DIFFICULTY.playerInfiniteJumps;
 
   if (next.hitstun > 0) {
+    next.shielding = false;
     return next;
   }
+
+  next.shielding = Boolean(input.shield) && !next.attack;
 
   if (input.left) {
     next.vx -= next.grounded ? PHYSICS.runSpeed : PHYSICS.airDrift;
@@ -247,6 +251,11 @@ export function applyInput(fighter, input) {
       next.jumpsLeft -= 1;
     }
     next.grounded = false;
+  }
+
+  if (next.shielding) {
+    next.vx *= 0.6;
+    return next;
   }
 
   if (input.attack) {
@@ -332,6 +341,25 @@ export function resolveAttack(attacker, defender) {
     nextDefender.invuln <= 0 &&
     intersects(getAttackHitbox(nextAttacker, attackData, hitboxBonus), nextDefender)
   ) {
+    if (nextDefender.shielding) {
+      nextDefender = {
+        ...nextDefender,
+        vx: nextAttacker.face * 1.4,
+        vy: Math.min(nextDefender.vy, -1.5),
+        impact: {
+          type: "spark",
+          timer: 10,
+          x: nextDefender.x + nextDefender.width / 2,
+          y: nextDefender.y + nextDefender.height / 2,
+          face: nextAttacker.face,
+        },
+      };
+      nextAttacker.attack = {
+        ...nextAttacker.attack,
+        didHit: true,
+      };
+      return { attacker: nextAttacker, defender: nextDefender, spawnedProjectile };
+    }
     const scaledDamage = attackData.damage * damageMultiplier;
     const knockback = (attackData.baseKnockback + nextDefender.damage * attackData.scale) * knockbackMultiplier;
     nextDefender = {
@@ -421,6 +449,22 @@ export function updateProjectiles(projectiles, fighters) {
       const fighter = nextFighters[i];
       if (fighter.name === nextProjectile.owner || fighter.invuln > 0) continue;
       if (!intersects(nextProjectile, fighter)) continue;
+
+      if (fighter.shielding) {
+        nextFighters[i] = {
+          ...fighter,
+          vx: nextProjectile.face * 1.2,
+          impact: {
+            type: "spark",
+            timer: 10,
+            x: fighter.x + fighter.width / 2,
+            y: fighter.y + fighter.height / 2,
+            face: nextProjectile.face,
+          },
+        };
+        hit = true;
+        break;
+      }
 
       const knockback = nextProjectile.baseKnockback + fighter.damage * nextProjectile.scale;
       nextFighters[i] = {
@@ -556,6 +600,7 @@ export function updateFighter(fighter) {
         ? { ...fighter.impact, timer: fighter.impact.timer - 1 }
         : null,
     grounded: false,
+    shielding: fighter.hitstun > 0 ? false : fighter.shielding,
   };
 
   next.vy = Math.min(next.vy + PHYSICS.gravity, PHYSICS.maxFall);
@@ -608,6 +653,7 @@ export function handleBlastZone(state, fighterIndex) {
       hitstun: 0,
       attack: null,
       invuln: 0,
+      shielding: false,
       jumpsLeft: PHYSICS.maxJumps,
       grounded: false,
       impact: null,

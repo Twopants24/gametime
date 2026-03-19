@@ -14,6 +14,7 @@ Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 - `W`: jump
 - `Space`: jab
 - `S`: smash attack
+- `Q`: shield
 - `Shift`: charge shot
 - Hold `E`: `Pulse Shot` that ramps up quickly, overheats into an explosion on you, and locks out for 2 seconds
 - `Left` / `Right`: `Nova Rush`

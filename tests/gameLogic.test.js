@@ -78,6 +78,44 @@ test("shot spawns a projectile that damages at range", () => {
   assert.ok((next.projectiles?.length ?? 0) === 0);
 });
 
+test("shield blocks direct attacks", () => {
+  const state = createInitialState();
+  let [attacker, defender] = state.fighters;
+  attacker.x = 400;
+  attacker.y = 400;
+  attacker.face = 1;
+  attacker.attack = { type: "jab", frame: ATTACKS.jab.startup - 1, didHit: false };
+  defender.x = 438;
+  defender.y = 400;
+  defender.shielding = true;
+
+  const resolved = resolveAttack(attacker, defender);
+  assert.equal(resolved.defender.damage, 0);
+  assert.equal(resolved.defender.impact?.type, "spark");
+});
+
+test("shield blocks projectiles", () => {
+  const state = createInitialState();
+  state.running = true;
+  state.fighters[1].x = 520;
+  state.fighters[1].y = 360;
+
+  let next = state;
+  next = stepState(next, {
+    p1: { left: false, right: false, shield: false, jump: false, attack: "shot" },
+    p2: { left: false, right: false, shield: true, jump: false, attack: null },
+  });
+
+  for (let i = 0; i < 12; i += 1) {
+    next = stepState(next, {
+      p1: { left: false, right: false, shield: false, jump: false, attack: null },
+      p2: { left: false, right: false, shield: true, jump: false, attack: null },
+    });
+  }
+
+  assert.equal(next.fighters[1].damage, 0);
+});
+
 test("side special gives Nova a horizontal burst", () => {
   const fighter = createInitialState().fighters[0];
   fighter.face = 1;
