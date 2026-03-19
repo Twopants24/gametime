@@ -974,9 +974,15 @@ function drawPulseHeatBar(fighter) {
 
   if (ratio > 0) {
     const fillGradient = ctx.createLinearGradient(x, y, x + barWidth, y);
-    fillGradient.addColorStop(0, "#34d399");
-    fillGradient.addColorStop(0.55, "#facc15");
-    fillGradient.addColorStop(1, "#f97316");
+    if (coolingDown) {
+      fillGradient.addColorStop(0, pulseVisual.core);
+      fillGradient.addColorStop(0.55, pulseVisual.mid);
+      fillGradient.addColorStop(1, pulseVisual.glow);
+    } else {
+      fillGradient.addColorStop(0, "#34d399");
+      fillGradient.addColorStop(0.55, "#facc15");
+      fillGradient.addColorStop(1, "#f97316");
+    }
     ctx.fillStyle = fillGradient;
     ctx.beginPath();
     ctx.roundRect(x, y, Math.max(6, barWidth * ratio), barHeight, 5);
