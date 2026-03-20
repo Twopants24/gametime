@@ -66,6 +66,23 @@ body {
   color: var(--muted);
 }
 
+.dev-access {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dev-access button {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #22d3ee, #93c5fd);
+}
+
+.dev-access span {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
 .eyebrow,
 .label {
   margin: 0 0 8px;
@@ -228,6 +245,14 @@ button {
   background: rgba(8, 17, 31, 0.86);
   color: var(--text);
   font: inherit;
+}
+
+.hidden-control {
+  display: none;
+}
+
+.hidden-control.visible {
+  display: grid;
 }
 
 .panel li + li {

@@ -19,6 +19,10 @@
           <p class="eyebrow">GameTime Prototype</p>
           <h1>GameTime Clash</h1>
           <p class="lede">A browser-based platform fighter prototype.</p>
+          <div class="dev-access">
+            <button id="dev-login-button" type="button">Dev Login</button>
+            <span id="dev-login-status">FX locked</span>
+          </div>
         </div>
         <div class="scoreboards">
           <article class="scorecard scorecard-player">
@@ -90,10 +94,14 @@
             <span>Training Mode</span>
             <input id="training-mode" type="checkbox" />
           </label>
+          <label class="speed-control hidden-control" for="dev-fx-toggle" id="dev-fx-wrap">
+            <span>Dev FX</span>
+            <input id="dev-fx-toggle" type="checkbox" />
+          </label>
         </article>
       </section>
     </main>
 
-    <script type="module" src="./src/main.js?v=20260308-68"></script>
+    <script type="module" src="./src/main.js?v=20260308-69"></script>
   </body>
 </html>

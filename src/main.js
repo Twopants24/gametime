@@ -11,6 +11,10 @@ const speedValue = document.getElementById("speed-value");
 const cpuDifficultyDial = document.getElementById("cpu-difficulty");
 const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
 const avatarSelect = document.getElementById("avatar-select");
+const devLoginButton = document.getElementById("dev-login-button");
+const devLoginStatus = document.getElementById("dev-login-status");
+const devFxWrap = document.getElementById("dev-fx-wrap");
+const devFxToggle = document.getElementById("dev-fx-toggle");
 const playerNameHeading = document.querySelector(".scorecard-player h2");
 const cpuNameHeading = document.querySelector(".scorecard-cpu h2");
 const trainingModeToggle = document.getElementById("training-mode");
@@ -54,6 +58,9 @@ const PULSE_OVERHEAT_MS = 2600;
 const PULSE_LOCKOUT_MS = 2000;
 const PULSE_FIRE_INTERVAL_MAX = 220;
 const PULSE_FIRE_INTERVAL_MIN = 35;
+const DEV_LOGIN_CODE = "gametime-dev";
+const DEV_UNLOCK_KEY = "gametime-dev-unlocked";
+const DEV_FX_KEY = "gametime-dev-fx";
 let lastHud = {
   p1Damage: null,
   p1Stocks: null,
@@ -64,6 +71,8 @@ let lastHud = {
 
 speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
 cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
+let devUnlocked = window.localStorage.getItem(DEV_UNLOCK_KEY) === "1";
+let devEffectsEnabled = window.localStorage.getItem(DEV_FX_KEY) !== "0" && devUnlocked;
 
 const input = {
   left: false,
@@ -78,6 +87,17 @@ const input = {
   specialQueued: null,
   specialFace: null,
 };
+
+function syncDevUi() {
+  devLoginButton.textContent = devUnlocked ? "Dev Logout" : "Dev Login";
+  devLoginStatus.textContent = devUnlocked ? (devEffectsEnabled ? "FX unlocked" : "FX unlocked, off") : "FX locked";
+  devFxWrap.classList.toggle("visible", devUnlocked);
+  devFxToggle.checked = devEffectsEnabled;
+}
+
+function getFxScale() {
+  return devEffectsEnabled ? 1.35 : 1;
+}
 
 const CHARACTER_LOADOUTS = {
   nova: {
@@ -1115,11 +1135,12 @@ function drawFighter(fighter) {
 
 function drawImpact(fighter) {
   if (!fighter.impact) return;
+  const fxScale = getFxScale();
 
   if (fighter.impact.type === "supernova") {
     const maxTimer = 30;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 132 * (1 - life) + 54;
+    const outerRadius = (132 * (1 - life) + 54) * fxScale;
     const coreRadius = outerRadius * 0.34;
     const shockRadius = outerRadius * (1.12 + (1 - life) * 0.35);
     const gradient = ctx.createRadialGradient(
@@ -1174,7 +1195,7 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "nova") {
     const maxTimer = 22;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 78 * (1 - life) + 28;
+    const outerRadius = (78 * (1 - life) + 28) * fxScale;
     const coreRadius = outerRadius * 0.28;
     const gradient = ctx.createRadialGradient(
       fighter.impact.x,
@@ -1228,7 +1249,7 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "smoke") {
     const maxTimer = 14;
     const life = fighter.impact.timer / maxTimer;
-    const puffRadius = 28 * (1 - life) + 10;
+    const puffRadius = (28 * (1 - life) + 10) * fxScale;
     const puffs = [
       [-16, -6, 0.95],
       [14, -10, 0.82],
@@ -1265,7 +1286,7 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "spark") {
     const maxTimer = 14;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 52 * (1 - life) + 16;
+    const outerRadius = (52 * (1 - life) + 16) * fxScale;
     ctx.strokeStyle = `rgba(167, 243, 208, ${0.9 * life})`;
     ctx.lineWidth = 4;
     for (let i = 0; i < 8; i += 1) {
@@ -1291,7 +1312,7 @@ function drawImpact(fighter) {
   if (fighter.impact.type === "burst") {
     const maxTimer = 20;
     const life = fighter.impact.timer / maxTimer;
-    const outerRadius = 360 * (1 - life) + 130;
+    const outerRadius = (360 * (1 - life) + 130) * fxScale;
     const innerRadius = outerRadius * 0.34;
     const gradient = ctx.createRadialGradient(
       fighter.impact.x,
@@ -1350,7 +1371,7 @@ function drawImpact(fighter) {
 
   const maxTimer = 16;
   const life = fighter.impact.timer / maxTimer;
-  const outerRadius = 54 * (1 - life) + 18;
+  const outerRadius = (54 * (1 - life) + 18) * fxScale;
   const innerRadius = outerRadius * 0.35;
   const gradient = ctx.createRadialGradient(
     fighter.impact.x,
@@ -1465,7 +1486,7 @@ function drawFrame() {
     const elapsed = performance.now() - cameraEffect.startedAt;
     const activeWindow = CHARGE_CAMERA_HOLD_MS + CHARGE_CAMERA_RELEASE_MS;
     const normalized = 1 - Math.min(1, elapsed / activeWindow);
-    const flash = normalized * 0.22;
+    const flash = normalized * (devEffectsEnabled ? 0.34 : 0.22);
     ctx.fillStyle = `rgba(255,255,255,${flash})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = `rgba(96,165,250,${flash * 0.8})`;
@@ -1660,9 +1681,39 @@ document.addEventListener("fullscreenchange", () => {
   fullscreenButton.textContent = document.fullscreenElement === arenaShell ? "Exit Fullscreen" : "Fullscreen";
 });
 
+devLoginButton.addEventListener("click", () => {
+  if (devUnlocked) {
+    devUnlocked = false;
+    devEffectsEnabled = false;
+    window.localStorage.removeItem(DEV_UNLOCK_KEY);
+    window.localStorage.removeItem(DEV_FX_KEY);
+    syncDevUi();
+    return;
+  }
+
+  const code = window.prompt("Enter dev code");
+  if (code !== DEV_LOGIN_CODE) {
+    window.alert("Wrong dev code.");
+    return;
+  }
+
+  devUnlocked = true;
+  devEffectsEnabled = true;
+  window.localStorage.setItem(DEV_UNLOCK_KEY, "1");
+  window.localStorage.setItem(DEV_FX_KEY, "1");
+  syncDevUi();
+});
+
+devFxToggle.addEventListener("input", () => {
+  devEffectsEnabled = devUnlocked && devFxToggle.checked;
+  window.localStorage.setItem(DEV_FX_KEY, devEffectsEnabled ? "1" : "0");
+  syncDevUi();
+});
+
 startButton.addEventListener("click", startMatch);
 
 resetMatch();
 renderStaticStage();
+syncDevUi();
 drawFrame();
 tick();
