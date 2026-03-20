@@ -1580,7 +1580,10 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "ArrowUp") input.specialQueued = "upSpecial";
   if (event.key === "ArrowDown") input.specialQueued = "blast";
   if (key === "w") input.jumpQueued = true;
-  if (key === "q") input.shield = true;
+  if (key === "q") {
+    event.preventDefault();
+    input.shield = true;
+  }
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
