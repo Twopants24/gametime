@@ -21,9 +21,9 @@ const trainingModeToggle = document.getElementById("training-mode");
 const arenaShell = document.querySelector(".arena-shell");
 const stageCanvas = document.createElement("canvas");
 const stageCtx = stageCanvas.getContext("2d");
-
-stageCanvas.width = canvas.width;
-stageCanvas.height = canvas.height;
+const LOGICAL_WIDTH = STAGE.width;
+const LOGICAL_HEIGHT = STAGE.height;
+let renderScale = 1;
 
 const hud = {
   p1Damage: document.getElementById("p1-damage"),
@@ -90,13 +90,38 @@ const input = {
 
 function syncDevUi() {
   devLoginButton.textContent = devUnlocked ? "Dev Logout" : "Dev Login";
-  devLoginStatus.textContent = devUnlocked ? (devEffectsEnabled ? "FX unlocked" : "FX unlocked, off") : "FX locked";
+  devLoginStatus.textContent = devUnlocked ? (devEffectsEnabled ? "FX+HR unlocked" : "Dev unlocked") : "FX locked";
   devFxWrap.classList.toggle("visible", devUnlocked);
   devFxToggle.checked = devEffectsEnabled;
 }
 
 function getFxScale() {
   return devEffectsEnabled ? 1.35 : 1;
+}
+
+function configureCanvasResolution() {
+  renderScale = devEffectsEnabled ? 1.5 : 1;
+  canvas.width = Math.round(LOGICAL_WIDTH * renderScale);
+  canvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
+  stageCanvas.width = Math.round(LOGICAL_WIDTH * renderScale);
+  stageCanvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
+  ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+  stageCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+  renderStaticStage();
+}
+
+function applyDevDialRanges() {
+  speedDial.min = devUnlocked ? "0.10" : "0.50";
+  speedDial.max = devUnlocked ? "2.50" : "1.20";
+  cpuDifficultyDial.min = devUnlocked ? "0.10" : "0.40";
+  cpuDifficultyDial.max = devUnlocked ? "3.00" : "1.80";
+
+  speedMultiplier = Math.min(Number(speedDial.max), Math.max(Number(speedDial.min), speedMultiplier));
+  cpuDifficulty = Math.min(Number(cpuDifficultyDial.max), Math.max(Number(cpuDifficultyDial.min), cpuDifficulty));
+  speedDial.value = speedMultiplier.toFixed(2);
+  cpuDifficultyDial.value = cpuDifficulty.toFixed(2);
+  speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
+  cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
 }
 
 const CHARACTER_LOADOUTS = {
@@ -436,7 +461,9 @@ function drawPlatforms(targetCtx) {
 }
 
 function renderStaticStage() {
+  stageCtx.setTransform(1, 0, 0, 1, 0, 0);
   stageCtx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
+  stageCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
   drawBackground(stageCtx);
   drawPlatforms(stageCtx);
 }
@@ -1451,7 +1478,8 @@ function drawProjectiles() {
 }
 
 function drawFrame() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+  ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 
   if (cameraEffect) {
     const elapsed = performance.now() - cameraEffect.startedAt;
@@ -1471,9 +1499,9 @@ function drawFrame() {
     const shudderX = Math.sin(performance.now() / 18) * shudder;
     const shudderY = Math.cos(performance.now() / 23) * shudder * 0.7;
     ctx.save();
-    ctx.translate(canvas.width / 2 + shudderX, canvas.height / 2 + shudderY);
+    ctx.translate(LOGICAL_WIDTH / 2 + shudderX, LOGICAL_HEIGHT / 2 + shudderY);
     ctx.rotate(tilt);
-    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    ctx.translate(-LOGICAL_WIDTH / 2, -LOGICAL_HEIGHT / 2);
   }
 
   ctx.drawImage(stageCanvas, 0, 0);
@@ -1488,9 +1516,9 @@ function drawFrame() {
     const normalized = 1 - Math.min(1, elapsed / activeWindow);
     const flash = normalized * (devEffectsEnabled ? 0.34 : 0.22);
     ctx.fillStyle = `rgba(255,255,255,${flash})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
     ctx.fillStyle = `rgba(96,165,250,${flash * 0.8})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
   }
 }
 
@@ -1687,6 +1715,8 @@ devLoginButton.addEventListener("click", () => {
     devEffectsEnabled = false;
     window.localStorage.removeItem(DEV_UNLOCK_KEY);
     window.localStorage.removeItem(DEV_FX_KEY);
+    applyDevDialRanges();
+    configureCanvasResolution();
     syncDevUi();
     return;
   }
@@ -1701,19 +1731,23 @@ devLoginButton.addEventListener("click", () => {
   devEffectsEnabled = true;
   window.localStorage.setItem(DEV_UNLOCK_KEY, "1");
   window.localStorage.setItem(DEV_FX_KEY, "1");
+  applyDevDialRanges();
+  configureCanvasResolution();
   syncDevUi();
 });
 
 devFxToggle.addEventListener("input", () => {
   devEffectsEnabled = devUnlocked && devFxToggle.checked;
   window.localStorage.setItem(DEV_FX_KEY, devEffectsEnabled ? "1" : "0");
+  configureCanvasResolution();
   syncDevUi();
 });
 
 startButton.addEventListener("click", startMatch);
 
 resetMatch();
-renderStaticStage();
+applyDevDialRanges();
+configureCanvasResolution();
 syncDevUi();
 drawFrame();
 tick();
