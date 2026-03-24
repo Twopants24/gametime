@@ -300,7 +300,7 @@ button {
   color: #08111f;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 920px), (pointer: coarse) {
   .topbar,
   .info-grid,
   .scoreboards {
@@ -334,7 +334,7 @@ button {
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 680px), (pointer: coarse) {
   .mobile-controls {
     grid-template-columns: 1fr;
   }
