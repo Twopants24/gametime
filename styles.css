@@ -259,6 +259,47 @@ button {
   margin-top: 10px;
 }
 
+.mobile-controls {
+  display: none;
+  gap: 14px;
+  margin-top: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mobile-pad,
+.mobile-actions,
+.mobile-specials {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-pad {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mobile-actions,
+.mobile-specials {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.touch-button {
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 17, 31, 0.78);
+  color: #f8fafc;
+  backdrop-filter: blur(14px);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-button:active,
+.touch-button.is-active {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.9), rgba(59, 130, 246, 0.9));
+  color: #08111f;
+}
+
 @media (max-width: 920px) {
   .topbar,
   .info-grid,
@@ -276,5 +317,25 @@ button {
   .overlay-card,
   .arena-shell {
     border-radius: 20px;
+  }
+
+  .mobile-controls {
+    display: grid;
+  }
+
+  .fullscreen-button {
+    top: 12px;
+    right: 12px;
+    padding: 9px 14px;
+  }
+
+  .dev-access {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 680px) {
+  .mobile-controls {
+    grid-template-columns: 1fr;
   }
 }

@@ -15,6 +15,7 @@ const devLoginButton = document.getElementById("dev-login-button");
 const devLoginStatus = document.getElementById("dev-login-status");
 const devFxWrap = document.getElementById("dev-fx-wrap");
 const devFxToggle = document.getElementById("dev-fx-toggle");
+const touchButtons = document.querySelectorAll("[data-touch-control]");
 const playerNameHeading = document.querySelector(".scorecard-player h2");
 const cpuNameHeading = document.querySelector(".scorecard-cpu h2");
 const trainingModeToggle = document.getElementById("training-mode");
@@ -160,6 +161,73 @@ function setOverlay(title, message, buttonText) {
   overlay.querySelector("h2").textContent = title;
   overlayMessage.textContent = message;
   startButton.textContent = buttonText;
+}
+
+function queueChargeAction(now = performance.now()) {
+  if (chargeReady) {
+    input.chargeQueued = true;
+  } else if (chargeStartedAt === null) {
+    chargeStartedAt = now;
+  }
+}
+
+function setPulseHeld(active, now = performance.now()) {
+  if (active) {
+    if (!pulseHeld && now >= pulseCooldownUntil) {
+      pulseHeld = true;
+      pulseLastFiredAt = now - PULSE_FIRE_INTERVAL_MAX;
+    }
+    return;
+  }
+  pulseHeld = false;
+}
+
+function runTouchControl(control, active, mode) {
+  const now = performance.now();
+  switch (control) {
+    case "left":
+      input.left = active;
+      break;
+    case "right":
+      input.right = active;
+      break;
+    case "jump":
+      if (active && mode === "tap") input.jumpQueued = true;
+      break;
+    case "shield":
+      input.shield = active;
+      break;
+    case "jab":
+      if (active && mode === "tap") input.jabQueued = true;
+      break;
+    case "smash":
+      if (active && mode === "tap") input.smashQueued = true;
+      break;
+    case "pulse":
+      setPulseHeld(active, now);
+      break;
+    case "charge":
+      if (active && mode === "tap") queueChargeAction(now);
+      break;
+    case "side-left":
+      if (active && mode === "tap") {
+        input.specialFace = -1;
+        input.specialQueued = "sideSpecial";
+      }
+      break;
+    case "side-right":
+      if (active && mode === "tap") {
+        input.specialFace = 1;
+        input.specialQueued = "sideSpecial";
+      }
+      break;
+    case "up-special":
+      if (active && mode === "tap") input.specialQueued = "upSpecial";
+      break;
+    case "down-special":
+      if (active && mode === "tap") input.specialQueued = "blast";
+      break;
+  }
 }
 
 function updateHud() {
@@ -1636,17 +1704,14 @@ window.addEventListener("keydown", (event) => {
   if (key === "s") input.smashQueued = true;
   if (key === "e") {
     event.preventDefault();
-    if (!pulseHeld && now >= pulseCooldownUntil) {
-      pulseHeld = true;
-      pulseLastFiredAt = now - PULSE_FIRE_INTERVAL_MAX;
-    }
+    setPulseHeld(true, now);
   }
   if (isShift && chargeReady) {
     event.preventDefault();
-    input.chargeQueued = true;
+    queueChargeAction(now);
   } else if (isShift && chargeStartedAt === null) {
     event.preventDefault();
-    chargeStartedAt = now;
+    queueChargeAction(now);
   }
   if (key === "r") resetMatch();
 });
@@ -1657,7 +1722,7 @@ window.addEventListener("keyup", (event) => {
   if (key === "d") input.right = false;
   if (key === "q") input.shield = false;
   if (key === "e") {
-    pulseHeld = false;
+    setPulseHeld(false);
   }
 });
 
@@ -1665,7 +1730,7 @@ window.addEventListener("blur", () => {
   input.left = false;
   input.right = false;
   input.shield = false;
-  pulseHeld = false;
+  setPulseHeld(false);
 });
 
 speedDial.addEventListener("input", () => {
@@ -1708,6 +1773,34 @@ fullscreenButton.addEventListener("click", async () => {
 document.addEventListener("fullscreenchange", () => {
   fullscreenButton.textContent = document.fullscreenElement === arenaShell ? "Exit Fullscreen" : "Fullscreen";
 });
+
+for (const button of touchButtons) {
+  const control = button.dataset.touchControl;
+  const mode = button.dataset.touchMode ?? "tap";
+
+  const activate = (event) => {
+    event.preventDefault();
+    button.classList.add("is-active");
+    runTouchControl(control, true, mode);
+  };
+
+  const deactivate = (event) => {
+    event.preventDefault();
+    button.classList.remove("is-active");
+    if (mode === "hold") {
+      runTouchControl(control, false, mode);
+    }
+  };
+
+  button.addEventListener("pointerdown", activate);
+  button.addEventListener("pointerup", deactivate);
+  button.addEventListener("pointercancel", deactivate);
+  button.addEventListener("pointerleave", (event) => {
+    if (event.buttons === 0) {
+      deactivate(event);
+    }
+  });
+}
 
 devLoginButton.addEventListener("click", () => {
   if (devUnlocked) {

@@ -54,6 +54,27 @@
         </div>
       </section>
 
+      <section class="mobile-controls" aria-label="Touch controls">
+        <div class="mobile-pad">
+          <button class="touch-button touch-move" data-touch-control="left" data-touch-mode="hold" type="button">Left</button>
+          <button class="touch-button touch-move" data-touch-control="right" data-touch-mode="hold" type="button">Right</button>
+          <button class="touch-button touch-jump" data-touch-control="jump" data-touch-mode="tap" type="button">Jump</button>
+          <button class="touch-button touch-shield" data-touch-control="shield" data-touch-mode="hold" type="button">Shield</button>
+        </div>
+        <div class="mobile-actions">
+          <button class="touch-button" data-touch-control="jab" data-touch-mode="tap" type="button">Jab</button>
+          <button class="touch-button" data-touch-control="smash" data-touch-mode="tap" type="button">Smash</button>
+          <button class="touch-button" data-touch-control="pulse" data-touch-mode="hold" type="button">Pulse</button>
+          <button class="touch-button" data-touch-control="charge" data-touch-mode="tap" type="button">Charge</button>
+        </div>
+        <div class="mobile-specials">
+          <button class="touch-button" data-touch-control="side-left" data-touch-mode="tap" type="button">Rush L</button>
+          <button class="touch-button" data-touch-control="up-special" data-touch-mode="tap" type="button">Sky</button>
+          <button class="touch-button" data-touch-control="down-special" data-touch-mode="tap" type="button">Burst</button>
+          <button class="touch-button" data-touch-control="side-right" data-touch-mode="tap" type="button">Rush R</button>
+        </div>
+      </section>
+
       <section class="info-grid">
         <article class="panel">
           <p class="label">Move Set</p>
@@ -64,6 +85,7 @@
             <li>Hold Shift for 1 second to store a Charge Shot, then tap Shift to fire it later.</li>
             <li>Hold E for Pulse Shot. It ramps up fast, but if you hold too long you overheat, explode, and lose Pulse Shot for 2 seconds.</li>
             <li>Left or right arrow for Nova Rush, up arrow for Skybreak, and down arrow for Burst Field.</li>
+            <li>On mobile, use the touch controls under the arena for movement, attacks, shield, and specials.</li>
             <li>You can keep jumping in the air as long as you need.</li>
             <li>Your attacks have a little extra reach to make confirms easier.</li>
           </ul>
@@ -103,6 +125,6 @@
       </section>
     </main>
 
-    <script type="module" src="./src/main.js?v=20260308-71"></script>
+    <script type="module" src="./src/main.js?v=20260308-72"></script>
   </body>
 </html>
