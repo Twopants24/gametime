@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260308-6" />
+    <link rel="stylesheet" href="./styles.css?v=20260308-7" />
   </head>
   <body>
     <main class="shell">
@@ -44,6 +44,26 @@
       <section class="arena-shell">
         <button class="fullscreen-button" id="fullscreen-button" type="button">Fullscreen</button>
         <canvas id="game" width="960" height="540" aria-label="Smash-style platform fighter arena"></canvas>
+        <section class="mobile-controls" aria-label="Touch controls">
+          <div class="mobile-pad">
+            <button class="touch-button touch-move" data-touch-control="left" data-touch-mode="hold" type="button" aria-label="Move left">◀</button>
+            <button class="touch-button touch-jump" data-touch-control="jump" data-touch-mode="tap" type="button" aria-label="Jump">▲</button>
+            <button class="touch-button touch-shield" data-touch-control="shield" data-touch-mode="hold" type="button" aria-label="Shield">◌</button>
+            <button class="touch-button touch-move" data-touch-control="right" data-touch-mode="hold" type="button" aria-label="Move right">▶</button>
+          </div>
+          <div class="mobile-actions">
+            <button class="touch-button" data-touch-control="jab" data-touch-mode="tap" type="button" aria-label="Jab">J</button>
+            <button class="touch-button" data-touch-control="smash" data-touch-mode="tap" type="button" aria-label="Smash">S</button>
+            <button class="touch-button" data-touch-control="pulse" data-touch-mode="hold" type="button" aria-label="Pulse Shot">P</button>
+            <button class="touch-button" data-touch-control="charge" data-touch-mode="tap" type="button" aria-label="Charge Shot">C</button>
+          </div>
+          <div class="mobile-specials">
+            <button class="touch-button" data-touch-control="side-left" data-touch-mode="tap" type="button" aria-label="Side special left">◁</button>
+            <button class="touch-button" data-touch-control="up-special" data-touch-mode="tap" type="button" aria-label="Up special">⬆</button>
+            <button class="touch-button" data-touch-control="down-special" data-touch-mode="tap" type="button" aria-label="Down special">⬇</button>
+            <button class="touch-button" data-touch-control="side-right" data-touch-mode="tap" type="button" aria-label="Side special right">▷</button>
+          </div>
+        </section>
         <div class="overlay" id="overlay">
           <div class="overlay-card">
             <p class="eyebrow">Controls</p>
@@ -51,27 +71,6 @@
             <p id="overlay-message">A/D move, W jump, Space jab, S smash, Q shield, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.</p>
             <button id="start-button" type="button">Start Match</button>
           </div>
-        </div>
-      </section>
-
-      <section class="mobile-controls" aria-label="Touch controls">
-        <div class="mobile-pad">
-          <button class="touch-button touch-move" data-touch-control="left" data-touch-mode="hold" type="button">Left</button>
-          <button class="touch-button touch-move" data-touch-control="right" data-touch-mode="hold" type="button">Right</button>
-          <button class="touch-button touch-jump" data-touch-control="jump" data-touch-mode="tap" type="button">Jump</button>
-          <button class="touch-button touch-shield" data-touch-control="shield" data-touch-mode="hold" type="button">Shield</button>
-        </div>
-        <div class="mobile-actions">
-          <button class="touch-button" data-touch-control="jab" data-touch-mode="tap" type="button">Jab</button>
-          <button class="touch-button" data-touch-control="smash" data-touch-mode="tap" type="button">Smash</button>
-          <button class="touch-button" data-touch-control="pulse" data-touch-mode="hold" type="button">Pulse</button>
-          <button class="touch-button" data-touch-control="charge" data-touch-mode="tap" type="button">Charge</button>
-        </div>
-        <div class="mobile-specials">
-          <button class="touch-button" data-touch-control="side-left" data-touch-mode="tap" type="button">Rush L</button>
-          <button class="touch-button" data-touch-control="up-special" data-touch-mode="tap" type="button">Sky</button>
-          <button class="touch-button" data-touch-control="down-special" data-touch-mode="tap" type="button">Burst</button>
-          <button class="touch-button" data-touch-control="side-right" data-touch-mode="tap" type="button">Rush R</button>
         </div>
       </section>
 
@@ -85,7 +84,7 @@
             <li>Hold Shift for 1 second to store a Charge Shot, then tap Shift to fire it later.</li>
             <li>Hold E for Pulse Shot. It ramps up fast, but if you hold too long you overheat, explode, and lose Pulse Shot for 2 seconds.</li>
             <li>Left or right arrow for Nova Rush, up arrow for Skybreak, and down arrow for Burst Field.</li>
-            <li>On mobile, use the touch controls under the arena for movement, attacks, shield, and specials.</li>
+            <li>On mobile, use the transparent touch controls on the arena for movement, attacks, shield, and specials.</li>
             <li>You can keep jumping in the air as long as you need.</li>
             <li>Your attacks have a little extra reach to make confirms easier.</li>
           </ul>
@@ -125,6 +124,6 @@
       </section>
     </main>
 
-    <script type="module" src="./src/main.js?v=20260308-74"></script>
+    <script type="module" src="./src/main.js?v=20260308-75"></script>
   </body>
 </html>
