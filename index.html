@@ -2,34 +2,128 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0; url=./beanfarmer/index.html?v=20260325-2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Bean Farmer</title>
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        font-family: system-ui, sans-serif;
-        background: linear-gradient(180deg, #e6f4ec, #f3ead5);
-        color: #2f2416;
-      }
-
-      main {
-        text-align: center;
-        padding: 24px;
-      }
-
-      a {
-        color: inherit;
-        font-weight: 700;
-      }
-    </style>
+    <title>GameTime Clash</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=20260308-7" />
   </head>
   <body>
-    <main>
-      <p>Redirecting to <a href="./beanfarmer/index.html?v=20260325-2">The Bean Farmer</a>...</p>
+    <main class="shell">
+      <section class="topbar">
+        <div class="brand">
+          <p class="eyebrow">GameTime Prototype</p>
+          <h1>GameTime Clash</h1>
+          <p class="lede">A browser-based platform fighter prototype.</p>
+          <div class="dev-access">
+            <button id="dev-login-button" type="button">Dev Login</button>
+            <span id="dev-login-status">FX locked</span>
+          </div>
+        </div>
+        <div class="scoreboards">
+          <article class="scorecard scorecard-player">
+            <p class="label">Player 1</p>
+            <h2>Nova</h2>
+            <p>Damage <strong id="p1-damage">0%</strong></p>
+            <p>Stocks <strong id="p1-stocks">4</strong></p>
+            <p>Charge <strong id="p1-charge">Building</strong></p>
+          </article>
+          <article class="scorecard scorecard-cpu">
+            <p class="label">CPU</p>
+            <h2>Volt</h2>
+            <p>Damage <strong id="p2-damage">0%</strong></p>
+            <p>Stocks <strong id="p2-stocks">4</strong></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="arena-shell">
+        <button class="fullscreen-button" id="fullscreen-button" type="button">Fullscreen</button>
+        <canvas id="game" width="960" height="540" aria-label="Smash-style platform fighter arena"></canvas>
+        <section class="mobile-controls" aria-label="Touch controls">
+          <div class="mobile-pad">
+            <button class="touch-button touch-move" data-touch-control="left" data-touch-mode="hold" type="button" aria-label="Move left">◀</button>
+            <button class="touch-button touch-jump" data-touch-control="jump" data-touch-mode="tap" type="button" aria-label="Jump">▲</button>
+            <button class="touch-button touch-shield" data-touch-control="shield" data-touch-mode="hold" type="button" aria-label="Shield">◌</button>
+            <button class="touch-button touch-move" data-touch-control="right" data-touch-mode="hold" type="button" aria-label="Move right">▶</button>
+          </div>
+          <div class="mobile-actions">
+            <button class="touch-button" data-touch-control="jab" data-touch-mode="tap" type="button" aria-label="Jab">J</button>
+            <button class="touch-button" data-touch-control="smash" data-touch-mode="tap" type="button" aria-label="Smash">S</button>
+            <button class="touch-button" data-touch-control="pulse" data-touch-mode="hold" type="button" aria-label="Pulse Shot">P</button>
+            <button class="touch-button" data-touch-control="charge" data-touch-mode="tap" type="button" aria-label="Charge Shot">C</button>
+          </div>
+          <div class="mobile-specials">
+            <button class="touch-button" data-touch-control="side-left" data-touch-mode="tap" type="button" aria-label="Side special left">◁</button>
+            <button class="touch-button" data-touch-control="up-special" data-touch-mode="tap" type="button" aria-label="Up special">⬆</button>
+            <button class="touch-button" data-touch-control="down-special" data-touch-mode="tap" type="button" aria-label="Down special">⬇</button>
+            <button class="touch-button" data-touch-control="side-right" data-touch-mode="tap" type="button" aria-label="Side special right">▷</button>
+          </div>
+        </section>
+        <div class="overlay" id="overlay">
+          <div class="overlay-card">
+            <p class="eyebrow">Controls</p>
+            <h2>Enter The Arena</h2>
+            <p id="overlay-message">A/D move, W jump, Space jab, S smash, Q shield, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.</p>
+            <button id="start-button" type="button">Start Match</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-grid">
+        <article class="panel">
+          <p class="label">Move Set</p>
+          <ul>
+            <li>Jab is fast and reliable for stacking percent.</li>
+            <li>Smash is slower but launches hard at high damage.</li>
+            <li>Hold Q to shield and block hits.</li>
+            <li>Hold Shift for 1 second to store a Charge Shot, then tap Shift to fire it later.</li>
+            <li>Hold E for Pulse Shot. It ramps up fast, but if you hold too long you overheat, explode, and lose Pulse Shot for 2 seconds.</li>
+            <li>Left or right arrow for Nova Rush, up arrow for Skybreak, and down arrow for Burst Field.</li>
+            <li>On mobile, use the transparent touch controls on the arena for movement, attacks, shield, and specials.</li>
+            <li>You can keep jumping in the air as long as you need.</li>
+            <li>Your attacks have a little extra reach to make confirms easier.</li>
+          </ul>
+          <label class="speed-control" for="avatar-select">
+            <span>Character</span>
+            <select id="avatar-select">
+              <option value="nova">Nova</option>
+              <option value="volt">Volt</option>
+            </select>
+          </label>
+        </article>
+        <article class="panel">
+          <p class="label">Rules</p>
+          <ul>
+            <li>Percent increases knockback instead of reducing health.</li>
+            <li>Cross the blast zone and you lose a stock.</li>
+            <li>You and the CPU both have 4 stocks.</li>
+            <li>Dev mode unlocks wider dial ranges plus stronger effects and higher internal resolution.</li>
+          </ul>
+          <label class="speed-control" for="speed-dial">
+            <span>Speed Dial <strong id="speed-value">0.85x</strong></span>
+            <input id="speed-dial" type="range" min="0.50" max="1.20" step="0.01" value="0.85" />
+          </label>
+          <label class="speed-control" for="cpu-difficulty">
+            <span>CPU Dial <strong id="cpu-difficulty-value">1.00x</strong></span>
+            <input id="cpu-difficulty" type="range" min="0.40" max="1.80" step="0.05" value="1.00" />
+          </label>
+          <label class="speed-control" for="training-mode">
+            <span>Training Mode</span>
+            <input id="training-mode" type="checkbox" />
+          </label>
+          <label class="speed-control hidden-control" for="dev-fx-toggle" id="dev-fx-wrap">
+            <span>Dev FX / High Res</span>
+            <input id="dev-fx-toggle" type="checkbox" />
+          </label>
+        </article>
+      </section>
     </main>
+
+    <script type="module" src="./src/main.js?v=20260308-75"></script>
   </body>
 </html>
