@@ -1,0 +1,91 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  BEANS,
+  QUESTS,
+  advanceTime,
+  buySeeds,
+  buyUpgrade,
+  createInitialState,
+  harvestPlot,
+  plantBean,
+  sellBeans,
+  unlockParcel,
+  waterPlot,
+  performMining,
+} from "../src/gameLogic.js";
+
+function getFirstPlotId(state) {
+  return state.parcels[0].plots[0].id;
+}
+
+test("planting and watering a bean allows it to mature and harvest", () => {
+  let state = createInitialState();
+  const plotId = getFirstPlotId(state);
+
+  state = plantBean(state, plotId, "green");
+  state = waterPlot(state, plotId);
+  state = advanceTime(state, 6);
+
+  assert.equal(state.parcels[0].plots[0].state, "ready");
+
+  state = harvestPlot(state, plotId);
+  assert.equal(state.inventory.beans.green, BEANS.green.yield);
+});
+
+test("selling beans advances the sell quest and grants rewards", () => {
+  let state = createInitialState();
+  const plotIds = state.parcels[0].plots.map((plot) => plot.id);
+
+  for (const plotId of plotIds) {
+    state = plantBean(state, plotId, "green");
+    state = waterPlot(state, plotId);
+  }
+
+  state = advanceTime(state, 6);
+
+  for (const plotId of plotIds) {
+    state = harvestPlot(state, plotId);
+  }
+
+  state = sellBeans(state);
+
+  assert.ok(state.completedQuestIds.includes(QUESTS[0].id));
+  assert.ok((state.inventory.seeds.wax ?? 0) >= 3);
+  assert.ok(state.credits > 40);
+});
+
+test("unlocking a parcel completes the expansion quest", () => {
+  let state = createInitialState();
+  state.credits = 200;
+
+  state = unlockParcel(state, "creek");
+
+  assert.equal(state.parcels.find((parcel) => parcel.id === "creek")?.unlocked, true);
+  assert.ok(state.completedQuestIds.includes("expand_farm"));
+});
+
+test("common bean yield upgrade increases harvest output", () => {
+  let state = createInitialState();
+  const plotId = getFirstPlotId(state);
+  state.credits = 200;
+
+  state = buyUpgrade(state, "field_notes");
+  state = buySeeds(state, "green", 1);
+  state = plantBean(state, plotId, "green");
+  state = waterPlot(state, plotId);
+  state = advanceTime(state, 6);
+  state = harvestPlot(state, plotId);
+
+  assert.equal(state.inventory.beans.green, BEANS.green.yield + 1);
+});
+
+test("mining produces ore and later special seed rewards", () => {
+  let state = createInitialState();
+  state.clock.day = 3;
+
+  state = performMining(state);
+
+  assert.ok(state.ore >= 3);
+  assert.equal(state.inventory.seeds.starlight, 1);
+});

@@ -1,0 +1,353 @@
+:root {
+  --bg: #f3ead5;
+  --ink: #2f2416;
+  --muted: #6e5d49;
+  --card: rgba(255, 248, 235, 0.8);
+  --card-border: rgba(95, 70, 35, 0.16);
+  --bean: #658536;
+  --soil: #7a5130;
+  --gold: #d4a746;
+  --leaf: #91bd63;
+  --sky: #d6efe2;
+  --special: #6f57d9;
+  --danger: #c85c3b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(201, 232, 203, 0.85), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(236, 188, 101, 0.35), transparent 25%),
+    linear-gradient(180deg, #e6f4ec 0%, var(--bg) 48%, #ead9bb 100%);
+}
+
+.shell {
+  width: min(1440px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 42px;
+}
+
+.hero,
+.dashboard,
+.main-grid,
+.info-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  grid-template-columns: 1.5fr auto;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #5d7c37;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  font-weight: 800;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  line-height: 0.95;
+}
+
+h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+.lede {
+  max-width: 48rem;
+  color: var(--muted);
+  font-size: 1.04rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 800;
+  color: #1f170d;
+  background: linear-gradient(135deg, #f6cd67, #cf8d37);
+  box-shadow: 0 10px 24px rgba(113, 75, 27, 0.16);
+  cursor: pointer;
+}
+
+button.secondary {
+  background: linear-gradient(135deg, #f6f0e1, #ddceb0);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.dashboard {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 24px 50px rgba(97, 70, 39, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.metric-card {
+  border-radius: 24px;
+  padding: 18px 20px;
+  display: grid;
+  gap: 6px;
+}
+
+.metric-card span {
+  font-size: 0.84rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.metric-card strong {
+  font-size: 1.35rem;
+}
+
+.main-grid {
+  grid-template-columns: 1.5fr 0.8fr;
+  align-items: start;
+}
+
+.panel {
+  border-radius: 28px;
+  padding: 22px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.time-controls,
+.action-grid,
+.shop-actions,
+.land-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.farm-view {
+  display: grid;
+  gap: 18px;
+}
+
+.parcel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(240, 255, 244, 0.88), rgba(230, 215, 184, 0.8)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  border: 1px solid rgba(116, 94, 57, 0.12);
+}
+
+.parcel.locked {
+  opacity: 0.7;
+}
+
+.parcel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
+.plot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 12px;
+}
+
+.plot-card {
+  position: relative;
+  min-height: 124px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(82, 56, 29, 0.12);
+  background: linear-gradient(180deg, rgba(228, 246, 223, 0.95), rgba(214, 224, 184, 0.9));
+  overflow: hidden;
+}
+
+.plot-card::before {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: 18px;
+  height: 40px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #8e6239 0%, #6f452a 100%);
+  box-shadow: inset 0 10px 0 rgba(255, 230, 189, 0.12);
+  transform: skew(-22deg);
+}
+
+.plot-card.empty::after,
+.plot-card.planted::after,
+.plot-card.ready::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+}
+
+.plot-card.planted::after {
+  width: 36px;
+  height: 58px;
+  left: calc(50% - 18px);
+  bottom: 34px;
+  background:
+    radial-gradient(circle at 18px 12px, var(--leaf) 0 8px, transparent 9px),
+    radial-gradient(circle at 10px 26px, #76a53d 0 7px, transparent 8px),
+    radial-gradient(circle at 26px 28px, #87b84a 0 7px, transparent 8px),
+    linear-gradient(180deg, #4f8a2b, #426f24);
+  clip-path: polygon(46% 0%, 55% 0%, 62% 100%, 38% 100%);
+}
+
+.plot-card.ready::after {
+  width: 58px;
+  height: 72px;
+  left: calc(50% - 29px);
+  bottom: 28px;
+  background:
+    radial-gradient(circle at 15px 18px, #89c445 0 10px, transparent 11px),
+    radial-gradient(circle at 43px 18px, #7db63c 0 10px, transparent 11px),
+    radial-gradient(circle at 20px 44px, #6f9f31 0 11px, transparent 12px),
+    radial-gradient(circle at 40px 44px, #88c15b 0 11px, transparent 12px);
+}
+
+.plot-title,
+.parcel-title {
+  position: relative;
+  z-index: 2;
+  font-weight: 800;
+}
+
+.plot-meta,
+.mini-copy {
+  position: relative;
+  z-index: 2;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.plot-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.plot-actions button {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+}
+
+.side-column,
+.info-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.bean-selector,
+.stack-list {
+  display: grid;
+  gap: 12px;
+}
+
+.bean-chip,
+.stack-item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(102, 79, 46, 0.12);
+  background: rgba(255, 249, 239, 0.86);
+}
+
+.bean-chip.active {
+  border-color: rgba(108, 147, 53, 0.45);
+  background: linear-gradient(135deg, rgba(237, 246, 213, 0.95), rgba(255, 247, 230, 0.92));
+}
+
+.bean-chip button {
+  justify-self: start;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+.stack-item strong {
+  font-size: 1rem;
+}
+
+.stack-item span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.quest-complete {
+  border-color: rgba(78, 149, 88, 0.28);
+  background: linear-gradient(135deg, rgba(232, 251, 235, 0.95), rgba(255, 249, 239, 0.86));
+}
+
+.rare {
+  color: var(--special);
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1080px) {
+  .dashboard,
+  .main-grid,
+  .info-grid,
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Bean Farmer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">3D Farm Slice</p>
+          <h1>The Bean Farmer</h1>
+          <p class="lede">Grow beans, sell the harvest, unlock new land, finish quests, mine for rare seeds, and build a ridiculous bean empire.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="save-button" type="button">Save Farm</button>
+          <button id="reset-button" type="button" class="secondary">New Save</button>
+        </div>
+      </section>
+
+      <section class="dashboard">
+        <article class="metric-card">
+          <span>Credits</span>
+          <strong id="credits-value">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Ore</span>
+          <strong id="ore-value">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Day / Hour</span>
+          <strong id="clock-value">Day 1, 08:00</strong>
+        </article>
+        <article class="metric-card">
+          <span>Action</span>
+          <strong id="action-value">Welcome to The Bean Farmer.</strong>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <section class="farm-panel panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Farm</p>
+              <h2>Bean Parcels</h2>
+            </div>
+            <div class="time-controls">
+              <button data-advance-hours="3" type="button">+3h</button>
+              <button data-advance-hours="6" type="button">+6h</button>
+              <button data-advance-hours="12" type="button">+12h</button>
+            </div>
+          </div>
+          <div id="farm-view" class="farm-view"></div>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel">
+            <p class="eyebrow">Seeds</p>
+            <h2>Planting Kit</h2>
+            <div id="bean-selector" class="bean-selector"></div>
+            <div class="shop-actions" id="shop-actions"></div>
+          </section>
+
+          <section class="panel">
+            <p class="eyebrow">Operations</p>
+            <h2>Farm Actions</h2>
+            <div class="action-grid">
+              <button id="sell-button" type="button">Sell Harvest</button>
+              <button id="mine-button" type="button" class="secondary">Go Mining</button>
+            </div>
+            <div id="land-actions" class="land-actions"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="info-grid">
+        <section class="panel">
+          <p class="eyebrow">Quests</p>
+          <h2>Town Board</h2>
+          <div id="quest-list" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Upgrades</p>
+          <h2>Player & Farm</h2>
+          <div id="upgrade-list" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Bean Index</p>
+          <h2>Discovery Log</h2>
+          <div id="bean-index" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Inventory</p>
+          <h2>Storage</h2>
+          <div id="inventory-list" class="stack-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
