@@ -17,7 +17,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js";
+} from "./gameLogic.js?v=20260325-1";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 
