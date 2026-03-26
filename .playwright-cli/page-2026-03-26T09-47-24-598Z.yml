@@ -1,0 +1,155 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - paragraph [ref=e5]: 3D Farm Slice
+      - heading "The Bean Farmer" [level=1] [ref=e6]
+      - paragraph [ref=e7]: Grow beans, sell the harvest, unlock new land, finish quests, mine for rare seeds, and build a ridiculous bean empire.
+    - generic [ref=e8]:
+      - button "Save Farm" [ref=e9] [cursor=pointer]
+      - button "New Save" [ref=e10] [cursor=pointer]
+  - generic [ref=e11]:
+    - article [ref=e12]:
+      - generic [ref=e13]: Credits
+      - strong [ref=e14]: "40"
+    - article [ref=e15]:
+      - generic [ref=e16]: Ore
+      - strong [ref=e17]: "0"
+    - article [ref=e18]:
+      - generic [ref=e19]: Day / Hour
+      - strong [ref=e20]: Day 1, 08:00
+    - article [ref=e21]:
+      - generic [ref=e22]: Action
+      - strong [ref=e23]: Welcome to The Bean Farmer.
+  - generic [ref=e24]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - paragraph [ref=e28]: Farm
+          - heading "Bean Parcels" [level=2] [ref=e29]
+        - generic [ref=e30]:
+          - button "+3h" [ref=e31] [cursor=pointer]
+          - button "+6h" [ref=e32] [cursor=pointer]
+          - button "+12h" [ref=e33] [cursor=pointer]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e37]:
+            - generic [ref=e38]: Home Patch
+            - generic [ref=e39]: 6 plots · soil bonus x1.00
+          - generic [ref=e40]:
+            - article [ref=e41]:
+              - generic [ref=e42]: Open Plot
+              - generic [ref=e43]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e45] [cursor=pointer]
+            - article [ref=e46]:
+              - generic [ref=e47]: Open Plot
+              - generic [ref=e48]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e50] [cursor=pointer]
+            - article [ref=e51]:
+              - generic [ref=e52]: Open Plot
+              - generic [ref=e53]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e55] [cursor=pointer]
+            - article [ref=e56]:
+              - generic [ref=e57]: Open Plot
+              - generic [ref=e58]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e60] [cursor=pointer]
+            - article [ref=e61]:
+              - generic [ref=e62]: Open Plot
+              - generic [ref=e63]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e65] [cursor=pointer]
+            - article [ref=e66]:
+              - generic [ref=e67]: Open Plot
+              - generic [ref=e68]: Fresh soil. Ready for planting.
+              - button "Plant Green Bean" [ref=e70] [cursor=pointer]
+        - generic [ref=e71]:
+          - generic [ref=e73]:
+            - generic [ref=e74]: Creekside Beds
+            - generic [ref=e75]: Locked · 120 credits
+          - article [ref=e77]:
+            - generic [ref=e78]: Locked Parcel
+            - generic [ref=e79]: Buy this land from the operations panel to add more bean beds.
+        - generic [ref=e80]:
+          - generic [ref=e82]:
+            - generic [ref=e83]: Sunridge Terrace
+            - generic [ref=e84]: Locked · 320 credits
+          - article [ref=e86]:
+            - generic [ref=e87]: Locked Parcel
+            - generic [ref=e88]: Buy this land from the operations panel to add more bean beds.
+    - complementary [ref=e89]:
+      - generic [ref=e90]:
+        - paragraph [ref=e91]: Seeds
+        - heading "Planting Kit" [level=2] [ref=e92]
+        - generic [ref=e93]:
+          - article [ref=e94]:
+            - strong [ref=e95]: Green Bean
+            - generic [ref=e96]: A reliable starter crop with steady returns.
+            - generic [ref=e97]: Common · 6h · 9 credits
+            - generic [ref=e98]: "Seeds in bag: 6"
+            - button "Use Seed" [ref=e99] [cursor=pointer]
+          - article [ref=e100]:
+            - strong [ref=e101]: Starlight Bean
+            - generic [ref=e102]: A special quest and challenge bean with huge value.
+            - generic [ref=e103]: Special · 18h · 90 credits
+            - generic [ref=e104]: "Seeds in bag: 0"
+            - button "Use Seed" [ref=e105] [cursor=pointer]
+        - button "Buy Green Bean Seed (4)" [ref=e107] [cursor=pointer]
+      - generic [ref=e108]:
+        - paragraph [ref=e109]: Operations
+        - heading "Farm Actions" [level=2] [ref=e110]
+        - generic [ref=e111]:
+          - button "Sell Harvest" [ref=e112] [cursor=pointer]
+          - button "Go Mining" [ref=e113] [cursor=pointer]
+        - generic [ref=e114]:
+          - button "Unlock Creekside Beds (120)" [ref=e115] [cursor=pointer]
+          - button "Unlock Sunridge Terrace (320)" [ref=e116] [cursor=pointer]
+  - generic [ref=e117]:
+    - generic [ref=e118]:
+      - paragraph [ref=e119]: Quests
+      - heading "Town Board" [level=2] [ref=e120]
+      - generic [ref=e121]:
+        - article [ref=e122]:
+          - strong [ref=e123]: Market Debut
+          - generic [ref=e124]: Sell 12 beans.
+          - generic [ref=e125]: 0 / 12
+        - article [ref=e126]:
+          - strong [ref=e127]: Room To Grow
+          - generic [ref=e128]: Unlock Creekside Beds.
+          - generic [ref=e129]: Locked
+        - article [ref=e130]:
+          - strong [ref=e131]: Festival Delivery
+          - generic [ref=e132]: Harvest 4 Scarlet Runner beans.
+          - generic [ref=e133]: 0 / 4
+    - generic [ref=e134]:
+      - paragraph [ref=e135]: Upgrades
+      - heading "Player & Farm" [level=2] [ref=e136]
+      - generic [ref=e137]:
+        - article [ref=e138]:
+          - strong [ref=e139]: Copper Watering Can
+          - generic [ref=e140]: Watering gives +1 extra hydration.
+          - generic [ref=e141]: 70 credits
+          - button "Buy Upgrade" [ref=e142] [cursor=pointer]
+        - article [ref=e143]:
+          - strong [ref=e144]: Field Notes
+          - generic [ref=e145]: Harvests gain +1 yield on common beans.
+          - generic [ref=e146]: 120 credits
+          - button "Buy Upgrade" [ref=e147] [cursor=pointer]
+        - article [ref=e148]:
+          - strong [ref=e149]: Miner Boots
+          - generic [ref=e150]: Mining grants +1 guaranteed ore.
+          - generic [ref=e151]: 150 credits
+          - button "Buy Upgrade" [ref=e152] [cursor=pointer]
+    - generic [ref=e153]:
+      - paragraph [ref=e154]: Bean Index
+      - heading "Discovery Log" [level=2] [ref=e155]
+      - article [ref=e157]:
+        - strong [ref=e158]: No beans logged yet.
+        - generic [ref=e159]: Plant or discover a bean to start the index.
+    - generic [ref=e160]:
+      - paragraph [ref=e161]: Inventory
+      - heading "Storage" [level=2] [ref=e162]
+      - generic [ref=e163]:
+        - article [ref=e164]:
+          - strong [ref=e165]: Seeds
+          - generic [ref=e166]: "Green Bean: 6"
+        - article [ref=e167]:
+          - strong [ref=e168]: Harvest
+          - generic [ref=e169]: Empty
