@@ -214,6 +214,53 @@ button:disabled {
   height: 620px;
 }
 
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 248, 220, 0.9);
+  box-shadow: 0 0 0 1px rgba(47, 36, 22, 0.25);
+  pointer-events: none;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.reticle::before,
+.reticle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(255, 248, 220, 0.9);
+  transform: translate(-50%, -50%);
+}
+
+.reticle::before {
+  width: 2px;
+  height: 14px;
+}
+
+.reticle::after {
+  width: 14px;
+  height: 2px;
+}
+
+.reticle.hidden {
+  opacity: 0;
+}
+
+.reticle.active {
+  border-color: rgba(246, 205, 103, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(47, 36, 22, 0.25),
+    0 0 18px rgba(246, 205, 103, 0.45);
+  transform: scale(1.08);
+}
+
 .viewport-overlay {
   position: absolute;
   inset: 0;

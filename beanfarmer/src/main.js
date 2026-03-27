@@ -70,6 +70,7 @@ const beanIndexPanel = beanIndex.closest(".panel");
 const inventoryList = document.getElementById("inventory-list");
 const viewModeButton = document.getElementById("viewmode-button");
 const fullscreenButton = document.getElementById("fullscreen-button");
+const reticle = document.getElementById("reticle");
 const saveButton = document.getElementById("save-button");
 const resetButton = document.getElementById("reset-button");
 const sellButton = document.getElementById("sell-button");
@@ -86,6 +87,11 @@ const movementKeys = {
   KeyA: false,
   KeyS: false,
   KeyD: false,
+  Space: false,
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false,
 };
 
 function loadState() {
@@ -111,8 +117,15 @@ const playerState = {
   position: new THREE.Vector3(-2, 0.85, 8),
   exteriorPosition: new THREE.Vector3(-2, 0.85, 8),
   heading: 0,
+  lookPitch: -0.04,
   moving: false,
+  verticalVelocity: 0,
+  landingTimer: 0,
 };
+
+const FLOOR_HEIGHT = 0.85;
+const JUMP_VELOCITY = 6.8;
+const GRAVITY = 18;
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -152,6 +165,7 @@ function clampCameraToBounds() {
 function syncViewModeUi() {
   viewModeButton.textContent = firstPersonMode ? "Third Person" : "First Person";
   playerGroup.visible = !firstPersonMode;
+  updateReticle();
 }
 
 function updateFirstPersonCamera() {
@@ -163,11 +177,7 @@ function updateFirstPersonCamera() {
   const eye = playerState.position.clone().add(new THREE.Vector3(0, headHeight, 0));
   const facing = new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading));
   const lookTarget = eye.clone().add(facing.multiplyScalar(8));
-  if (insideHouse) {
-    lookTarget.y = headHeight - 0.15;
-  } else {
-    lookTarget.y = headHeight - 0.2;
-  }
+  lookTarget.y = headHeight + playerState.lookPitch * 8;
 
   camera.position.copy(eye);
   camera.lookAt(lookTarget);
@@ -236,6 +246,7 @@ function enterHouse() {
   insideHouse = true;
   playerState.exteriorPosition.copy(playerState.position);
   playerState.position.set(0, 0.85, 4.2);
+  playerState.verticalVelocity = 0;
   selectedPlotId = null;
   worldGroup.visible = false;
   interiorGroup.visible = true;
@@ -256,6 +267,7 @@ function exitHouse() {
   worldGroup.visible = true;
   interiorGroup.visible = false;
   playerState.position.copy(playerState.exteriorPosition);
+  playerState.verticalVelocity = 0;
   controls.minDistance = 16;
   controls.maxDistance = 42;
   controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
@@ -268,41 +280,65 @@ function exitHouse() {
 }
 
 function updatePlayerMovement(deltaSeconds) {
+  if (firstPersonMode) {
+    const lookHorizontal = (movementKeys.ArrowRight ? 1 : 0) - (movementKeys.ArrowLeft ? 1 : 0);
+    const lookVertical = (movementKeys.ArrowDown ? 1 : 0) - (movementKeys.ArrowUp ? 1 : 0);
+    if (lookHorizontal) {
+      playerState.heading += lookHorizontal * deltaSeconds * 2.2;
+    }
+    if (lookVertical) {
+      playerState.lookPitch = THREE.MathUtils.clamp(playerState.lookPitch + lookVertical * deltaSeconds * 1.2, -0.6, 0.35);
+    }
+  }
+
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
-  if (!horizontal && !vertical) {
-    playerState.moving = false;
-    return;
+  const wasGrounded = playerState.position.y <= FLOOR_HEIGHT + 0.001;
+  const wantsJump = !insideHouse && movementKeys.Space && wasGrounded;
+  if (wantsJump) {
+    playerState.verticalVelocity = JUMP_VELOCITY;
   }
 
-  const moveScale = deltaSeconds * 9.5;
-  const forward = firstPersonMode
-    ? new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading)).normalize()
-    : controls.target.clone().sub(camera.position).setY(0).normalize();
-  const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
-  const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
+  let actualMovement = new THREE.Vector3();
+  if (horizontal || vertical) {
+    const moveScale = deltaSeconds * 9.5;
+    const forward = firstPersonMode
+      ? new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading)).normalize()
+      : controls.target.clone().sub(camera.position).setY(0).normalize();
+    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+    const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
-  const desiredPosition = playerState.position.clone().add(movement);
-  const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse);
-  const actualMovement = resolvedPosition.clone().sub(playerState.position);
+    const desiredPosition = playerState.position.clone().add(movement);
+    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse);
+    actualMovement = resolvedPosition.clone().sub(playerState.position);
 
-  if (actualMovement.lengthSq() <= 0.0001) {
-    playerState.moving = false;
-    updateFirstPersonCamera();
-    return;
+    if (actualMovement.lengthSq() > 0.0001) {
+      playerState.position.copy(resolvedPosition);
+      if (!firstPersonMode) {
+        playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
+      }
+    }
   }
 
-  playerState.position.copy(resolvedPosition);
-  if (!firstPersonMode) {
-    playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
+  playerState.verticalVelocity -= GRAVITY * deltaSeconds;
+  playerState.position.y += playerState.verticalVelocity * deltaSeconds;
+  if (playerState.position.y < FLOOR_HEIGHT) {
+    if (!insideHouse && !wasGrounded) {
+      playerState.landingTimer = 0.35;
+    }
+    playerState.position.y = FLOOR_HEIGHT;
+    playerState.verticalVelocity = 0;
   }
-  playerState.moving = true;
+
+  playerState.moving = actualMovement.lengthSq() > 0.0001;
   if (firstPersonMode) {
     updateFirstPersonCamera();
   } else {
-    camera.position.add(actualMovement);
-    controls.target.add(actualMovement);
-    clampCameraToBounds();
+    if (actualMovement.lengthSq() > 0.0001) {
+      camera.position.add(actualMovement);
+      controls.target.add(actualMovement);
+      clampCameraToBounds();
+    }
     controls.update();
   }
 }
@@ -393,6 +429,17 @@ const playerPack = new THREE.Mesh(
 playerPack.position.set(0, 1.5, -0.5);
 playerPack.castShadow = true;
 playerGroup.add(playerPack);
+
+const landingRingMaterial = new THREE.MeshBasicMaterial({
+  color: 0xf5dba7,
+  transparent: true,
+  opacity: 0,
+});
+const landingRing = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.82, 28), landingRingMaterial);
+landingRing.rotation.x = -Math.PI / 2;
+landingRing.position.y = 0.04;
+landingRing.visible = false;
+actorGroup.add(landingRing);
 
 actorGroup.add(playerGroup);
 
@@ -1078,6 +1125,23 @@ function performSelectedPlotAction(action) {
   }
 }
 
+function getPlotInteractionAction(plot) {
+  if (!plot) {
+    return null;
+  }
+
+  if (plot.state === "empty") {
+    return "plant";
+  }
+  if (plot.state === "planted") {
+    return "water";
+  }
+  if (plot.state === "ready") {
+    return "harvest";
+  }
+  return null;
+}
+
 function focusPanel(panel) {
   panel?.scrollIntoView({ behavior: "smooth", block: "center" });
   panel?.classList.add("panel-flash");
@@ -1136,6 +1200,97 @@ function resizeRenderer() {
   camera.updateProjectionMatrix();
 }
 
+function getTaggedInteractive(object) {
+  let current = object;
+  while (current && current !== scene) {
+    if (current.userData?.kind || current.userData?.plotId) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return null;
+}
+
+function getReticleTarget() {
+  if (!firstPersonMode) {
+    return null;
+  }
+
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const candidates = insideHouse
+    ? interiorInteractiveMeshes
+    : houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh]
+    : [...plotMeshes.values()];
+  const hits = raycaster.intersectObjects(candidates, true);
+
+  for (const hit of hits) {
+    const tagged = getTaggedInteractive(hit.object);
+    if (!tagged) {
+      continue;
+    }
+
+    if (tagged.userData.kind) {
+      const worldPosition = new THREE.Vector3();
+      tagged.getWorldPosition(worldPosition);
+      if (worldPosition.distanceTo(playerState.position) <= INTERACT_DISTANCE) {
+        return tagged;
+      }
+      continue;
+    }
+
+    if (tagged.userData.plotId) {
+      return tagged;
+    }
+  }
+
+  return null;
+}
+
+function updateReticle() {
+  if (!reticle) {
+    return;
+  }
+
+  reticle.classList.toggle("hidden", !firstPersonMode);
+  reticle.classList.toggle("active", Boolean(getReticleTarget()));
+}
+
+function interactWithTarget(target) {
+  if (!target) {
+    actionValue.textContent = firstPersonMode ? "Nothing to interact with." : actionValue.textContent;
+    return;
+  }
+
+  if (target.userData.kind) {
+    const worldPosition = new THREE.Vector3();
+    target.getWorldPosition(worldPosition);
+    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
+      actionValue.textContent = insideHouse ? "Move closer to use that furniture." : "Walk closer to the house door.";
+      return;
+    }
+
+    if (target.userData.kind === "houseDoor") {
+      enterHouse();
+      return;
+    }
+
+    handleInteriorInteraction(target.userData.kind);
+    return;
+  }
+
+  if (target.userData.plotId) {
+    selectedPlotId = target.userData.plotId;
+    const plot = findPlotById(selectedPlotId);
+    const action = getPlotInteractionAction(plot);
+    if (action) {
+      performSelectedPlotAction(action);
+    } else {
+      render();
+    }
+  }
+}
+
 function handleCanvasPick(event) {
   const rect = canvas.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1151,47 +1306,21 @@ function handleCanvasPick(event) {
   if (hits.length === 0) {
     return;
   }
-
-  if (insideHouse) {
-    const interiorHit = hits.find((hit) => hit.object.userData.kind);
-    const kind = interiorHit?.object.userData.kind;
-    if (!kind) return;
-    const worldPosition = new THREE.Vector3();
-    interiorHit.object.getWorldPosition(worldPosition);
-    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
-      actionValue.textContent = "Move closer to use that furniture.";
-      return;
-    }
-    handleInteriorInteraction(kind);
-    return;
-  }
-
-  const doorHit = hits.find((hit) => hit.object.userData.kind === "houseDoor");
-  if (doorHit) {
-    const worldPosition = new THREE.Vector3();
-    doorHit.object.getWorldPosition(worldPosition);
-    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
-      actionValue.textContent = "Walk closer to the house door.";
-      return;
-    }
-    enterHouse();
-    return;
-  }
-
-  const plotHit = hits.find((hit) => hit.object.userData.plotId);
-  const plotId = plotHit?.object.userData.plotId;
-  if (!plotId) {
-    return;
-  }
-
-  selectedPlotId = plotId;
-  render();
+  const taggedHit = hits.map((hit) => getTaggedInteractive(hit.object)).find(Boolean);
+  interactWithTarget(taggedHit);
 }
 
 canvas.addEventListener("pointerdown", handleCanvasPick);
 canvas.addEventListener("wheel", handleTrackpadPan, { passive: false });
 window.addEventListener("resize", resizeRenderer);
 window.addEventListener("keydown", (event) => {
+  if (event.code === "KeyE") {
+    event.preventDefault();
+    if (!event.repeat) {
+      interactWithTarget(getReticleTarget());
+    }
+    return;
+  }
   if (event.code in movementKeys) {
     event.preventDefault();
     movementKeys[event.code] = true;
@@ -1290,10 +1419,39 @@ function animate() {
   worldGroup.rotation.y = Math.sin(elapsed * 0.15) * 0.025;
   playerGroup.position.copy(playerState.position);
   playerGroup.rotation.y = playerState.heading;
-  playerBody.position.y = 1.4 + (playerState.moving ? Math.sin(elapsed * 10) * 0.08 : 0);
+  const walkBob = playerState.moving && playerState.position.y <= FLOOR_HEIGHT + 0.001 ? Math.sin(elapsed * 10) * 0.08 : 0;
+  playerBody.position.y = 1.4 + walkBob;
+  if (playerState.position.y > FLOOR_HEIGHT + 0.02) {
+    if (playerState.verticalVelocity > 0) {
+      playerGroup.scale.set(0.92, 1.1, 0.92);
+    } else {
+      playerGroup.scale.set(1.08, 0.9, 1.08);
+    }
+  } else {
+    const squash = playerState.landingTimer > 0 ? 1 + playerState.landingTimer * 0.25 : 1;
+    playerGroup.scale.set(1 / squash, squash, 1 / squash);
+  }
+
+  if (playerState.landingTimer > 0 && !insideHouse && !firstPersonMode) {
+    playerState.landingTimer = Math.max(0, playerState.landingTimer - delta);
+    landingRing.visible = true;
+    landingRing.position.set(playerState.position.x, 0.05, playerState.position.z);
+    const pulse = 1 + (0.35 - playerState.landingTimer) * 4.2;
+    landingRing.scale.setScalar(pulse);
+    landingRingMaterial.opacity = playerState.landingTimer / 0.35;
+  } else {
+    landingRing.visible = false;
+    landingRingMaterial.opacity = 0;
+    if (playerState.landingTimer > 0) {
+      playerState.landingTimer = Math.max(0, playerState.landingTimer - delta);
+    }
+  }
+
   if (firstPersonMode) {
     updateFirstPersonCamera();
   }
+
+  updateReticle();
 
   for (const [plotId, mesh] of plotMeshes) {
     const plot = findPlotById(plotId);
