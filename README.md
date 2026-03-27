@@ -1,29 +1,25 @@
-# GameTime Clash
+# The Bean Farmer
 
-GameTime Clash is a compact browser-based platform fighter prototype.
+Browser prototype for the Bean Farmer vertical slice described in [GDD.md](/Users/logan/Documents/New%20Project/GDD.md) and [TDD.md](/Users/logan/Documents/New%20Project/TDD.md).
 
-The current tuning is intentionally beginner-friendly: the player has 4 stocks, the CPU has 2, player attacks get a small reach boost, and the player has infinite jumps.
+## Includes
+
+- Plant, water, grow, and harvest bean plots
+- Sell harvested beans for credits
+- Unlock new parcels
+- Buy upgrades
+- Complete quests
+- Discover beans in the Bean Index
+- Mining side activity
+- Local save via `localStorage`
+- 3D farm scene with first-person and third-person play
 
 ## Run
 
 Open [index.html](/Users/logan/Documents/New%20Project/index.html) in a browser.
 
-## Controls
-
-- `A` / `D`: move
-- `W`: jump
-- `Space`: jab
-- `S`: smash attack
-- `Q`: shield
-- `Shift`: charge shot
-- Hold `E`: `Pulse Shot` that ramps up quickly, overheats into an explosion on you, and locks out for 2 seconds
-- `Left` / `Right`: `Nova Rush`
-- `Up`: `Skybreak`
-- `Down`: `Burst Field`
-- `R`: reset the full match
-
 ## Test
 
 ```bash
-node --test
+node --test tests/gameLogic.test.js
 ```

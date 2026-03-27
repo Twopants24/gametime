@@ -1,9 +1,9 @@
 {
-  "name": "gametime-clash",
+  "name": "beanfarmer",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test tests/gameLogic.test.js"
   },
   "dependencies": {
     "playwright": "^1.58.2",

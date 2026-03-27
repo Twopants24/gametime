@@ -1,1846 +1,1482 @@
-import { ATTACKS, DIFFICULTY, STAGE, createInitialState, stepState } from "./gameLogic.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import {
+  BEANS,
+  PARCELS,
+  QUESTS,
+  UPGRADES,
+  advanceTime,
+  buySeeds,
+  buyUpgrade,
+  createInitialState,
+  deserializeState,
+  evaluateQuests,
+  getUnlockedBeanIds,
+  harvestPlot,
+  performMining,
+  plantBean,
+  sellBeans,
+  serializeState,
+  unlockParcel,
+  waterPlot,
+} from "./gameLogic.js?v=20260325-3";
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const overlay = document.getElementById("overlay");
-const overlayMessage = document.getElementById("overlay-message");
-const startButton = document.getElementById("start-button");
+const STORAGE_KEY = "beanfarmer-save-v1";
+const CAMERA_BOUNDS = {
+  minX: -22,
+  maxX: 24,
+  minZ: -16,
+  maxZ: 24,
+};
+const INTERIOR_CAMERA_BOUNDS = {
+  minX: -4.5,
+  maxX: 4.5,
+  minZ: -5.5,
+  maxZ: 5.5,
+};
+const PLAYER_BOUNDS = {
+  minX: -18,
+  maxX: 20,
+  minZ: -12,
+  maxZ: 20,
+};
+const INTERIOR_PLAYER_BOUNDS = {
+  minX: -5.8,
+  maxX: 5.8,
+  minZ: -4.8,
+  maxZ: 5.8,
+};
+const INTERACT_DISTANCE = 4.25;
+
+const PLOT_LAYOUTS = {
+  home: { originX: -8, originZ: -2, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
+  creek: { originX: 10, originZ: -2, cols: 2, spacingX: 5.5, spacingZ: 5.5 },
+  ridge: { originX: -2.5, originZ: 12, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
+};
+
+const creditsValue = document.getElementById("credits-value");
+const oreValue = document.getElementById("ore-value");
+const clockValue = document.getElementById("clock-value");
+const actionValue = document.getElementById("action-value");
+const farmView = document.getElementById("farm-view");
+const beanSelector = document.getElementById("bean-selector");
+const shopActions = document.getElementById("shop-actions");
+const landActions = document.getElementById("land-actions");
+const questList = document.getElementById("quest-list");
+const upgradeList = document.getElementById("upgrade-list");
+const upgradePanel = upgradeList.closest(".panel");
+const beanIndex = document.getElementById("bean-index");
+const beanIndexPanel = beanIndex.closest(".panel");
+const inventoryList = document.getElementById("inventory-list");
+const viewModeButton = document.getElementById("viewmode-button");
 const fullscreenButton = document.getElementById("fullscreen-button");
-const speedDial = document.getElementById("speed-dial");
-const speedValue = document.getElementById("speed-value");
-const cpuDifficultyDial = document.getElementById("cpu-difficulty");
-const cpuDifficultyValue = document.getElementById("cpu-difficulty-value");
-const avatarSelect = document.getElementById("avatar-select");
-const devLoginButton = document.getElementById("dev-login-button");
-const devLoginStatus = document.getElementById("dev-login-status");
-const devFxWrap = document.getElementById("dev-fx-wrap");
-const devFxToggle = document.getElementById("dev-fx-toggle");
-const touchButtons = document.querySelectorAll("[data-touch-control]");
-const playerNameHeading = document.querySelector(".scorecard-player h2");
-const cpuNameHeading = document.querySelector(".scorecard-cpu h2");
-const trainingModeToggle = document.getElementById("training-mode");
-const arenaShell = document.querySelector(".arena-shell");
-const stageCanvas = document.createElement("canvas");
-const stageCtx = stageCanvas.getContext("2d");
-const LOGICAL_WIDTH = STAGE.width;
-const LOGICAL_HEIGHT = STAGE.height;
-let renderScale = 1;
-
-const hud = {
-  p1Damage: document.getElementById("p1-damage"),
-  p1Stocks: document.getElementById("p1-stocks"),
-  p1Charge: document.getElementById("p1-charge"),
-  p2Damage: document.getElementById("p2-damage"),
-  p2Stocks: document.getElementById("p2-stocks"),
+const reticle = document.getElementById("reticle");
+const saveButton = document.getElementById("save-button");
+const resetButton = document.getElementById("reset-button");
+const sellButton = document.getElementById("sell-button");
+const mineButton = document.getElementById("mine-button");
+const selectionText = document.getElementById("selection-text");
+const selectionActions = document.getElementById("selection-actions");
+const interiorCard = document.getElementById("interior-card");
+const exitHouseButton = document.getElementById("exit-house-button");
+const canvas = document.getElementById("farm-canvas");
+const sceneShell = document.getElementById("scene-shell");
+const timeButtons = [...document.querySelectorAll("[data-advance-hours]")];
+const movementKeys = {
+  KeyW: false,
+  KeyA: false,
+  KeyS: false,
+  KeyD: false,
+  Space: false,
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false,
 };
 
-let state = createInitialState();
-let speedMultiplier = Number(speedDial.value);
-let cpuDifficulty = Number(cpuDifficultyDial.value);
-let playerCharacter = avatarSelect.value;
-let trainingMode = trainingModeToggle.checked;
-let trainingDummyAnchor = null;
-let speedAccumulator = 0;
-let chargeStartedAt = null;
-let chargeReady = false;
-let blastStartedAt = null;
-let blastReady = false;
-let pulseHeld = false;
-let pulseLastFiredAt = 0;
-let pulseCooldownUntil = 0;
-let pulseHeatMs = 0;
-let pulseLastTickAt = 0;
-let cameraEffect = null;
-const CHARGE_TIME_MS = 1000;
-const BLAST_CHARGE_TIME_MS = 100;
-const CHARGE_CAMERA_HOLD_MS = 500;
-const CHARGE_CAMERA_RELEASE_MS = 120;
-const PULSE_OVERHEAT_MS = 2600;
-const PULSE_LOCKOUT_MS = 2000;
-const PULSE_FIRE_INTERVAL_MAX = 220;
-const PULSE_FIRE_INTERVAL_MIN = 35;
-const DEV_LOGIN_CODE = "gametime-dev";
-const DEV_UNLOCK_KEY = "gametime-dev-unlocked";
-const DEV_FX_KEY = "gametime-dev-fx";
-let lastHud = {
-  p1Damage: null,
-  p1Stocks: null,
-  p1Charge: null,
-  p2Damage: null,
-  p2Stocks: null,
-};
-
-speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
-cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
-let devUnlocked = window.localStorage.getItem(DEV_UNLOCK_KEY) === "1";
-let devEffectsEnabled = window.localStorage.getItem(DEV_FX_KEY) !== "0" && devUnlocked;
-
-const input = {
-  left: false,
-  right: false,
-  shield: false,
-  jumpQueued: false,
-  jabQueued: false,
-  smashQueued: false,
-  shotQueued: false,
-  chargeQueued: false,
-  blastQueued: false,
-  specialQueued: null,
-  specialFace: null,
-};
-
-function syncDevUi() {
-  devLoginButton.textContent = devUnlocked ? "Dev Logout" : "Dev Login";
-  devLoginStatus.textContent = devUnlocked ? (devEffectsEnabled ? "FX+HR unlocked" : "Dev unlocked") : "FX locked";
-  devFxWrap.classList.toggle("visible", devUnlocked);
-  devFxToggle.checked = devEffectsEnabled;
-}
-
-function getFxScale() {
-  return devEffectsEnabled ? 1.35 : 1;
-}
-
-function configureCanvasResolution() {
-  renderScale = devEffectsEnabled ? 1.5 : 1;
-  canvas.width = Math.round(LOGICAL_WIDTH * renderScale);
-  canvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
-  stageCanvas.width = Math.round(LOGICAL_WIDTH * renderScale);
-  stageCanvas.height = Math.round(LOGICAL_HEIGHT * renderScale);
-  ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-  stageCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-  renderStaticStage();
-}
-
-function applyDevDialRanges() {
-  speedDial.min = devUnlocked ? "0.10" : "0.50";
-  speedDial.max = devUnlocked ? "2.50" : "1.20";
-  cpuDifficultyDial.min = devUnlocked ? "0.10" : "0.40";
-  cpuDifficultyDial.max = devUnlocked ? "3.00" : "1.80";
-
-  speedMultiplier = Math.min(Number(speedDial.max), Math.max(Number(speedDial.min), speedMultiplier));
-  cpuDifficulty = Math.min(Number(cpuDifficultyDial.max), Math.max(Number(cpuDifficultyDial.min), cpuDifficulty));
-  speedDial.value = speedMultiplier.toFixed(2);
-  cpuDifficultyDial.value = cpuDifficulty.toFixed(2);
-  speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
-  cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
-}
-
-const CHARACTER_LOADOUTS = {
-  nova: {
-    name: "Nova",
-    color: "#fb923c",
-    accent: "#fed7aa",
-  },
-  volt: {
-    name: "Volt",
-    color: "#22d3ee",
-    accent: "#a5f3fc",
-  },
-};
-
-function configureRoster() {
-  const playerLoadout = CHARACTER_LOADOUTS[playerCharacter] ?? CHARACTER_LOADOUTS.nova;
-  const cpuLoadout = playerCharacter === "volt" ? CHARACTER_LOADOUTS.nova : CHARACTER_LOADOUTS.volt;
-
-  state.fighters[0] = {
-    ...state.fighters[0],
-    ...playerLoadout,
-    isPlayer: true,
-  };
-  state.fighters[1] = {
-    ...state.fighters[1],
-    ...cpuLoadout,
-    isPlayer: false,
-  };
-
-  playerNameHeading.textContent = playerLoadout.name;
-  cpuNameHeading.textContent = cpuLoadout.name;
-}
-
-function setOverlay(title, message, buttonText) {
-  overlay.querySelector("h2").textContent = title;
-  overlayMessage.textContent = message;
-  startButton.textContent = buttonText;
-}
-
-function queueChargeAction(now = performance.now()) {
-  if (chargeReady) {
-    input.chargeQueued = true;
-  } else if (chargeStartedAt === null) {
-    chargeStartedAt = now;
+function loadState() {
+  const serialized = window.localStorage.getItem(STORAGE_KEY);
+  if (!serialized) {
+    return evaluateQuests(createInitialState());
   }
-}
-
-function setPulseHeld(active, now = performance.now()) {
-  if (active) {
-    if (!pulseHeld && now >= pulseCooldownUntil) {
-      pulseHeld = true;
-      pulseLastFiredAt = now - PULSE_FIRE_INTERVAL_MAX;
-    }
-    return;
-  }
-  pulseHeld = false;
-}
-
-function runTouchControl(control, active, mode) {
-  const now = performance.now();
-  switch (control) {
-    case "left":
-      input.left = active;
-      break;
-    case "right":
-      input.right = active;
-      break;
-    case "jump":
-      if (active && mode === "tap") input.jumpQueued = true;
-      break;
-    case "shield":
-      input.shield = active;
-      break;
-    case "jab":
-      if (active && mode === "tap") input.jabQueued = true;
-      break;
-    case "smash":
-      if (active && mode === "tap") input.smashQueued = true;
-      break;
-    case "pulse":
-      setPulseHeld(active, now);
-      break;
-    case "charge":
-      if (active && mode === "tap") queueChargeAction(now);
-      break;
-    case "side-left":
-      if (active && mode === "tap") {
-        input.specialFace = -1;
-        input.specialQueued = "sideSpecial";
-      }
-      break;
-    case "side-right":
-      if (active && mode === "tap") {
-        input.specialFace = 1;
-        input.specialQueued = "sideSpecial";
-      }
-      break;
-    case "up-special":
-      if (active && mode === "tap") input.specialQueued = "upSpecial";
-      break;
-    case "down-special":
-      if (active && mode === "tap") input.specialQueued = "blast";
-      break;
-  }
-}
-
-function updateHud() {
-  const [p1, p2] = state.fighters;
-  const now = performance.now();
-  let pulseStatus = "Building";
-  if (pulseCooldownUntil > now) {
-    pulseStatus = `Overheat ${((pulseCooldownUntil - now) / 1000).toFixed(1)}s`;
-  } else if (pulseHeld || pulseHeatMs > 0) {
-    const ratio = Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS);
-    pulseStatus = `Pulse ${Math.round(ratio * 100)}%`;
-  }
-  const nextHud = {
-    p1Damage: `${Math.round(p1.damage)}%`,
-    p1Stocks: String(p1.stocks),
-    p1Charge:
-      pulseStatus !== "Building"
-        ? pulseStatus
-        : chargeReady
-        ? "CHARGED"
-        : chargeStartedAt !== null
-        ? "Charging"
-        : "Building",
-    p2Damage: `${Math.round(p2.damage)}%`,
-    p2Stocks: String(p2.stocks),
-  };
-
-  if (nextHud.p1Damage !== lastHud.p1Damage) hud.p1Damage.textContent = nextHud.p1Damage;
-  if (nextHud.p1Stocks !== lastHud.p1Stocks) hud.p1Stocks.textContent = nextHud.p1Stocks;
-  if (nextHud.p1Charge !== lastHud.p1Charge) hud.p1Charge.textContent = nextHud.p1Charge;
-  if (nextHud.p2Damage !== lastHud.p2Damage) hud.p2Damage.textContent = nextHud.p2Damage;
-  if (nextHud.p2Stocks !== lastHud.p2Stocks) hud.p2Stocks.textContent = nextHud.p2Stocks;
-  lastHud = nextHud;
-}
-
-function resetMatch() {
-  state = createInitialState();
-  configureRoster();
-  trainingDummyAnchor = null;
-  speedAccumulator = 0;
-  pulseHeld = false;
-  pulseLastFiredAt = 0;
-  pulseCooldownUntil = 0;
-  pulseHeatMs = 0;
-  pulseLastTickAt = 0;
-  chargeStartedAt = null;
-  chargeReady = false;
-  blastStartedAt = null;
-  blastReady = false;
-  cameraEffect = null;
-  if (trainingMode) {
-    freezeTrainingDummy();
-  }
-  overlay.classList.remove("hidden");
-  setOverlay("Enter The Arena", "A/D move, W jump, Space jab, S smash, Q shield, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.", "Start Match");
-  updateHud();
-}
-
-function startMatch() {
-  if (state.winner) {
-    state = createInitialState();
-    configureRoster();
-  }
-  trainingDummyAnchor = null;
-  speedAccumulator = 0;
-  pulseHeld = false;
-  pulseLastFiredAt = 0;
-  pulseCooldownUntil = 0;
-  pulseHeatMs = 0;
-  pulseLastTickAt = 0;
-  chargeStartedAt = null;
-  chargeReady = false;
-  blastStartedAt = null;
-  blastReady = false;
-  cameraEffect = null;
-  if (trainingMode) {
-    freezeTrainingDummy();
-  }
-  state.running = true;
-  state.winner = null;
-  overlay.classList.add("hidden");
-}
-
-function freezeTrainingDummy() {
-  const dummy = state.fighters[1];
-  if (!dummy) return;
-  const floor = STAGE.platforms[0];
-  if (!trainingDummyAnchor) {
-    trainingDummyAnchor = {
-      x: floor.x + floor.width - dummy.width - 88,
-      y: floor.y - dummy.height,
-    };
-  }
-
-  state.fighters[1] = {
-    ...dummy,
-    x: trainingDummyAnchor.x,
-    y: trainingDummyAnchor.y,
-    vx: 0,
-    vy: 0,
-    grounded: true,
-    hitstun: 0,
-    attack: null,
-    attackCooldown: 0,
-    cpuCooldown: 0,
-  };
-}
-
-function triggerPulseOverheat(now) {
-  pulseHeld = false;
-  pulseCooldownUntil = now + PULSE_LOCKOUT_MS;
-  pulseHeatMs = 0;
-  input.shotQueued = false;
-
-  const player = state.fighters[0];
-  if (!player) return;
-
-  const centerX = player.x + player.width / 2;
-  const centerY = player.y + player.height / 2;
-  state.fighters[0] = {
-    ...player,
-    damage: player.damage + 28,
-    vx: player.face * -12,
-    vy: -16,
-    hitstun: 22,
-    attack: null,
-    grounded: false,
-    impact: {
-      type: "burst",
-      timer: 20,
-      x: centerX,
-      y: centerY,
-    },
-  };
-}
-
-function getPlayerInput() {
-  let attack = null;
-  if (input.jabQueued) attack = "jab";
-  if (input.shotQueued) attack = "shot";
-  if (input.smashQueued) attack = "smash";
-  if (input.chargeQueued) {
-    attack = "charge";
-    chargeReady = false;
-  }
-  if (input.blastQueued) {
-    attack = "blast";
-    blastReady = false;
-  }
-  if (input.specialQueued) attack = input.specialQueued;
-
-  const next = {
-    left: input.left,
-    right: input.right,
-    shield: input.shield,
-    jump: input.jumpQueued,
-    attack,
-    specialFace: input.specialFace,
-  };
-
-  input.jumpQueued = false;
-  input.jabQueued = false;
-  input.shotQueued = false;
-  input.smashQueued = false;
-  input.chargeQueued = false;
-  input.blastQueued = false;
-  input.specialQueued = null;
-  input.specialFace = null;
-  return next;
-}
-
-function getStageAnchor(target) {
-  const targetCenterX = target.x + target.width / 2;
-  const supportPlatform = STAGE.platforms.find(
-    (platform) =>
-      targetCenterX >= platform.x &&
-      targetCenterX <= platform.x + platform.width &&
-      target.y + target.height <= platform.y + 28
-  );
-
-  if (supportPlatform) {
-    return {
-      x: Math.min(
-        supportPlatform.x + supportPlatform.width - 28,
-        Math.max(supportPlatform.x + 28, targetCenterX)
-      ),
-      y: supportPlatform.y,
-    };
-  }
-
-  return {
-    x: Math.min(STAGE.width - 70, Math.max(70, targetCenterX)),
-    y: STAGE.platforms[0].y,
-  };
-}
-
-function getCpuInput(cpu, target) {
-  const cpuCenterX = cpu.x + cpu.width / 2;
-  const targetCenterX = target.x + target.width / 2;
-  const anchor = getStageAnchor(target);
-  const anchorDeltaX = anchor.x - cpuCenterX;
-  const deltaX = targetCenterX - cpuCenterX;
-  const deltaY = target.y - cpu.y;
-  const horizontalAttackWindow = 52 + cpuDifficulty * 36;
-  const verticalAttackWindow = 24 + cpuDifficulty * 18;
-  const shouldAttack =
-    Math.abs(deltaX) < horizontalAttackWindow &&
-    Math.abs(deltaY) < verticalAttackWindow &&
-    !cpu.attack &&
-    cpu.attackCooldown <= 0;
-  const offstage = cpuCenterX < 80 || cpuCenterX > STAGE.width - 80 || cpu.y > STAGE.height - 10;
-  const recovering = offstage || cpu.y > 540;
-  const driftThreshold = Math.max(8, 52 - cpuDifficulty * 18);
-  const recoverThreshold = Math.max(6, 18 - cpuDifficulty * 4);
-  const attackType =
-    cpuDifficulty > 1.35
-      ? (cpu.damage > 70 ? "smash" : "shot")
-      : cpuDifficulty > 0.9
-      ? (cpu.damage > 90 ? "smash" : "jab")
-      : "jab";
-  const edgeBuffer = 64;
-  const tooCloseToLeftEdge = cpuCenterX < edgeBuffer;
-  const tooCloseToRightEdge = cpuCenterX > STAGE.width - edgeBuffer;
-  const forcedInwardLeft = tooCloseToLeftEdge && targetCenterX > cpuCenterX;
-  const forcedInwardRight = tooCloseToRightEdge && targetCenterX < cpuCenterX;
-  const pathDeltaX = recovering ? anchorDeltaX : Math.abs(deltaX) > 120 ? anchorDeltaX : deltaX;
-  const wantsJumpToPlatform =
-    !recovering &&
-    cpu.grounded &&
-    target.y + target.height < cpu.y - 34 &&
-    Math.abs(anchorDeltaX) < 58 &&
-    Math.abs(deltaX) < 92;
-  const wantsVerticalChase =
-    !recovering &&
-    !cpu.grounded &&
-    target.y + target.height < cpu.y - 42 &&
-    Math.abs(deltaX) < 54;
-  const wantsRecoveryJump =
-    recovering &&
-    (cpu.y > anchor.y - 30 || Math.abs(anchorDeltaX) > 22);
-  const safeLeft = forcedInwardRight ? true : pathDeltaX < -(recovering ? recoverThreshold : driftThreshold);
-  const safeRight = forcedInwardLeft ? true : pathDeltaX > (recovering ? recoverThreshold : driftThreshold);
-
-  return {
-    left: safeLeft && !forcedInwardLeft,
-    right: safeRight && !forcedInwardRight,
-    jump:
-      (wantsRecoveryJump || wantsJumpToPlatform || wantsVerticalChase || cpu.y > 600) &&
-      cpu.jumpsLeft > 0 &&
-      cpu.hitstun === 0,
-    attack: shouldAttack && cpu.cpuCooldown === 0 ? attackType : null,
-    shield: false,
-  };
-}
-
-function drawBackground(targetCtx) {
-  targetCtx.fillStyle = "#93c5fd";
-  targetCtx.beginPath();
-  targetCtx.arc(810, 90, 62, 0, Math.PI * 2);
-  targetCtx.fill();
-
-  targetCtx.fillStyle = "rgba(255,255,255,0.18)";
-  for (const [x, y, r] of [
-    [135, 90, 68],
-    [315, 120, 54],
-    [585, 72, 84],
-  ]) {
-    targetCtx.beginPath();
-    targetCtx.arc(x, y, r, 0, Math.PI * 2);
-    targetCtx.fill();
-  }
-}
-
-function drawPlatforms(targetCtx) {
-  for (const [index, platform] of STAGE.platforms.entries()) {
-    if (platform.solid) {
-      targetCtx.fillStyle = "#64748b";
-      targetCtx.beginPath();
-      targetCtx.roundRect(platform.x, platform.y + 12, platform.width, platform.height - 12, 12);
-      targetCtx.fill();
-
-      const capGradient = targetCtx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.topInset);
-      capGradient.addColorStop(0, "#f8fafc");
-      capGradient.addColorStop(1, "#cbd5e1");
-      targetCtx.fillStyle = capGradient;
-      targetCtx.beginPath();
-      targetCtx.roundRect(platform.x, platform.y, platform.width, platform.topInset, 12);
-      targetCtx.fill();
-    } else {
-      const gradient = targetCtx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
-      gradient.addColorStop(0, "#bae6fd");
-      gradient.addColorStop(1, "#7dd3fc");
-      targetCtx.fillStyle = gradient;
-      targetCtx.beginPath();
-      targetCtx.roundRect(platform.x, platform.y, platform.width, platform.height, 12);
-      targetCtx.fill();
-    }
-  }
-}
-
-function renderStaticStage() {
-  stageCtx.setTransform(1, 0, 0, 1, 0, 0);
-  stageCtx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
-  stageCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-  drawBackground(stageCtx);
-  drawPlatforms(stageCtx);
-}
-
-function drawAttack(fighter) {
-  if (!fighter.attack) return;
 
   try {
-    const attackData = ATTACKS[fighter.attack.type];
-    if (!attackData) return;
-    const activeStart = attackData.startup;
-    const activeEnd = attackData.startup + attackData.active;
-    if (fighter.attack.frame < activeStart || fighter.attack.frame > activeEnd) return;
-
-    const armBaseX = fighter.x + fighter.width / 2 + fighter.face * 18;
-    const armBaseY = fighter.y + fighter.height / 2 - 4;
-    const armLength =
-      fighter.attack.type === "charge"
-        ? 62
-        : fighter.attack.type === "sideSpecial"
-        ? 54
-        : fighter.attack.type === "smash"
-        ? 48
-        : fighter.attack.type === "shot"
-        ? 34
-        : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
-        ? 0
-        : 30;
-    const fistRadius =
-      fighter.attack.type === "charge"
-        ? 20
-        : fighter.attack.type === "sideSpecial"
-        ? 14
-        : fighter.attack.type === "smash"
-        ? 17
-        : fighter.attack.type === "shot"
-        ? 10
-        : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
-        ? 0
-        : 11;
-    const fistX = armBaseX + fighter.face * armLength;
-    const fistY = armBaseY;
-
-    if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
-      ctx.strokeStyle =
-        fighter.attack.type === "charge"
-          ? "#67e8f9"
-          : fighter.attack.type === "sideSpecial"
-          ? "#38bdf8"
-          : fighter.attack.type === "smash"
-          ? "#fb923c"
-          : fighter.accent;
-      ctx.lineWidth = fighter.attack.type === "charge" ? 14 : fighter.attack.type === "sideSpecial" ? 11 : fighter.attack.type === "smash" ? 12 : 8;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(armBaseX, armBaseY);
-      ctx.lineTo(fistX, fistY);
-      ctx.stroke();
-    }
-
-    if (fighter.attack.type === "sideSpecial") {
-    const streakX = fistX + fighter.face * 86;
-    const flare = ctx.createLinearGradient(fistX, fistY, streakX, fistY);
-    flare.addColorStop(0, "rgba(224, 242, 254, 0.95)");
-    flare.addColorStop(0.32, "rgba(56, 189, 248, 0.95)");
-    flare.addColorStop(1, "rgba(2, 132, 199, 0)");
-    ctx.fillStyle = flare;
-    ctx.beginPath();
-    ctx.moveTo(fistX - fighter.face * 6, fistY - 18);
-    ctx.quadraticCurveTo(streakX - fighter.face * 22, fistY - 24, streakX, fistY - 5);
-    ctx.quadraticCurveTo(streakX + fighter.face * 16, fistY, streakX, fistY + 5);
-    ctx.quadraticCurveTo(streakX - fighter.face * 22, fistY + 24, fistX - fighter.face * 6, fistY + 18);
-    ctx.closePath();
-    ctx.fill();
-    } else if (fighter.attack.type === "charge") {
-    const time = performance.now();
-    const pulse = 0.92 + Math.sin(time / 90) * 0.08;
-    const wave = Math.sin(time / 65) * 6;
-    const length = 138 + Math.sin(time / 110) * 8;
-    const tipX = fistX + fighter.face * length;
-    const bodyWidth = 22 * pulse;
-    const shellWidth = 40 + Math.sin(time / 80) * 4;
-
-    const shellGradient = ctx.createLinearGradient(fistX, fistY, tipX, fistY);
-    shellGradient.addColorStop(0, "rgba(224, 242, 254, 0.9)");
-    shellGradient.addColorStop(0.25, "rgba(125, 211, 252, 0.95)");
-    shellGradient.addColorStop(0.7, "rgba(37, 99, 235, 0.82)");
-    shellGradient.addColorStop(1, "rgba(30, 64, 175, 0)");
-    ctx.fillStyle = shellGradient;
-    ctx.beginPath();
-    ctx.moveTo(fistX - fighter.face * 4, fistY - shellWidth * 0.55);
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 42,
-      fistY - shellWidth - wave,
-      tipX,
-      fistY - 7
-    );
-    ctx.quadraticCurveTo(
-      tipX + fighter.face * 22,
-      fistY,
-      tipX,
-      fistY + 7
-    );
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 42,
-      fistY + shellWidth + wave,
-      fistX - fighter.face * 4,
-      fistY + shellWidth * 0.55
-    );
-    ctx.closePath();
-    ctx.fill();
-
-    const coreGradient = ctx.createLinearGradient(fistX, fistY, tipX, fistY);
-    coreGradient.addColorStop(0, "rgba(255,255,255,1)");
-    coreGradient.addColorStop(0.22, "rgba(191, 219, 254, 0.98)");
-    coreGradient.addColorStop(0.6, "rgba(96, 165, 250, 0.94)");
-    coreGradient.addColorStop(1, "rgba(59, 130, 246, 0)");
-    ctx.fillStyle = coreGradient;
-    ctx.beginPath();
-    ctx.moveTo(fistX, fistY - bodyWidth);
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 34,
-      fistY - bodyWidth * 0.95 - wave * 0.55,
-      tipX,
-      fistY - 5
-    );
-    ctx.quadraticCurveTo(
-      tipX + fighter.face * 14,
-      fistY,
-      tipX,
-      fistY + 5
-    );
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 34,
-      fistY + bodyWidth * 0.95 + wave * 0.55,
-      fistX,
-      fistY + bodyWidth
-    );
-    ctx.closePath();
-    ctx.fill();
-
-    const tipGlow = ctx.createRadialGradient(tipX, fistY, 6, tipX, fistY, 30 * pulse);
-    tipGlow.addColorStop(0, "rgba(255,255,255,1)");
-    tipGlow.addColorStop(0.3, "rgba(186, 230, 253, 0.98)");
-    tipGlow.addColorStop(0.68, "rgba(56, 189, 248, 0.9)");
-    tipGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
-    ctx.fillStyle = tipGlow;
-    ctx.beginPath();
-    ctx.arc(tipX, fistY, 30 * pulse, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255,255,255,0.98)";
-    ctx.beginPath();
-    ctx.ellipse(tipX, fistY, 12 * pulse, 9 * pulse, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    const muzzleGlow = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 28);
-    muzzleGlow.addColorStop(0, "rgba(255,255,255,1)");
-    muzzleGlow.addColorStop(0.4, "rgba(147, 197, 253, 0.95)");
-    muzzleGlow.addColorStop(1, "rgba(37, 99, 235, 0)");
-    ctx.fillStyle = muzzleGlow;
-    ctx.beginPath();
-    ctx.arc(fistX, fistY, 28, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(255,255,255,0.55)";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(fistX + fighter.face * 10, fistY - 10);
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 62,
-      fistY - 16 - wave * 0.45,
-      tipX - fighter.face * 8,
-      fistY - 3
-    );
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(fistX + fighter.face * 10, fistY + 10);
-    ctx.quadraticCurveTo(
-      fistX + fighter.face * 62,
-      fistY + 16 + wave * 0.45,
-      tipX - fighter.face * 8,
-      fistY + 3
-    );
-    ctx.stroke();
-
-    for (let i = 0; i < 3; i += 1) {
-      const sparkX = fistX + fighter.face * (28 + i * 26 + ((time / 10) % 18));
-      const sparkY = fistY + Math.sin(time / 70 + i * 1.7) * (8 + i * 3);
-      ctx.fillStyle = `rgba(191, 219, 254, ${0.55 - i * 0.12})`;
-      ctx.beginPath();
-      ctx.arc(sparkX, sparkY, 3 - i * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    } else if (fighter.attack.type === "shot") {
-    const pulseVisual = getPulseVisualState();
-    const muzzleX = fistX + fighter.face * 10;
-    const shotGradient = ctx.createRadialGradient(muzzleX, fistY, 3, muzzleX, fistY, 34);
-    shotGradient.addColorStop(0, "rgba(255,255,255,0.98)");
-    shotGradient.addColorStop(0.35, `${pulseVisual.mid}f5`);
-    shotGradient.addColorStop(0.75, `${pulseVisual.glow}b3`);
-    shotGradient.addColorStop(1, `${pulseVisual.glow}00`);
-    ctx.fillStyle = shotGradient;
-    ctx.beginPath();
-    ctx.arc(muzzleX, fistY, 34, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = pulseVisual.trail;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(muzzleX - fighter.face * 10, fistY);
-    ctx.lineTo(muzzleX + fighter.face * 24, fistY);
-    ctx.stroke();
-    } else if (fighter.attack.type === "blast") {
-    const centerX = fighter.x + fighter.width / 2;
-    const centerY = fighter.y + fighter.height / 2;
-    const time = performance.now();
-    const pulse = 1 + Math.sin(time / 45) * 0.08;
-    const outerRadius = 360 * pulse;
-    const innerRadius = 170 * pulse;
-    const blastGradient = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, outerRadius);
-    blastGradient.addColorStop(0, "rgba(255,255,255,0.98)");
-    blastGradient.addColorStop(0.18, "rgba(254, 215, 170, 0.98)");
-    blastGradient.addColorStop(0.48, "rgba(251, 146, 60, 0.9)");
-    blastGradient.addColorStop(0.8, "rgba(239, 68, 68, 0.62)");
-    blastGradient.addColorStop(1, "rgba(239, 68, 68, 0)");
-    ctx.fillStyle = blastGradient;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(255, 247, 237, 0.9)";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, outerRadius * 1.06, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
-    ctx.fill();
-    } else if (fighter.attack.type === "upSpecial") {
-    const centerX = fighter.x + fighter.width / 2;
-    const centerY = fighter.y + fighter.height / 2 - 20;
-    const time = performance.now();
-    ctx.strokeStyle = "rgba(125, 211, 252, 0.95)";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(centerX - 14, centerY + 34);
-    ctx.quadraticCurveTo(centerX - 30, centerY - 6, centerX - 6, centerY - 52);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(centerX + 14, centerY + 34);
-    ctx.quadraticCurveTo(centerX + 30, centerY - 6, centerX + 6, centerY - 52);
-    ctx.stroke();
-
-    ctx.strokeStyle = "rgba(224, 242, 254, 0.8)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY - 12, 22 + Math.sin(time / 55) * 3, Math.PI * 0.2, Math.PI * 0.8);
-    ctx.stroke();
-    } else if (fighter.attack.type === "smash") {
-    const flameGradient = ctx.createRadialGradient(fistX, fistY, 4, fistX, fistY, 30);
-    flameGradient.addColorStop(0, "rgba(255, 245, 157, 0.95)");
-    flameGradient.addColorStop(0.45, "rgba(251, 146, 60, 0.85)");
-    flameGradient.addColorStop(1, "rgba(239, 68, 68, 0)");
-    ctx.fillStyle = flameGradient;
-    ctx.beginPath();
-    ctx.arc(fistX, fistY, 30, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#fb923c";
-    ctx.beginPath();
-    ctx.moveTo(fistX + fighter.face * 26, fistY);
-    ctx.lineTo(fistX + fighter.face * 10, fistY - 13);
-    ctx.lineTo(fistX + fighter.face * 8, fistY + 13);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-    if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
-      ctx.fillStyle = fighter.attack.type === "charge" ? "#e0f2fe" : fighter.attack.type === "smash" ? "#fff7ed" : fighter.attack.type === "shot" ? "#dcfce7" : "#f8fafc";
-      ctx.beginPath();
-      ctx.arc(fistX, fistY, fistRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(15, 23, 42, 0.18)";
-      ctx.beginPath();
-      ctx.arc(fistX + fighter.face * 3, fistY + 2, Math.max(5, fistRadius - 4), 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } catch (error) {
-    console.error("drawAttack failed", error);
+    return evaluateQuests(deserializeState(serialized));
+  } catch {
+    return evaluateQuests(createInitialState());
   }
 }
 
-function drawChargingEffect(fighter) {
-  if (fighter.name !== "Nova" || state.running === false) return;
+let state = loadState();
+let selectedPlotId = null;
+let insideHouse = false;
+let firstPersonMode = false;
+let houseDoorMesh = null;
+const interiorInteractiveMeshes = [];
+const playerState = {
+  position: new THREE.Vector3(-2, 0.85, 8),
+  exteriorPosition: new THREE.Vector3(-2, 0.85, 8),
+  heading: 0,
+  lookPitch: -0.04,
+  moving: false,
+  verticalVelocity: 0,
+  landingTimer: 0,
+};
 
-  if (blastStartedAt !== null || blastReady) {
-    const elapsed = blastReady
-      ? BLAST_CHARGE_TIME_MS
-      : Math.min(BLAST_CHARGE_TIME_MS, performance.now() - blastStartedAt);
-    const charge = elapsed / BLAST_CHARGE_TIME_MS;
-    const centerX = fighter.x + fighter.width / 2;
-    const centerY = fighter.y + fighter.height / 2;
-    const radius = 32 + charge * 44;
-    const pulse = 1 + Math.sin(performance.now() / 40) * 0.08;
-    const glow = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, radius * 1.02);
-    glow.addColorStop(0, `rgba(255,255,255,${0.12 + charge * 0.18})`);
-    glow.addColorStop(0.28, `rgba(254, 215, 170, ${0.18 + charge * 0.38})`);
-    glow.addColorStop(0.65, `rgba(251, 146, 60, ${0.14 + charge * 0.4})`);
-    glow.addColorStop(1, "rgba(239, 68, 68, 0)");
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 1.02 * pulse, 0, Math.PI * 2);
-    ctx.fill();
+const FLOOR_HEIGHT = 0.85;
+const JUMP_VELOCITY = 6.8;
+const GRAVITY = 18;
 
-    ctx.strokeStyle = `rgba(251, 146, 60, ${0.55 + charge * 0.34})`;
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * pulse, 0, Math.PI * 2);
-    ctx.stroke();
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: true,
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    ctx.strokeStyle = `rgba(255, 247, 237, ${0.45 + charge * 0.36})`;
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 10; i += 1) {
-      const angle = performance.now() / 160 + (Math.PI * 2 * i) / 10;
-      ctx.beginPath();
-      ctx.moveTo(centerX + Math.cos(angle) * (radius - 10), centerY + Math.sin(angle) * (radius - 10));
-      ctx.lineTo(centerX + Math.cos(angle) * (radius + 14), centerY + Math.sin(angle) * (radius + 14));
-      ctx.stroke();
-    }
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xd7e8d2, 22, 62);
 
-    if (blastReady) {
-      ctx.strokeStyle = "rgba(255,255,255,0.95)";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 18 + Math.sin(performance.now() / 36) * 5, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+camera.position.set(-2, 20, 24);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enablePan = false;
+controls.maxPolarAngle = Math.PI * 0.45;
+controls.minDistance = 16;
+controls.maxDistance = 42;
+controls.target.set(4, 0.8, 6);
+clampCameraToBounds();
+controls.update();
+
+function clampCameraToBounds() {
+  if (firstPersonMode) {
+    return;
   }
-
-  if (!chargeReady && chargeStartedAt === null) return;
-
-  const elapsed = chargeReady ? CHARGE_TIME_MS : Math.min(CHARGE_TIME_MS, performance.now() - chargeStartedAt);
-  const charge = elapsed / CHARGE_TIME_MS;
-  const centerX = fighter.x + fighter.width / 2;
-  const centerY = fighter.y + fighter.height / 2;
-  const auraRadius = 34 + charge * 34;
-  const pulse = 0.92 + Math.sin(performance.now() / 55) * 0.14;
-  const fullyCharged = chargeReady || charge > 0.96;
-  const gradient = ctx.createRadialGradient(
-    centerX,
-    centerY,
-    6,
-    centerX,
-    centerY,
-    auraRadius
-  );
-  gradient.addColorStop(0, `rgba(255,255,255,${0.24 + charge * 0.28})`);
-  gradient.addColorStop(0.25, `rgba(186, 230, 253, ${0.2 + charge * 0.4})`);
-  gradient.addColorStop(0.5, `rgba(103, 232, 249, ${0.24 + charge * 0.48})`);
-  gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, auraRadius * pulse, 0, Math.PI * 2);
-  ctx.fill();
-
-  for (let ring = 0; ring < 2; ring += 1) {
-    ctx.strokeStyle = `rgba(186, 230, 253, ${0.28 + charge * 0.48 - ring * 0.1})`;
-    ctx.lineWidth = 2 + charge * 2.5 - ring * 0.5;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, (auraRadius + 6 + ring * 10) * pulse, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  const sparkCount = 6 + Math.floor(charge * 8);
-  ctx.strokeStyle = `rgba(255,255,255,${0.35 + charge * 0.5})`;
-  ctx.lineWidth = 2.5;
-  for (let i = 0; i < sparkCount; i += 1) {
-    const angle = performance.now() / 260 + (Math.PI * 2 * i) / sparkCount;
-    const inner = auraRadius * 0.78;
-    const outer = auraRadius + 10 + charge * 12;
-    ctx.beginPath();
-    ctx.moveTo(centerX + Math.cos(angle) * inner, centerY + Math.sin(angle) * inner);
-    ctx.lineTo(centerX + Math.cos(angle) * outer, centerY + Math.sin(angle) * outer);
-    ctx.stroke();
-  }
-
-  if (fullyCharged) {
-    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, auraRadius + 20 + Math.sin(performance.now() / 40) * 6, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = "rgba(255,255,255,0.22)";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, auraRadius * 1.05, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  const offset = camera.position.clone().sub(controls.target);
+  const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : CAMERA_BOUNDS;
+  controls.target.x = THREE.MathUtils.clamp(controls.target.x, bounds.minX, bounds.maxX);
+  controls.target.z = THREE.MathUtils.clamp(controls.target.z, bounds.minZ, bounds.maxZ);
+  camera.position.copy(controls.target).add(offset);
 }
 
-function drawMasterHand(fighter) {
-  ctx.save();
-  ctx.scale(fighter.face, 1);
-
-  ctx.fillStyle = "rgba(15, 23, 42, 0.2)";
-  ctx.beginPath();
-  ctx.ellipse(1, 34, 28, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  const gloveGradient = ctx.createLinearGradient(-34, -52, 28, 64);
-  gloveGradient.addColorStop(0, "#ffffff");
-  gloveGradient.addColorStop(0.5, "#f3f6fb");
-  gloveGradient.addColorStop(1, "#d8dee8");
-
-  const drawFinger = (x, y, width, height, radius, rotation) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.fillStyle = gloveGradient;
-    ctx.beginPath();
-    ctx.roundRect(-width / 2, -height / 2, width, height, radius);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(148, 163, 184, 0.22)";
-    ctx.beginPath();
-    ctx.roundRect(-width * 0.18, -height * 0.36, width * 0.22, height * 0.58, Math.max(3, radius * 0.55));
-    ctx.fill();
-    ctx.restore();
-  };
-
-  drawFinger(-11, 7, 16, 44, 7, -0.58);
-  drawFinger(-1, -12, 13, 58, 6, -0.1);
-  drawFinger(12, -17, 12, 66, 6, 0.04);
-  drawFinger(25, -10, 11, 57, 6, 0.12);
-  drawFinger(37, 5, 10, 39, 5, 0.2);
-
-  ctx.fillStyle = gloveGradient;
-  ctx.beginPath();
-  ctx.moveTo(-15, 8);
-  ctx.bezierCurveTo(-15, -1, -8, -10, 3, -11);
-  ctx.bezierCurveTo(15, -11, 23, -4, 26, 9);
-  ctx.bezierCurveTo(28, 24, 21, 34, 9, 37);
-  ctx.bezierCurveTo(-1, 39, -11, 36, -16, 25);
-  ctx.bezierCurveTo(-19, 18, -19, 12, -15, 8);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(-15, 33);
-  ctx.bezierCurveTo(-10, 21, -8, 12, -5, 9);
-  ctx.bezierCurveTo(1, 18, 6, 30, 7, 42);
-  ctx.bezierCurveTo(0, 48, -10, 45, -15, 33);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(148, 163, 184, 0.24)";
-  ctx.beginPath();
-  ctx.moveTo(-8, 9);
-  ctx.bezierCurveTo(-4, 4, 2, 2, 9, 4);
-  ctx.bezierCurveTo(15, 7, 17, 15, 15, 22);
-  ctx.bezierCurveTo(8, 22, 1, 21, -6, 19);
-  ctx.bezierCurveTo(-9, 16, -10, 12, -8, 9);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.54)";
-  ctx.lineWidth = 1.6;
-  ctx.lineCap = "round";
-  for (const [startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY] of [
-    [-4, -7, -3, -18, -2, -29, 0, -39],
-    [9, -8, 10, -23, 12, -35, 13, -48],
-    [21, -3, 23, -16, 25, -27, 27, -39],
-    [32, 10, 36, 9, 41, 10, 45, 12],
-  ]) {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
-    ctx.stroke();
-  }
-
-  ctx.strokeStyle = "rgba(255,255,255,0.92)";
-  ctx.lineWidth = 1.3;
-  ctx.beginPath();
-  ctx.moveTo(-10, 10);
-  ctx.bezierCurveTo(-7, 1, 0, -6, 10, -8);
-  ctx.stroke();
-
-  ctx.fillStyle = "#eef2f7";
-  ctx.beginPath();
-  ctx.roundRect(-11, 41, 20, 12, 5);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.74)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-8, 52);
-  ctx.lineTo(4, 52);
-  ctx.moveTo(-7, 57);
-  ctx.lineTo(3, 57);
-  ctx.stroke();
-
-  ctx.restore();
+function syncViewModeUi() {
+  viewModeButton.textContent = firstPersonMode ? "Third Person" : "First Person";
+  playerGroup.visible = !firstPersonMode;
+  updateReticle();
 }
 
-function getPulseVisualState() {
-  const now = performance.now();
-  const coolingDown = pulseCooldownUntil > now;
-  const ratio = coolingDown
-    ? Math.max(0, Math.min(1, (pulseCooldownUntil - now) / PULSE_LOCKOUT_MS))
-    : Math.max(0, Math.min(1, pulseHeatMs / PULSE_OVERHEAT_MS));
-
-  if (coolingDown) {
-    return { coolingDown, ratio, core: "#fff1f2", mid: "#fb7185", glow: "#dc2626", trail: "#ffe4e6" };
+function updateFirstPersonCamera() {
+  if (!firstPersonMode) {
+    return;
   }
 
-  const lerp = (a, b, t) => Math.round(a + (b - a) * t);
-  const toHex = (r, g, b) => `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
-  const mix = (from, to, t) => {
-    const a = from.match(/\w\w/g).map((value) => Number.parseInt(value, 16));
-    const b = to.match(/\w\w/g).map((value) => Number.parseInt(value, 16));
-    return toHex(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t));
-  };
+  const headHeight = insideHouse ? 2.35 : 2.55;
+  const eye = playerState.position.clone().add(new THREE.Vector3(0, headHeight, 0));
+  const facing = new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading));
+  const lookTarget = eye.clone().add(facing.multiplyScalar(8));
+  lookTarget.y = headHeight + playerState.lookPitch * 8;
 
-  const low = "#34d399";
-  const mid = "#facc15";
-  const high = "#f97316";
-  const glow = ratio < 0.55 ? mix(low, mid, ratio / 0.55) : mix(mid, high, (ratio - 0.55) / 0.45);
-  const core = ratio < 0.55 ? "#f0fdf4" : ratio < 0.85 ? "#fefce8" : "#fff7ed";
-  const trail = ratio < 0.55 ? "#dcfce7" : ratio < 0.85 ? "#fef9c3" : "#ffedd5";
-  return { coolingDown, ratio, core, mid: glow, glow, trail };
+  camera.position.copy(eye);
+  camera.lookAt(lookTarget);
 }
 
-function drawPulseHeatBar(fighter) {
-  if (!fighter.isPlayer || !state.running) return;
+function setViewMode(nextFirstPerson) {
+  firstPersonMode = nextFirstPerson;
+  controls.enabled = !firstPersonMode;
+  syncViewModeUi();
 
-  const pulseVisual = getPulseVisualState();
-  const { coolingDown, ratio } = pulseVisual;
-  if (ratio <= 0) return;
-  const barWidth = 76;
-  const barHeight = 8;
-  const x = fighter.x + fighter.width / 2 - barWidth / 2;
-  const y = fighter.y - 36;
-
-  ctx.fillStyle = "rgba(8, 17, 31, 0.72)";
-  ctx.beginPath();
-  ctx.roundRect(x - 3, y - 3, barWidth + 6, barHeight + 6, 7);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255,255,255,0.16)";
-  ctx.beginPath();
-  ctx.roundRect(x, y, barWidth, barHeight, 5);
-  ctx.fill();
-
-  if (ratio > 0) {
-    const fillGradient = ctx.createLinearGradient(x, y, x + barWidth, y);
-    if (coolingDown) {
-      fillGradient.addColorStop(0, pulseVisual.core);
-      fillGradient.addColorStop(0.55, pulseVisual.mid);
-      fillGradient.addColorStop(1, pulseVisual.glow);
+  if (!firstPersonMode) {
+    if (insideHouse) {
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+      camera.position.set(playerState.position.x, 8.5, playerState.position.z + 7.3);
+      controls.minDistance = 8;
+      controls.maxDistance = 22;
     } else {
-      fillGradient.addColorStop(0, "#34d399");
-      fillGradient.addColorStop(0.55, "#facc15");
-      fillGradient.addColorStop(1, "#f97316");
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+      camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+      controls.minDistance = 16;
+      controls.maxDistance = 42;
     }
-    ctx.fillStyle = fillGradient;
-    ctx.beginPath();
-    ctx.roundRect(x, y, Math.max(6, barWidth * ratio), barHeight, 5);
-    ctx.fill();
-  }
-
-  ctx.strokeStyle = coolingDown ? "rgba(226,232,240,0.8)" : "rgba(255,255,255,0.72)";
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.roundRect(x, y, barWidth, barHeight, 5);
-  ctx.stroke();
-}
-
-function drawFighter(fighter) {
-  if (fighter.invuln > 0 && Math.floor(fighter.invuln / 6) % 2 === 0) {
+    clampCameraToBounds();
+    controls.update();
     return;
   }
 
-  drawChargingEffect(fighter);
-  if (fighter.shielding) {
-    const centerX = fighter.x + fighter.width / 2;
-    const centerY = fighter.y + fighter.height / 2;
-    const shieldGradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, 44);
-    shieldGradient.addColorStop(0, "rgba(255,255,255,0.12)");
-    shieldGradient.addColorStop(0.6, "rgba(96,165,250,0.18)");
-    shieldGradient.addColorStop(1, "rgba(37,99,235,0.02)");
-    ctx.fillStyle = shieldGradient;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 42, 0, Math.PI * 2);
-    ctx.fill();
+  updateFirstPersonCamera();
+}
 
-    ctx.strokeStyle = "rgba(191,219,254,0.9)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 36, 0, Math.PI * 2);
-    ctx.stroke();
+function handleTrackpadPan(event) {
+  event.preventDefault();
+
+  if (firstPersonMode) {
+    const turnStep = event.deltaX * 0.0035;
+    playerState.heading += turnStep;
+    return;
   }
 
-  ctx.save();
-  ctx.translate(fighter.x + fighter.width / 2, fighter.y + fighter.height / 2);
-
-  const useMasterHand = false;
-
-  if (useMasterHand) {
-    drawMasterHand(fighter);
-  } else {
-    ctx.scale(fighter.face, 1);
-    ctx.fillStyle = fighter.color;
-    ctx.beginPath();
-    ctx.roundRect(-fighter.width / 2, -fighter.height / 2, fighter.width, fighter.height, 14);
-    ctx.fill();
-
-    ctx.fillStyle = fighter.accent;
-    ctx.beginPath();
-    ctx.arc(6, -10, 9, 0, Math.PI * 2);
-    ctx.fill();
+  const zoomIntent = event.ctrlKey || event.metaKey;
+  if (zoomIntent) {
+    const zoomStep = event.deltaY * 0.012;
+    const offset = camera.position.clone().sub(controls.target);
+    const distance = offset.length();
+    const nextDistance = THREE.MathUtils.clamp(distance + zoomStep, controls.minDistance, controls.maxDistance);
+    offset.setLength(nextDistance);
+    camera.position.copy(controls.target).add(offset);
+    clampCameraToBounds();
+    controls.update();
+    return;
   }
 
-  if (fighter.attack) {
-    const attackData = ATTACKS[fighter.attack.type];
-    const activeStart = attackData.startup;
-    const totalFrames = attackData.startup + attackData.active + attackData.recovery;
-    const extend = Math.min(1, fighter.attack.frame / Math.max(1, activeStart));
-    const retract = fighter.attack.frame > activeStart + attackData.active
-      ? 1 - (fighter.attack.frame - activeStart - attackData.active) / Math.max(1, totalFrames - activeStart - attackData.active)
-      : 1;
-    const armReach = Math.max(0, extend * retract);
-    const armLength =
-      fighter.attack.type === "charge"
-        ? 28
-        : fighter.attack.type === "sideSpecial"
-        ? 24
-        : fighter.attack.type === "smash"
-        ? 22
-        : fighter.attack.type === "shot"
-        ? 18
-        : fighter.attack.type === "upSpecial" || fighter.attack.type === "blast"
-        ? 0
-        : 15;
+  const panScale = 0.022;
+  const offset = camera.position.clone().sub(controls.target);
+  const forward = offset.clone().setY(0).normalize().negate();
+  const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+  const movement = right.multiplyScalar(event.deltaX * panScale).add(forward.multiplyScalar(event.deltaY * panScale));
 
-    if (fighter.attack.type !== "blast" && fighter.attack.type !== "upSpecial") {
-      if (useMasterHand) {
-        ctx.scale(fighter.face, 1);
+  camera.position.add(movement);
+  controls.target.add(movement);
+  clampCameraToBounds();
+  controls.update();
+}
+
+function enterHouse() {
+  insideHouse = true;
+  playerState.exteriorPosition.copy(playerState.position);
+  playerState.position.set(0, 0.85, 4.2);
+  playerState.verticalVelocity = 0;
+  selectedPlotId = null;
+  worldGroup.visible = false;
+  interiorGroup.visible = true;
+  controls.target.set(0, 0.8, 2.2);
+  camera.position.set(0, 8.5, 11.5);
+  controls.minDistance = 8;
+  controls.maxDistance = 22;
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  interiorCard.classList.remove("hidden");
+  actionValue.textContent = "Entered the farmhouse.";
+  renderSelection();
+}
+
+function exitHouse() {
+  insideHouse = false;
+  worldGroup.visible = true;
+  interiorGroup.visible = false;
+  playerState.position.copy(playerState.exteriorPosition);
+  playerState.verticalVelocity = 0;
+  controls.minDistance = 16;
+  controls.maxDistance = 42;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+  camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  interiorCard.classList.add("hidden");
+  actionValue.textContent = "Stepped back outside.";
+}
+
+function updatePlayerMovement(deltaSeconds) {
+  if (firstPersonMode) {
+    const lookHorizontal = (movementKeys.ArrowLeft ? 1 : 0) - (movementKeys.ArrowRight ? 1 : 0);
+    const lookVertical = (movementKeys.ArrowUp ? 1 : 0) - (movementKeys.ArrowDown ? 1 : 0);
+    if (lookHorizontal) {
+      playerState.heading += lookHorizontal * deltaSeconds * 2.2;
+    }
+    if (lookVertical) {
+      playerState.lookPitch = THREE.MathUtils.clamp(playerState.lookPitch + lookVertical * deltaSeconds * 1.2, -0.6, 0.35);
+    }
+  }
+
+  const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
+  const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
+  const wasGrounded = playerState.position.y <= FLOOR_HEIGHT + 0.001;
+  const wantsJump = !insideHouse && movementKeys.Space && wasGrounded;
+  if (wantsJump) {
+    playerState.verticalVelocity = JUMP_VELOCITY;
+  }
+
+  let actualMovement = new THREE.Vector3();
+  if (horizontal || vertical) {
+    const moveScale = deltaSeconds * 9.5;
+    const forward = firstPersonMode
+      ? new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading)).normalize()
+      : controls.target.clone().sub(camera.position).setY(0).normalize();
+    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+    const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
+
+    const desiredPosition = playerState.position.clone().add(movement);
+    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse);
+    actualMovement = resolvedPosition.clone().sub(playerState.position);
+
+    if (actualMovement.lengthSq() > 0.0001) {
+      playerState.position.copy(resolvedPosition);
+      if (!firstPersonMode) {
+        playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
       }
-      ctx.strokeStyle =
-        fighter.attack.type === "charge"
-          ? "#67e8f9"
-          : fighter.attack.type === "sideSpecial"
-          ? "#38bdf8"
-          : fighter.attack.type === "smash"
-          ? "#fdba74"
-          : fighter.attack.type === "shot"
-          ? "#34d399"
-          : fighter.accent;
-      ctx.lineWidth =
-        fighter.attack.type === "charge"
-          ? 12
-          : fighter.attack.type === "sideSpecial"
-          ? 10
-          : fighter.attack.type === "smash"
-          ? 10
-          : fighter.attack.type === "shot"
-          ? 8
-          : 7;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(14, 2);
-      ctx.lineTo(14 + armLength * armReach, 2);
-      ctx.stroke();
     }
   }
 
-  if (!useMasterHand) {
-    ctx.fillStyle = "#08111f";
-    ctx.fillRect(2, -8, 8, 3);
+  playerState.verticalVelocity -= GRAVITY * deltaSeconds;
+  playerState.position.y += playerState.verticalVelocity * deltaSeconds;
+  if (playerState.position.y < FLOOR_HEIGHT) {
+    if (!insideHouse && !wasGrounded) {
+      playerState.landingTimer = 0.35;
+    }
+    playerState.position.y = FLOOR_HEIGHT;
+    playerState.verticalVelocity = 0;
   }
-  ctx.restore();
 
-  ctx.fillStyle = "rgba(8, 17, 31, 0.76)";
-  ctx.font = "700 18px Space Grotesk";
-  ctx.textAlign = "center";
-  ctx.fillText(fighter.name, fighter.x + fighter.width / 2, fighter.y - 14);
-  drawPulseHeatBar(fighter);
-
-  drawAttack(fighter);
+  playerState.moving = actualMovement.lengthSq() > 0.0001;
+  if (firstPersonMode) {
+    updateFirstPersonCamera();
+  } else {
+    if (actualMovement.lengthSq() > 0.0001) {
+      camera.position.add(actualMovement);
+      controls.target.add(actualMovement);
+      clampCameraToBounds();
+    }
+    controls.update();
+  }
 }
 
-function drawImpact(fighter) {
-  if (!fighter.impact) return;
-  const fxScale = getFxScale();
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const plotMeshes = new Map();
+const worldColliders = [];
+const interiorColliders = [];
 
-  if (fighter.impact.type === "supernova") {
-    const maxTimer = 30;
-    const life = fighter.impact.timer / maxTimer;
-    const outerRadius = (132 * (1 - life) + 54) * fxScale;
-    const coreRadius = outerRadius * 0.34;
-    const shockRadius = outerRadius * (1.12 + (1 - life) * 0.35);
-    const gradient = ctx.createRadialGradient(
-      fighter.impact.x,
-      fighter.impact.y,
-      coreRadius * 0.08,
-      fighter.impact.x,
-      fighter.impact.y,
-      outerRadius
-    );
-    gradient.addColorStop(0, `rgba(255, 255, 255, ${1 * life})`);
-    gradient.addColorStop(0.16, `rgba(224, 242, 254, ${1 * life})`);
-    gradient.addColorStop(0.38, `rgba(125, 211, 252, ${0.96 * life})`);
-    gradient.addColorStop(0.68, `rgba(59, 130, 246, ${0.82 * life})`);
-    gradient.addColorStop(1, "rgba(30, 64, 175, 0)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
-    ctx.fill();
+const worldGroup = new THREE.Group();
+scene.add(worldGroup);
 
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.96 * life})`;
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, shockRadius, 0, Math.PI * 2);
-    ctx.stroke();
+const actorGroup = new THREE.Group();
+scene.add(actorGroup);
 
-    ctx.strokeStyle = `rgba(186, 230, 253, ${0.92 * life})`;
-    ctx.lineWidth = 5;
-    for (let i = 0; i < 14; i += 1) {
-      const angle = (Math.PI * 2 * i) / 14;
-      const inner = outerRadius * 0.42;
-      const outer = outerRadius + 42 * life;
-      ctx.beginPath();
-      ctx.moveTo(
-        fighter.impact.x + Math.cos(angle) * inner,
-        fighter.impact.y + Math.sin(angle) * inner
-      );
-      ctx.lineTo(
-        fighter.impact.x + Math.cos(angle) * outer,
-        fighter.impact.y + Math.sin(angle) * outer
-      );
-      ctx.stroke();
-    }
+const interiorGroup = new THREE.Group();
+interiorGroup.visible = false;
+scene.add(interiorGroup);
 
-    ctx.fillStyle = `rgba(255,255,255,${0.98 * life})`;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, coreRadius, 0, Math.PI * 2);
-    ctx.fill();
+const skyLight = new THREE.HemisphereLight(0xf8ffe6, 0x8b6a3f, 1.7);
+scene.add(skyLight);
+
+const sun = new THREE.DirectionalLight(0xfff2c9, 1.7);
+sun.position.set(18, 28, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -40;
+sun.shadow.camera.right = 40;
+sun.shadow.camera.top = 40;
+sun.shadow.camera.bottom = -40;
+scene.add(sun);
+
+const ambientBounce = new THREE.PointLight(0xc5e59d, 0.5, 80);
+ambientBounce.position.set(-10, 8, 12);
+scene.add(ambientBounce);
+
+const fillLight = new THREE.PointLight(0xfff5c2, 0.75, 70);
+fillLight.position.set(8, 16, 24);
+scene.add(fillLight);
+
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(60, 64),
+  new THREE.MeshStandardMaterial({ color: 0x7aa35a, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const path = new THREE.Mesh(
+  new THREE.RingGeometry(16, 20, 48),
+  new THREE.MeshStandardMaterial({ color: 0xbf9b63, roughness: 1 })
+);
+path.rotation.x = -Math.PI / 2;
+path.position.y = 0.01;
+scene.add(path);
+
+const centerStone = new THREE.Mesh(
+  new THREE.CylinderGeometry(3.4, 4.2, 1.1, 8),
+  new THREE.MeshStandardMaterial({ color: 0xc6b189, roughness: 0.95 })
+);
+centerStone.position.set(4, 0.45, 6);
+centerStone.receiveShadow = true;
+centerStone.castShadow = true;
+scene.add(centerStone);
+
+const playerGroup = new THREE.Group();
+const playerBody = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.65, 1.4, 5, 12),
+  new THREE.MeshStandardMaterial({ color: 0xf0c45a, roughness: 0.62 })
+);
+playerBody.position.y = 1.4;
+playerBody.castShadow = true;
+playerGroup.add(playerBody);
+
+const playerHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.52, 18, 18),
+  new THREE.MeshStandardMaterial({ color: 0x2f2416, roughness: 0.82 })
+);
+playerHead.position.y = 2.6;
+playerHead.castShadow = true;
+playerGroup.add(playerHead);
+
+const playerPack = new THREE.Mesh(
+  new THREE.BoxGeometry(0.75, 0.9, 0.4),
+  new THREE.MeshStandardMaterial({ color: 0x6f57d9, roughness: 0.7 })
+);
+playerPack.position.set(0, 1.5, -0.5);
+playerPack.castShadow = true;
+playerGroup.add(playerPack);
+
+const landingRingMaterial = new THREE.MeshBasicMaterial({
+  color: 0xf5dba7,
+  transparent: true,
+  opacity: 0,
+});
+const landingRing = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.82, 28), landingRingMaterial);
+landingRing.rotation.x = -Math.PI / 2;
+landingRing.position.y = 0.04;
+landingRing.visible = false;
+actorGroup.add(landingRing);
+
+actorGroup.add(playerGroup);
+
+const interiorFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(16, 0.6, 16),
+  new THREE.MeshStandardMaterial({ color: 0x9c7b55, roughness: 0.95 })
+);
+interiorFloor.position.set(0, -0.1, 0);
+interiorFloor.receiveShadow = true;
+interiorGroup.add(interiorFloor);
+
+const backWall = new THREE.Mesh(
+  new THREE.BoxGeometry(16, 7, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0xf4ead4, roughness: 0.95 })
+);
+backWall.position.set(0, 3.2, -8);
+interiorGroup.add(backWall);
+
+const leftWall = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 7, 16),
+  new THREE.MeshStandardMaterial({ color: 0xead9b6, roughness: 0.95 })
+);
+leftWall.position.set(-8, 3.2, 0);
+interiorGroup.add(leftWall);
+
+const rightWall = leftWall.clone();
+rightWall.position.x = 8;
+interiorGroup.add(rightWall);
+
+const table = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.5, 1.7, 1, 20),
+  new THREE.MeshStandardMaterial({ color: 0x7b4d2d, roughness: 0.88 })
+);
+table.position.set(0, 0.6, -1.2);
+table.castShadow = true;
+interiorGroup.add(table);
+
+const bed = new THREE.Mesh(
+  new THREE.BoxGeometry(4, 1.1, 7),
+  new THREE.MeshStandardMaterial({ color: 0x6f57d9, roughness: 0.72 })
+);
+bed.position.set(4.6, 0.6, 1.6);
+bed.castShadow = true;
+interiorGroup.add(bed);
+
+const notesBoard = new THREE.Mesh(
+  new THREE.BoxGeometry(3.8, 2.6, 0.16),
+  new THREE.MeshStandardMaterial({ color: 0xd9bf84, roughness: 0.9 })
+);
+notesBoard.position.set(-4.4, 3.2, -7.65);
+notesBoard.userData.kind = "indexBoard";
+interiorGroup.add(notesBoard);
+
+const lantern = new THREE.Mesh(
+  new THREE.SphereGeometry(0.45, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xffd878, emissive: 0xa55a10, emissiveIntensity: 0.85 })
+);
+lantern.position.set(0, 5.4, -1.5);
+interiorGroup.add(lantern);
+
+table.userData.kind = "upgradeTable";
+bed.userData.kind = "bed";
+interiorInteractiveMeshes.push(table, bed, notesBoard);
+
+function setState(nextState) {
+  state = nextState;
+  render();
+}
+
+function saveState() {
+  window.localStorage.setItem(STORAGE_KEY, serializeState(state));
+  actionValue.textContent = "Farm saved locally.";
+}
+
+function resetState() {
+  window.localStorage.removeItem(STORAGE_KEY);
+  selectedPlotId = null;
+  setState(evaluateQuests(createInitialState()));
+}
+
+function formatHour(hour) {
+  return `${String(hour).padStart(2, "0")}:00`;
+}
+
+function renderHeader() {
+  creditsValue.textContent = `${state.credits}`;
+  oreValue.textContent = `${state.ore}`;
+  clockValue.textContent = `Day ${state.clock.day}, ${formatHour(state.clock.hour)}`;
+  actionValue.textContent = state.lastAction;
+}
+
+function renderBeanSelector() {
+  const unlockedBeanIds = getUnlockedBeanIds(state);
+  beanSelector.innerHTML = unlockedBeanIds
+    .map((beanId) => {
+      const bean = BEANS[beanId];
+      const selectedClass = state.selectedBeanId === beanId ? "bean-chip active" : "bean-chip";
+      return `
+        <article class="${selectedClass}">
+          <strong>${bean.name}</strong>
+          <span>${bean.description}</span>
+          <span>${bean.rarity} · ${bean.growthHours}h · ${bean.sellValue} credits</span>
+          <span>Seeds in bag: ${state.inventory.seeds[beanId] ?? 0}</span>
+          <button type="button" data-select-bean="${beanId}">Select Seed</button>
+        </article>
+      `;
+    })
+    .join("");
+
+  shopActions.innerHTML = unlockedBeanIds
+    .filter((beanId) => BEANS[beanId].seedCost > 0)
+    .map((beanId) => {
+      const bean = BEANS[beanId];
+      return `<button type="button" data-buy-seed="${beanId}">Buy ${bean.name} Seed (${bean.seedCost})</button>`;
+    })
+    .join("");
+}
+
+function renderLandActions() {
+  landActions.innerHTML = PARCELS.filter((parcel) => parcel.unlockCost > 0)
+    .map((parcel) => {
+      const stateParcel = state.parcels.find((entry) => entry.id === parcel.id);
+      if (stateParcel?.unlocked) {
+        return `<button type="button" disabled>${parcel.name} Unlocked</button>`;
+      }
+      return `<button type="button" data-unlock-parcel="${parcel.id}">Unlock ${parcel.name} (${parcel.unlockCost})</button>`;
+    })
+    .join("");
+}
+
+function renderQuests() {
+  questList.innerHTML = QUESTS.map((quest) => {
+    const completed = state.completedQuestIds.includes(quest.id);
+    const progress = state.questProgress[quest.id] ?? 0;
+    const progressText =
+      quest.type === "unlockParcel"
+        ? completed
+          ? "Unlocked"
+          : "Locked"
+        : `${progress} / ${quest.target}`;
+    return `
+      <article class="stack-item ${completed ? "quest-complete" : ""}">
+        <strong>${quest.name}</strong>
+        <span>${quest.description}</span>
+        <span>${progressText}</span>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderUpgrades() {
+  upgradeList.innerHTML = Object.values(UPGRADES)
+    .map((upgrade) => {
+      const owned = state.upgrades.includes(upgrade.id);
+      const oreCost = upgrade.oreCost ?? 0;
+      const costText = oreCost > 0 ? `${upgrade.cost} credits · ${oreCost} ore` : `${upgrade.cost} credits`;
+      return `
+        <article class="stack-item">
+          <strong>${upgrade.name}</strong>
+          <span>${upgrade.description}</span>
+          <span>${owned ? "Installed in farmhouse" : costText}</span>
+          <button type="button" data-buy-upgrade="${upgrade.id}" ${owned ? "disabled" : ""}>${owned ? "Installed" : "Buy Upgrade"}</button>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderIndex() {
+  const entries = Object.entries(state.beanIndex);
+  beanIndex.innerHTML =
+    entries.length === 0
+      ? `<article class="stack-item"><strong>No beans logged yet.</strong><span>Plant or discover a bean to start the index.</span></article>`
+      : entries
+          .map(([beanId, entry]) => {
+            const bean = BEANS[beanId];
+            return `
+              <article class="stack-item">
+                <strong class="${bean.rarity === "Rare" || bean.rarity === "Special" ? "rare" : ""}">${bean.name}</strong>
+                <span>${bean.rarity} · ${bean.description}</span>
+                <span>Planted ${entry.planted ?? 0} · Harvested ${entry.harvested ?? 0} · Sold ${entry.sold ?? 0}</span>
+              </article>
+            `;
+          })
+          .join("");
+}
+
+function renderInventory() {
+  const sections = [
+    { title: "Seeds", items: state.inventory.seeds },
+    { title: "Harvest", items: state.inventory.beans },
+  ];
+
+  inventoryList.innerHTML = sections
+    .map((section) => {
+      const items = Object.entries(section.items);
+      return `
+        <article class="stack-item">
+          <strong>${section.title}</strong>
+          <span>${items.length === 0 ? "Empty" : items.map(([id, count]) => `${BEANS[id].name}: ${count}`).join(" · ")}</span>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function describePlot(plot) {
+  if (!plot) {
+    return insideHouse ? "You are inside the farmhouse." : "Choose a plot in the 3D field.";
+  }
+  if (plot.state === "empty") {
+    return `Open soil in ${plot.parcelId}. Plant ${BEANS[state.selectedBeanId].name} here.`;
+  }
+  const bean = BEANS[plot.beanId];
+  if (plot.state === "planted") {
+    return `${bean.name} growing: ${plot.growthHours.toFixed(1)} / ${bean.growthHours}h, hydration ${plot.hydration}/${bean.waterNeed}.`;
+  }
+  return `${bean.name} is ready. Harvest it now.`;
+}
+
+function renderSelection() {
+  if (insideHouse) {
+    selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to spend ore on house upgrades.";
+    selectionActions.innerHTML = "";
+    return;
+  }
+  const plot = selectedPlotId ? findPlotById(selectedPlotId) : null;
+  selectionText.textContent = describePlot(plot);
+  selectionActions.innerHTML = "";
+
+  if (!plot) {
     return;
   }
 
-  if (fighter.impact.type === "nova") {
-    const maxTimer = 22;
-    const life = fighter.impact.timer / maxTimer;
-    const outerRadius = (78 * (1 - life) + 28) * fxScale;
-    const coreRadius = outerRadius * 0.28;
-    const gradient = ctx.createRadialGradient(
-      fighter.impact.x,
-      fighter.impact.y,
-      coreRadius * 0.15,
-      fighter.impact.x,
-      fighter.impact.y,
-      outerRadius
-    );
-    gradient.addColorStop(0, `rgba(255, 255, 255, ${0.98 * life})`);
-    gradient.addColorStop(0.22, `rgba(186, 230, 253, ${0.95 * life})`);
-    gradient.addColorStop(0.48, `rgba(103, 232, 249, ${0.88 * life})`);
-    gradient.addColorStop(0.78, `rgba(59, 130, 246, ${0.62 * life})`);
-    gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
-    ctx.fill();
+  const button = document.createElement("button");
+  button.type = "button";
 
-    ctx.strokeStyle = `rgba(224, 242, 254, ${0.95 * life})`;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.02 + (1 - life) * 0.22), 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = `rgba(103, 232, 249, ${0.85 * life})`;
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 10; i += 1) {
-      const angle = (Math.PI * 2 * i) / 10;
-      const inner = outerRadius * 0.5;
-      const outer = outerRadius + 26 * life;
-      ctx.beginPath();
-      ctx.moveTo(
-        fighter.impact.x + Math.cos(angle) * inner,
-        fighter.impact.y + Math.sin(angle) * inner
-      );
-      ctx.lineTo(
-        fighter.impact.x + Math.cos(angle) * outer,
-        fighter.impact.y + Math.sin(angle) * outer
-      );
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = `rgba(255,255,255,${0.95 * life})`;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, coreRadius, 0, Math.PI * 2);
-    ctx.fill();
-    return;
+  if (plot.state === "empty") {
+    button.textContent = `Plant ${BEANS[state.selectedBeanId].name}`;
+    button.dataset.selectionAction = "plant";
+  } else if (plot.state === "planted") {
+    button.textContent = "Water Plot";
+    button.dataset.selectionAction = "water";
+  } else if (plot.state === "ready") {
+    button.textContent = "Harvest Plot";
+    button.dataset.selectionAction = "harvest";
   }
 
-  if (fighter.impact.type === "smoke") {
-    const maxTimer = 14;
-    const life = fighter.impact.timer / maxTimer;
-    const puffRadius = (28 * (1 - life) + 10) * fxScale;
-    const puffs = [
-      [-16, -6, 0.95],
-      [14, -10, 0.82],
-      [2, 10, 1.08],
-      [20, 2, 0.7],
-    ];
-
-    for (const [dx, dy, scale] of puffs) {
-      ctx.fillStyle = `rgba(226, 232, 240, ${0.46 * life})`;
-      ctx.beginPath();
-      ctx.arc(
-        fighter.impact.x + fighter.impact.face * 8 * (1 - life) + dx * (1 - life * 0.35),
-        fighter.impact.y + dy * (1 - life * 0.22),
-        puffRadius * scale,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
-
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.28 * life})`;
-    ctx.beginPath();
-    ctx.arc(
-      fighter.impact.x + fighter.impact.face * 6,
-      fighter.impact.y,
-      puffRadius * 0.62,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    return;
+  if (button.dataset.selectionAction) {
+    selectionActions.appendChild(button);
   }
+}
 
-  if (fighter.impact.type === "spark") {
-    const maxTimer = 14;
-    const life = fighter.impact.timer / maxTimer;
-    const outerRadius = (52 * (1 - life) + 16) * fxScale;
-    ctx.strokeStyle = `rgba(167, 243, 208, ${0.9 * life})`;
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 8; i += 1) {
-      const angle = (Math.PI * 2 * i) / 8;
-      ctx.beginPath();
-      ctx.moveTo(
-        fighter.impact.x + Math.cos(angle) * outerRadius * 0.3,
-        fighter.impact.y + Math.sin(angle) * outerRadius * 0.3
-      );
-      ctx.lineTo(
-        fighter.impact.x + Math.cos(angle) * outerRadius,
-        fighter.impact.y + Math.sin(angle) * outerRadius
-      );
-      ctx.stroke();
-    }
-    ctx.fillStyle = `rgba(255,255,255,${0.92 * life})`;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 0.34, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
+function renderParcelSummaries() {
+  farmView.innerHTML = state.parcels
+    .map((parcel) => {
+      const definition = PARCELS.find((entry) => entry.id === parcel.id);
+      const readyCount = parcel.plots.filter((plot) => plot.state === "ready").length;
+      const plantedCount = parcel.plots.filter((plot) => plot.state === "planted").length;
+      return `
+        <article class="parcel-summary ${parcel.unlocked ? "" : "locked"}">
+          <strong>${definition.name}</strong>
+          <span>${parcel.unlocked ? `${plantedCount} growing · ${readyCount} ready · soil x${definition.soilBonus.toFixed(2)}` : `Locked · ${definition.unlockCost} credits`}</span>
+        </article>
+      `;
+    })
+    .join("");
+}
 
-  if (fighter.impact.type === "burst") {
-    const maxTimer = 20;
-    const life = fighter.impact.timer / maxTimer;
-    const outerRadius = (360 * (1 - life) + 130) * fxScale;
-    const innerRadius = outerRadius * 0.34;
-    const gradient = ctx.createRadialGradient(
-      fighter.impact.x,
-      fighter.impact.y,
-      innerRadius * 0.15,
-      fighter.impact.x,
-      fighter.impact.y,
-      outerRadius
-    );
-    gradient.addColorStop(0, `rgba(255,255,255,${0.98 * life})`);
-    gradient.addColorStop(0.2, `rgba(255, 237, 213, ${0.98 * life})`);
-    gradient.addColorStop(0.46, `rgba(251, 146, 60, ${0.92 * life})`);
-    gradient.addColorStop(0.78, `rgba(239, 68, 68, ${0.7 * life})`);
-    gradient.addColorStop(1, "rgba(239, 68, 68, 0)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
-    ctx.fill();
+function beanColor(beanId) {
+  if (beanId === "green") return 0x76b84f;
+  if (beanId === "wax") return 0xe2c15c;
+  if (beanId === "scarlet") return 0xc74339;
+  if (beanId === "starlight") return 0x7c68f0;
+  return 0x6aa54a;
+}
 
-    ctx.strokeStyle = `rgba(255, 247, 237, ${0.95 * life})`;
-    ctx.lineWidth = 12;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.08 + (1 - life) * 0.2), 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = `rgba(255, 245, 157, ${0.86 * life})`;
-    ctx.lineWidth = 10;
-    for (let i = 0; i < 20; i += 1) {
-      const angle = (Math.PI * 2 * i) / 20;
-      const inner = outerRadius * 0.46;
-      const outer = outerRadius + 120 * life;
-      ctx.beginPath();
-      ctx.moveTo(
-        fighter.impact.x + Math.cos(angle) * inner,
-        fighter.impact.y + Math.sin(angle) * inner
-      );
-      ctx.lineTo(
-        fighter.impact.x + Math.cos(angle) * outer,
-        fighter.impact.y + Math.sin(angle) * outer
-      );
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = `rgba(255,255,255,${0.6 * life})`;
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * 1.24, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = `rgba(255,255,255,${0.92 * life})`;
-    ctx.beginPath();
-    ctx.arc(fighter.impact.x, fighter.impact.y, innerRadius, 0, Math.PI * 2);
-    ctx.fill();
-    return;
-  }
-
-  const maxTimer = 16;
-  const life = fighter.impact.timer / maxTimer;
-  const outerRadius = (54 * (1 - life) + 18) * fxScale;
-  const innerRadius = outerRadius * 0.35;
-  const gradient = ctx.createRadialGradient(
-    fighter.impact.x,
-    fighter.impact.y,
-    innerRadius * 0.2,
-    fighter.impact.x,
-    fighter.impact.y,
-    outerRadius
+function createCropVisual(plot) {
+  const bean = BEANS[plot.beanId];
+  const group = new THREE.Group();
+  const isGiantPod = plot.beanId === "giant";
+  const isFrostPod = plot.beanId === "frost";
+  const isEmberBean = plot.beanId === "ember";
+  const isStarlightBean = plot.beanId === "starlight";
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      isGiantPod ? 0.16 : 0.09,
+      isGiantPod ? 0.22 : 0.12,
+      plot.state === "ready" ? (isGiantPod ? 3.8 : 2.2) : isGiantPod ? 2.2 : 1.5,
+      12
+    ),
+    new THREE.MeshStandardMaterial({ color: 0x4f8b2a, roughness: 0.8 })
   );
-  gradient.addColorStop(0, `rgba(255, 251, 235, ${0.95 * life})`);
-  gradient.addColorStop(0.25, `rgba(254, 215, 170, ${0.95 * life})`);
-  gradient.addColorStop(0.5, `rgba(251, 146, 60, ${0.9 * life})`);
-  gradient.addColorStop(0.78, `rgba(239, 68, 68, ${0.7 * life})`);
-  gradient.addColorStop(1, "rgba(239, 68, 68, 0)");
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius, 0, Math.PI * 2);
-  ctx.fill();
+  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : 1.1) : isGiantPod ? 1.1 : 0.75;
+  stem.castShadow = true;
+  group.add(stem);
 
-  ctx.strokeStyle = `rgba(255, 247, 237, ${0.85 * life})`;
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(fighter.impact.x, fighter.impact.y, outerRadius * (1.08 + (1 - life) * 0.18), 0, Math.PI * 2);
-  ctx.stroke();
+  const leafOffsets = isGiantPod
+    ? [
+        [-0.9, 1.45, 0.35],
+        [0.85, 1.8, -0.3],
+        [0.25, 1.2, 0.95],
+        [-0.35, 2.15, -0.7],
+      ]
+    : isFrostPod
+    ? [
+        [-0.6, 1.15, 0.3],
+        [0.55, 1.45, -0.2],
+        [0.18, 1.0, 0.62],
+      ]
+    : isEmberBean
+    ? [
+        [-0.45, 1.0, 0.1],
+        [0.5, 1.4, -0.12],
+        [0.08, 1.1, 0.58],
+      ]
+    : isStarlightBean
+    ? [
+        [-0.38, 1.05, 0.32],
+        [0.42, 1.32, -0.25],
+        [0.02, 1.58, 0.02],
+      ]
+    : [
+        [-0.55, 1.1, 0.25],
+        [0.45, 1.35, -0.18],
+        [0.12, 0.95, 0.52],
+      ];
 
-  ctx.strokeStyle = `rgba(255, 245, 157, ${0.9 * life})`;
-  ctx.lineWidth = 3;
-  for (let i = 0; i < 8; i += 1) {
-    const angle = (Math.PI * 2 * i) / 8;
-    const inner = outerRadius * 0.58;
-    const outer = outerRadius + 18 * life;
-    ctx.beginPath();
-    ctx.moveTo(
-      fighter.impact.x + Math.cos(angle) * inner,
-      fighter.impact.y + Math.sin(angle) * inner
+  const leafMaterial = new THREE.MeshStandardMaterial({
+    color: isFrostPod ? 0x89c8ff : isEmberBean ? 0xe87b39 : isStarlightBean ? 0xd9c2ff : beanColor(plot.beanId),
+    roughness: 0.7,
+    emissive: isFrostPod ? 0x17365f : isEmberBean ? 0x57210b : isStarlightBean ? 0x36205d : 0x000000,
+    emissiveIntensity: isFrostPod ? 0.28 : isEmberBean ? 0.3 : isStarlightBean ? 0.42 : 0,
+  });
+
+  const leafScale = plot.state === "ready" ? (isGiantPod ? 1.95 : 1.2) : isGiantPod ? 1.2 : 0.8;
+  for (const offset of leafOffsets) {
+    const leafGeometry = isStarlightBean
+      ? new THREE.OctahedronGeometry(0.34 * leafScale, 0)
+      : isEmberBean
+      ? new THREE.ConeGeometry(0.28 * leafScale, 0.9 * leafScale, 8)
+      : new THREE.SphereGeometry(0.42 * leafScale, 14, 14);
+    const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+    leaf.position.set(offset[0], offset[1], offset[2]);
+    leaf.scale.set(
+      isEmberBean ? 1 : 1.25,
+      isStarlightBean ? 1 : 0.7,
+      isStarlightBean ? 1 : 0.9
     );
-    ctx.lineTo(
-      fighter.impact.x + Math.cos(angle) * outer,
-      fighter.impact.y + Math.sin(angle) * outer
-    );
-    ctx.stroke();
+    if (isEmberBean) {
+      leaf.rotation.x = Math.PI;
+    }
+    leaf.castShadow = true;
+    group.add(leaf);
   }
 
-  ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * life})`;
-  ctx.beginPath();
-  ctx.arc(fighter.impact.x, fighter.impact.y, innerRadius * 0.55, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawProjectiles() {
-  for (const projectile of state.projectiles ?? []) {
-    const pulseVisual = getPulseVisualState();
-    const centerX = projectile.x + projectile.width / 2;
-    const centerY = projectile.y + projectile.height / 2;
-    const glow = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, projectile.width * 2.1);
-    glow.addColorStop(0, "rgba(255,255,255,1)");
-    glow.addColorStop(0.3, `${pulseVisual.mid}fa`);
-    glow.addColorStop(0.7, `${pulseVisual.glow}d1`);
-    glow.addColorStop(1, `${pulseVisual.glow}00`);
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, projectile.width * 1.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = pulseVisual.core;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, projectile.width * 0.55, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = pulseVisual.trail;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(centerX - projectile.face * projectile.width * 1.8, centerY);
-    ctx.lineTo(centerX - projectile.face * projectile.width * 0.25, centerY);
-    ctx.stroke();
-  }
-}
-
-function drawFrame() {
-  ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
-  ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-
-  if (cameraEffect) {
-    const elapsed = performance.now() - cameraEffect.startedAt;
-    const activeWindow = CHARGE_CAMERA_HOLD_MS + CHARGE_CAMERA_RELEASE_MS;
-    if (elapsed >= activeWindow) {
-      cameraEffect = null;
-    }
-  }
-
-  if (cameraEffect) {
-    const elapsed = performance.now() - cameraEffect.startedAt;
-    const releaseProgress = elapsed <= CHARGE_CAMERA_HOLD_MS
-      ? 0
-      : Math.min(1, (elapsed - CHARGE_CAMERA_HOLD_MS) / CHARGE_CAMERA_RELEASE_MS);
-    const tilt = (cameraEffect.tilt ?? 0.095) * (1 - releaseProgress);
-    const shudder = (1 - releaseProgress) * 7;
-    const shudderX = Math.sin(performance.now() / 18) * shudder;
-    const shudderY = Math.cos(performance.now() / 23) * shudder * 0.7;
-    ctx.save();
-    ctx.translate(LOGICAL_WIDTH / 2 + shudderX, LOGICAL_HEIGHT / 2 + shudderY);
-    ctx.rotate(tilt);
-    ctx.translate(-LOGICAL_WIDTH / 2, -LOGICAL_HEIGHT / 2);
-  }
-
-  ctx.drawImage(stageCanvas, 0, 0);
-  drawProjectiles();
-  state.fighters.forEach(drawFighter);
-  state.fighters.forEach(drawImpact);
-
-  if (cameraEffect) {
-    ctx.restore();
-    const elapsed = performance.now() - cameraEffect.startedAt;
-    const activeWindow = CHARGE_CAMERA_HOLD_MS + CHARGE_CAMERA_RELEASE_MS;
-    const normalized = 1 - Math.min(1, elapsed / activeWindow);
-    const flash = normalized * (devEffectsEnabled ? 0.34 : 0.22);
-    ctx.fillStyle = `rgba(255,255,255,${flash})`;
-    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-    ctx.fillStyle = `rgba(96,165,250,${flash * 0.8})`;
-    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-  }
-}
-
-function tick() {
-  if (state.running) {
-    const now = performance.now();
-    const elapsedSinceLastTick = pulseLastTickAt === 0 ? 16.67 : now - pulseLastTickAt;
-    pulseLastTickAt = now;
-
-    if (pulseCooldownUntil > now) {
-      pulseHeld = false;
-    }
-
-    if (pulseHeld && now >= pulseCooldownUntil) {
-      pulseHeatMs = Math.min(PULSE_OVERHEAT_MS, pulseHeatMs + elapsedSinceLastTick);
-      if (pulseHeatMs >= PULSE_OVERHEAT_MS) {
-        triggerPulseOverheat(now);
-      } else {
-        const progress = pulseHeatMs / PULSE_OVERHEAT_MS;
-        const interval =
-          PULSE_FIRE_INTERVAL_MAX - (PULSE_FIRE_INTERVAL_MAX - PULSE_FIRE_INTERVAL_MIN) * progress;
-        if (now - pulseLastFiredAt >= interval) {
-          input.shotQueued = true;
-          pulseLastFiredAt = now;
-        }
-      }
-    } else if (pulseHeatMs > 0 && now >= pulseCooldownUntil) {
-      pulseHeatMs = Math.max(0, pulseHeatMs - elapsedSinceLastTick * 1.4);
-    }
-
-    if (!chargeReady && chargeStartedAt !== null && performance.now() - chargeStartedAt >= CHARGE_TIME_MS) {
-      chargeReady = true;
-      chargeStartedAt = null;
-    }
-
-    if (!blastReady && blastStartedAt !== null && performance.now() - blastStartedAt >= BLAST_CHARGE_TIME_MS) {
-      blastReady = true;
-      blastStartedAt = null;
-    }
-
-    speedAccumulator += speedMultiplier;
-    const stepCount = Math.floor(speedAccumulator);
-    speedAccumulator -= stepCount;
-
-    for (let i = 0; i < stepCount && state.running; i += 1) {
-      const [p1, p2] = state.fighters;
-      const cpuInput = trainingMode
-        ? { left: false, right: false, jump: false, attack: null }
-        : getCpuInput(p2, p1);
-      state = stepState(state, {
-        p1: getPlayerInput(),
-        p2: cpuInput,
-      });
-      if (trainingMode) {
-        freezeTrainingDummy();
-      }
-      const cinematicHit = state.fighters.find(
-        (fighter) =>
-          (fighter.impact?.type === "supernova" && fighter.impact.timer === 30) ||
-          (fighter.impact?.type === "burst" && fighter.impact.timer === 20)
+  if (plot.state === "ready") {
+    const podMaterial = new THREE.MeshStandardMaterial({
+      color:
+        isFrostPod ? 0x9fdbff : isEmberBean ? 0xff8748 : isStarlightBean ? 0xc49bff : bean.rarity === "Special" ? 0x8f7fff : bean.rarity === "Rare" ? 0xda5841 : 0xe2d56b,
+      roughness: 0.45,
+      metalness: isFrostPod ? 0.22 : isStarlightBean ? 0.28 : bean.rarity === "Special" ? 0.2 : 0.05,
+      emissive: isFrostPod ? 0x215fb0 : isEmberBean ? 0x7a2400 : isStarlightBean ? 0x4b1f8c : bean.rarity === "Special" ? 0x29145b : 0x000000,
+      emissiveIntensity: isFrostPod ? 0.48 : isEmberBean ? 0.7 : isStarlightBean ? 0.8 : bean.rarity === "Special" ? 0.55 : 0,
+    });
+    const podOffsets = isGiantPod
+      ? [
+          [-0.65, 2.25, 0],
+          [0.3, 2.55, -0.4],
+          [0.68, 1.85, 0.35],
+          [-0.12, 2.95, 0.25],
+        ]
+      : isEmberBean
+      ? [
+          [-0.3, 1.55, 0.08],
+          [0.22, 1.78, -0.2],
+          [0.42, 1.3, 0.26],
+        ]
+      : isStarlightBean
+      ? [
+          [-0.4, 1.5, 0],
+          [0.16, 1.74, -0.22],
+          [0.38, 1.2, 0.18],
+        ]
+      : [
+          [-0.45, 1.5, 0],
+          [0.18, 1.68, -0.26],
+          [0.42, 1.22, 0.22],
+        ];
+    for (const offset of podOffsets) {
+      const podGeometry = isEmberBean
+        ? new THREE.SphereGeometry(0.24, 14, 14)
+        : isStarlightBean
+        ? new THREE.OctahedronGeometry(0.26, 0)
+        : new THREE.CapsuleGeometry(isGiantPod ? 0.28 : 0.14, isGiantPod ? 1.1 : 0.5, 4, 10);
+      const pod = new THREE.Mesh(
+        podGeometry,
+        podMaterial
       );
-      if (cinematicHit) {
-        const isBlastBurst = cinematicHit.impact.type === "burst";
-        cameraEffect = {
-          startedAt: performance.now(),
-          x: cinematicHit.impact.x,
-          y: cinematicHit.impact.y,
-          tilt: cinematicHit.isPlayer ? (isBlastBurst ? 0.06 : 0.095) : isBlastBurst ? -0.06 : -0.095,
-        };
-      }
-      if (cpuInput.attack) {
-        state.fighters[1].cpuCooldown = Math.max(0, Math.round(DIFFICULTY.cpuReactionFrames / cpuDifficulty));
+      pod.position.set(
+        offset[0] * (isGiantPod ? 1.55 : 1),
+        offset[1] * (isGiantPod ? 1.55 : 1),
+        offset[2] * (isGiantPod ? 1.55 : 1)
+      );
+      pod.rotation.z = isEmberBean || isStarlightBean ? 0 : Math.PI / 2.8;
+      pod.castShadow = true;
+      group.add(pod);
+    }
+
+    if (isFrostPod) {
+      const frostMaterial = new THREE.MeshStandardMaterial({
+        color: 0xc9efff,
+        emissive: 0x7cc8ff,
+        emissiveIntensity: 0.6,
+        roughness: 0.25,
+        metalness: 0.15,
+      });
+      for (const offset of [
+        [-0.9, 1.8, 0.4],
+        [0.95, 1.6, -0.3],
+        [-0.2, 2.1, -0.75],
+        [0.35, 1.25, 0.95],
+        [0, 2.35, 0.15],
+      ]) {
+        const flake = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), frostMaterial);
+        flake.position.set(offset[0], offset[1], offset[2]);
+        flake.rotation.set(offset[1], offset[2] * 2, offset[0] * 2);
+        group.add(flake);
       }
     }
-    updateHud();
 
-    if (state.winner) {
-      overlay.classList.remove("hidden");
-      setOverlay(`${state.winner} Wins`, "Press Start Match for an immediate rematch or R for a full reset.", "Rematch");
+    if (isEmberBean) {
+      const emberMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffbf7a,
+        emissive: 0xff5a00,
+        emissiveIntensity: 0.9,
+        roughness: 0.2,
+      });
+      for (const offset of [
+        [-0.65, 1.8, 0.25],
+        [0.55, 1.95, -0.12],
+        [0, 2.2, 0.45],
+        [0.2, 1.45, -0.55],
+      ]) {
+        const ember = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), emberMaterial);
+        ember.position.set(offset[0], offset[1], offset[2]);
+        group.add(ember);
+      }
+    }
+
+    if (isStarlightBean) {
+      const sparkleMaterial = new THREE.MeshStandardMaterial({
+        color: 0xf7edff,
+        emissive: 0x9f7dff,
+        emissiveIntensity: 1,
+        roughness: 0.15,
+        metalness: 0.2,
+      });
+      for (const offset of [
+        [-0.85, 1.95, 0.15],
+        [0.8, 2.05, -0.15],
+        [0, 2.45, 0.4],
+        [0.28, 1.55, -0.62],
+        [-0.35, 1.35, 0.72],
+      ]) {
+        const sparkle = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), sparkleMaterial);
+        sparkle.position.set(offset[0], offset[1], offset[2]);
+        sparkle.rotation.set(offset[2] * 3, offset[0] * 2, offset[1]);
+        group.add(sparkle);
+      }
     }
   }
 
-  drawFrame();
-  window.requestAnimationFrame(tick);
+  if (isGiantPod) {
+    group.scale.setScalar(plot.state === "ready" ? 1.38 : 1.1);
+  }
+
+  return group;
 }
 
-window.addEventListener("keydown", (event) => {
-  const key = event.key.toLowerCase();
-  const isShift = event.key === "Shift" || event.code === "ShiftLeft" || event.code === "ShiftRight";
-  const now = performance.now();
-  if (event.key.startsWith("Arrow")) {
-    event.preventDefault();
-  }
-  if (event.code === "Space") {
-    event.preventDefault();
-    input.jabQueued = true;
-  }
-  if (key === "a") input.left = true;
-  if (key === "d") input.right = true;
-  if (event.key === "ArrowLeft") {
-    input.specialFace = -1;
-    input.specialQueued = "sideSpecial";
-  }
-  if (event.key === "ArrowRight") {
-    input.specialFace = 1;
-    input.specialQueued = "sideSpecial";
-  }
-  if (event.key === "ArrowUp") input.specialQueued = "upSpecial";
-  if (event.key === "ArrowDown") input.specialQueued = "blast";
-  if (key === "w") input.jumpQueued = true;
-  if (key === "q") {
-    event.preventDefault();
-    input.shield = true;
-  }
-  if (key === "s") input.smashQueued = true;
-  if (key === "e") {
-    event.preventDefault();
-    setPulseHeld(true, now);
-  }
-  if (isShift && chargeReady) {
-    event.preventDefault();
-    queueChargeAction(now);
-  } else if (isShift && chargeStartedAt === null) {
-    event.preventDefault();
-    queueChargeAction(now);
-  }
-  if (key === "r") resetMatch();
-});
+function createPlotMesh(plot, selected) {
+  const baseColor =
+    plot.state === "ready" ? 0xe9c35c : plot.state === "planted" ? 0x8d6b3d : 0x6c4a2e;
+  const material = new THREE.MeshStandardMaterial({
+    color: selected ? 0xf2d982 : baseColor,
+    roughness: 0.95,
+  });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 4.2), material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.plotId = plot.id;
 
-window.addEventListener("keyup", (event) => {
-  const key = event.key.toLowerCase();
-  if (key === "a") input.left = false;
-  if (key === "d") input.right = false;
-  if (key === "q") input.shield = false;
-  if (key === "e") {
-    setPulseHeld(false);
+  const rim = new THREE.Mesh(
+    new THREE.BoxGeometry(4.55, 0.22, 4.55),
+    new THREE.MeshStandardMaterial({ color: 0xcaa36b, roughness: 0.85 })
+  );
+  rim.position.y = 0.56;
+  mesh.add(rim);
+
+  if (plot.state === "planted" || plot.state === "ready") {
+    const crop = createCropVisual(plot);
+    crop.position.y = 0.45;
+    mesh.add(crop);
   }
-});
 
-window.addEventListener("blur", () => {
-  input.left = false;
-  input.right = false;
-  input.shield = false;
-  setPulseHeld(false);
-});
-
-speedDial.addEventListener("input", () => {
-  speedMultiplier = Number(speedDial.value);
-  speedAccumulator = 0;
-  speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
-});
-
-cpuDifficultyDial.addEventListener("input", () => {
-  cpuDifficulty = Number(cpuDifficultyDial.value);
-  cpuDifficultyValue.textContent = `${cpuDifficulty.toFixed(2)}x`;
-});
-
-avatarSelect.addEventListener("input", () => {
-  playerCharacter = avatarSelect.value;
-  configureRoster();
-  updateHud();
-});
-
-trainingModeToggle.addEventListener("input", () => {
-  trainingMode = trainingModeToggle.checked;
-  if (trainingMode) {
-    trainingDummyAnchor = null;
-    freezeTrainingDummy();
-    updateHud();
-  } else {
-    trainingDummyAnchor = null;
+  if (selected) {
+    const halo = new THREE.Mesh(
+      new THREE.TorusGeometry(2.5, 0.08, 10, 40),
+      new THREE.MeshStandardMaterial({ color: 0xffee98, emissive: 0x8a5b11, emissiveIntensity: 0.5 })
+    );
+    halo.rotation.x = Math.PI / 2;
+    halo.position.y = 0.72;
+    mesh.add(halo);
   }
-});
 
-fullscreenButton.addEventListener("click", async () => {
-  if (document.fullscreenElement === arenaShell) {
-    await document.exitFullscreen();
+  return mesh;
+}
+
+function addCircleCollider(x, z, radius) {
+  worldColliders.push({ x, z, radius });
+}
+
+function addInteriorCircleCollider(x, z, radius) {
+  interiorColliders.push({ x, z, radius });
+}
+
+function resolvePlayerCollision(nextPosition, useInterior = false) {
+  const resolved = nextPosition.clone();
+  const bounds = useInterior ? INTERIOR_PLAYER_BOUNDS : PLAYER_BOUNDS;
+  const colliders = useInterior ? interiorColliders : worldColliders;
+
+  resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
+
+  for (const collider of colliders) {
+    const dx = resolved.x - collider.x;
+    const dz = resolved.z - collider.z;
+    const distanceSq = dx * dx + dz * dz;
+    const minDistance = collider.radius;
+
+    if (distanceSq === 0) {
+      resolved.x += minDistance;
+      continue;
+    }
+
+    if (distanceSq < minDistance * minDistance) {
+      const distance = Math.sqrt(distanceSq);
+      const push = (minDistance - distance) / distance;
+      resolved.x += dx * push;
+      resolved.z += dz * push;
+    }
+  }
+
+  resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
+  return resolved;
+}
+
+function parcelWorldPosition(parcelId, plotIndex) {
+  const layout = PLOT_LAYOUTS[parcelId];
+  const col = plotIndex % layout.cols;
+  const row = Math.floor(plotIndex / layout.cols);
+  return new THREE.Vector3(layout.originX + col * layout.spacingX, 0.5, layout.originZ + row * layout.spacingZ);
+}
+
+function rebuildScene() {
+  plotMeshes.clear();
+  worldColliders.length = 0;
+  interiorColliders.length = 0;
+  worldGroup.clear();
+  houseDoorMesh = null;
+
+  for (const parcel of state.parcels) {
+    const definition = PARCELS.find((entry) => entry.id === parcel.id);
+    const layout = PLOT_LAYOUTS[parcel.id];
+    const width = Math.min(layout.cols, parcel.plots.length) * layout.spacingX + 3;
+    const depth = Math.ceil(parcel.plots.length / layout.cols) * layout.spacingZ + 3;
+
+    const parcelPad = new THREE.Mesh(
+      new THREE.BoxGeometry(width, 0.6, depth),
+      new THREE.MeshStandardMaterial({
+        color: parcel.unlocked ? 0x739856 : 0x837461,
+        roughness: 1,
+      })
+    );
+    parcelPad.position.set(layout.originX + (width - layout.spacingX) / 2 - 1.5, -0.1, layout.originZ + (depth - layout.spacingZ) / 2 - 1.5);
+    parcelPad.receiveShadow = true;
+    worldGroup.add(parcelPad);
+
+    if (!parcel.unlocked) {
+      const beacon = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.2, 1.5, 4, 6),
+        new THREE.MeshStandardMaterial({ color: 0xd7bc8b, roughness: 0.8 })
+      );
+      beacon.position.copy(parcelPad.position);
+      beacon.position.y = 2;
+      beacon.castShadow = true;
+      worldGroup.add(beacon);
+      addCircleCollider(beacon.position.x, beacon.position.z, 2.4);
+      continue;
+    }
+
+    parcel.plots.forEach((plot, index) => {
+      const selected = plot.id === selectedPlotId;
+      const mesh = createPlotMesh(plot, selected);
+      mesh.position.copy(parcelWorldPosition(parcel.id, index));
+      worldGroup.add(mesh);
+      plotMeshes.set(plot.id, mesh);
+      addCircleCollider(mesh.position.x, mesh.position.z, 2.45);
+    });
+
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(1.6, 1.2, 0.2),
+      new THREE.MeshStandardMaterial({ color: definition.id === "ridge" ? 0xdba65e : 0xf1e5c2, roughness: 0.9 })
+    );
+    sign.position.set(layout.originX - 3.6, 1.2, layout.originZ + 2);
+    sign.castShadow = true;
+    worldGroup.add(sign);
+  }
+
+  const barn = new THREE.Group();
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(7, 4.4, 5.5),
+    new THREE.MeshStandardMaterial({ color: 0xb5543c, roughness: 0.9 })
+  );
+  base.position.set(-18, 2.2, -10);
+  base.castShadow = true;
+  barn.add(base);
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(5.5, 3.5, 4),
+    new THREE.MeshStandardMaterial({ color: 0x6f4029, roughness: 0.85 })
+  );
+  roof.rotation.y = Math.PI / 4;
+  roof.position.set(-18, 6.1, -10);
+  roof.castShadow = true;
+  barn.add(roof);
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 2.8, 0.18),
+    new THREE.MeshStandardMaterial({ color: 0x4f2f1d, roughness: 0.78 })
+  );
+  door.position.set(-18, 1.55, -7.16);
+  door.userData.kind = "houseDoor";
+  door.castShadow = true;
+  barn.add(door);
+  houseDoorMesh = door;
+  worldGroup.add(barn);
+  addCircleCollider(base.position.x, base.position.z, 4.8);
+
+  const pond = new THREE.Mesh(
+    new THREE.CircleGeometry(4.6, 36),
+    new THREE.MeshStandardMaterial({ color: 0x73b8db, roughness: 0.25, metalness: 0.15 })
+  );
+  pond.rotation.x = -Math.PI / 2;
+  pond.position.set(18, 0.02, 14);
+  worldGroup.add(pond);
+  addCircleCollider(pond.position.x, pond.position.z, 4.9);
+
+  addInteriorCircleCollider(0, -1.2, 2.2);
+  addInteriorCircleCollider(4.6, 1.6, 3.2);
+}
+
+function findPlotById(plotId) {
+  for (const parcel of state.parcels) {
+    const plot = parcel.plots.find((entry) => entry.id === plotId);
+    if (plot) {
+      return plot;
+    }
+  }
+  return null;
+}
+
+function performSelectedPlotAction(action) {
+  if (!selectedPlotId) {
     return;
   }
 
-  await arenaShell.requestFullscreen();
+  if (action === "plant") {
+    setState(plantBean(state, selectedPlotId, state.selectedBeanId));
+  } else if (action === "water") {
+    setState(waterPlot(state, selectedPlotId));
+  } else if (action === "harvest") {
+    setState(harvestPlot(state, selectedPlotId));
+  }
+}
+
+function getPlotInteractionAction(plot) {
+  if (!plot) {
+    return null;
+  }
+
+  if (plot.state === "empty") {
+    return "plant";
+  }
+  if (plot.state === "planted") {
+    return "water";
+  }
+  if (plot.state === "ready") {
+    return "harvest";
+  }
+  return null;
+}
+
+function focusPanel(panel) {
+  panel?.scrollIntoView({ behavior: "smooth", block: "center" });
+  panel?.classList.add("panel-flash");
+  window.setTimeout(() => panel?.classList.remove("panel-flash"), 1200);
+}
+
+function handleInteriorInteraction(kind) {
+  if (kind === "bed") {
+    saveState();
+    actionValue.textContent = "You rested for a moment and saved the farmhouse.";
+    return;
+  }
+
+  if (kind === "indexBoard") {
+    focusPanel(beanIndexPanel);
+    actionValue.textContent = "Opened your Bean Index notes.";
+    return;
+  }
+
+  if (kind === "upgradeTable") {
+    const candidate = Object.values(UPGRADES).find(
+      (upgrade) => !state.upgrades.includes(upgrade.id) && state.credits >= upgrade.cost && state.ore >= (upgrade.oreCost ?? 0)
+    );
+    if (candidate) {
+      setState(buyUpgrade(state, candidate.id));
+      focusPanel(upgradePanel);
+      return;
+    }
+    focusPanel(upgradePanel);
+    actionValue.textContent = "You need more credits or ore for the next farmhouse upgrade.";
+  }
+}
+
+function render() {
+  renderHeader();
+  renderBeanSelector();
+  renderLandActions();
+  renderQuests();
+  renderUpgrades();
+  renderIndex();
+  renderInventory();
+  renderSelection();
+  renderParcelSummaries();
+  rebuildScene();
+}
+
+function resizeRenderer() {
+  const width = sceneShell.clientWidth;
+  const fullscreenHeight = window.innerHeight - 170;
+  const height = document.fullscreenElement === sceneShell.closest(".viewport-panel")
+    ? Math.max(520, fullscreenHeight)
+    : Math.max(620, Math.round(sceneShell.clientWidth * 0.56));
+  canvas.style.height = `${height}px`;
+  renderer.setSize(width, height, false);
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+}
+
+function getTaggedInteractive(object) {
+  let current = object;
+  while (current && current !== scene) {
+    if (current.userData?.kind || current.userData?.plotId) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return null;
+}
+
+function getReticleTarget() {
+  if (!firstPersonMode) {
+    return null;
+  }
+
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const candidates = insideHouse
+    ? interiorInteractiveMeshes
+    : houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh]
+    : [...plotMeshes.values()];
+  const hits = raycaster.intersectObjects(candidates, true);
+
+  for (const hit of hits) {
+    const tagged = getTaggedInteractive(hit.object);
+    if (!tagged) {
+      continue;
+    }
+
+    if (tagged.userData.kind) {
+      const worldPosition = new THREE.Vector3();
+      tagged.getWorldPosition(worldPosition);
+      if (worldPosition.distanceTo(playerState.position) <= INTERACT_DISTANCE) {
+        return tagged;
+      }
+      continue;
+    }
+
+    if (tagged.userData.plotId) {
+      return tagged;
+    }
+  }
+
+  return null;
+}
+
+function updateReticle() {
+  if (!reticle) {
+    return;
+  }
+
+  reticle.classList.toggle("hidden", !firstPersonMode);
+  reticle.classList.toggle("active", Boolean(getReticleTarget()));
+}
+
+function interactWithTarget(target) {
+  if (!target) {
+    actionValue.textContent = firstPersonMode ? "Nothing to interact with." : actionValue.textContent;
+    return;
+  }
+
+  if (target.userData.kind) {
+    const worldPosition = new THREE.Vector3();
+    target.getWorldPosition(worldPosition);
+    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
+      actionValue.textContent = insideHouse ? "Move closer to use that furniture." : "Walk closer to the house door.";
+      return;
+    }
+
+    if (target.userData.kind === "houseDoor") {
+      enterHouse();
+      return;
+    }
+
+    handleInteriorInteraction(target.userData.kind);
+    return;
+  }
+
+  if (target.userData.plotId) {
+    selectedPlotId = target.userData.plotId;
+    const plot = findPlotById(selectedPlotId);
+    const action = getPlotInteractionAction(plot);
+    if (action) {
+      performSelectedPlotAction(action);
+    } else {
+      render();
+    }
+  }
+}
+
+function getPointerTarget(event) {
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+  const candidates = insideHouse
+    ? interiorInteractiveMeshes
+    : houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh]
+    : [...plotMeshes.values()];
+  const hits = raycaster.intersectObjects(candidates, true);
+  if (hits.length === 0) {
+    return null;
+  }
+
+  return hits.map((hit) => getTaggedInteractive(hit.object)).find(Boolean) ?? null;
+}
+
+function handleCanvasPick(event) {
+  if (firstPersonMode) {
+    return;
+  }
+
+  interactWithTarget(getPointerTarget(event));
+}
+
+canvas.addEventListener("pointerdown", handleCanvasPick);
+canvas.addEventListener("wheel", handleTrackpadPan, { passive: false });
+window.addEventListener("resize", resizeRenderer);
+window.addEventListener("keydown", (event) => {
+  if (event.code === "KeyE") {
+    event.preventDefault();
+    if (!event.repeat) {
+      interactWithTarget(getReticleTarget());
+    }
+    return;
+  }
+  if (event.code in movementKeys) {
+    event.preventDefault();
+    movementKeys[event.code] = true;
+  }
+});
+window.addEventListener("keyup", (event) => {
+  if (event.code in movementKeys) {
+    event.preventDefault();
+    movementKeys[event.code] = false;
+  }
 });
 
-document.addEventListener("fullscreenchange", () => {
-  fullscreenButton.textContent = document.fullscreenElement === arenaShell ? "Exit Fullscreen" : "Fullscreen";
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const selectBeanId = target.dataset.selectBean;
+  if (selectBeanId) {
+    state = { ...state, selectedBeanId: selectBeanId, lastAction: `Selected ${BEANS[selectBeanId].name}.` };
+    render();
+    return;
+  }
+
+  const buySeedId = target.dataset.buySeed;
+  if (buySeedId) {
+    setState(buySeeds(state, buySeedId, 1));
+    return;
+  }
+
+  const upgradeId = target.dataset.buyUpgrade;
+  if (upgradeId) {
+    setState(buyUpgrade(state, upgradeId));
+    return;
+  }
+
+  const parcelId = target.dataset.unlockParcel;
+  if (parcelId) {
+    setState(unlockParcel(state, parcelId));
+    return;
+  }
+
+  const selectionAction = target.dataset.selectionAction;
+  if (selectionAction) {
+    performSelectedPlotAction(selectionAction);
+  }
 });
 
-for (const button of touchButtons) {
-  const control = button.dataset.touchControl;
-  const mode = button.dataset.touchMode ?? "tap";
-
-  const activate = (event) => {
-    event.preventDefault();
-    button.classList.add("is-active");
-    runTouchControl(control, true, mode);
-  };
-
-  const deactivate = (event) => {
-    event.preventDefault();
-    button.classList.remove("is-active");
-    if (mode === "hold") {
-      runTouchControl(control, false, mode);
-    }
-  };
-
-  button.addEventListener("pointerdown", activate);
-  button.addEventListener("pointerup", deactivate);
-  button.addEventListener("pointercancel", deactivate);
-  button.addEventListener("pointerleave", (event) => {
-    if (event.buttons === 0) {
-      deactivate(event);
-    }
+for (const button of timeButtons) {
+  button.addEventListener("click", () => {
+    setState(advanceTime(state, Number(button.dataset.advanceHours)));
   });
 }
 
-devLoginButton.addEventListener("click", () => {
-  if (devUnlocked) {
-    devUnlocked = false;
-    devEffectsEnabled = false;
-    window.localStorage.removeItem(DEV_UNLOCK_KEY);
-    window.localStorage.removeItem(DEV_FX_KEY);
-    applyDevDialRanges();
-    configureCanvasResolution();
-    syncDevUi();
-    return;
-  }
-
-  const code = window.prompt("Enter dev code");
-  if (code !== DEV_LOGIN_CODE) {
-    window.alert("Wrong dev code.");
-    return;
-  }
-
-  devUnlocked = true;
-  devEffectsEnabled = true;
-  window.localStorage.setItem(DEV_UNLOCK_KEY, "1");
-  window.localStorage.setItem(DEV_FX_KEY, "1");
-  applyDevDialRanges();
-  configureCanvasResolution();
-  syncDevUi();
+sellButton.addEventListener("click", () => {
+  setState(sellBeans(state));
 });
 
-devFxToggle.addEventListener("input", () => {
-  devEffectsEnabled = devUnlocked && devFxToggle.checked;
-  window.localStorage.setItem(DEV_FX_KEY, devEffectsEnabled ? "1" : "0");
-  configureCanvasResolution();
-  syncDevUi();
+mineButton.addEventListener("click", () => {
+  setState(performMining(state));
 });
 
-startButton.addEventListener("click", startMatch);
+saveButton.addEventListener("click", saveState);
+resetButton.addEventListener("click", resetState);
+exitHouseButton.addEventListener("click", exitHouse);
+fullscreenButton.addEventListener("click", async () => {
+  const viewportPanel = sceneShell.closest(".viewport-panel");
+  if (!viewportPanel) return;
 
-resetMatch();
-applyDevDialRanges();
-configureCanvasResolution();
-syncDevUi();
-drawFrame();
-tick();
+  if (document.fullscreenElement === viewportPanel) {
+    await document.exitFullscreen();
+  } else {
+    await viewportPanel.requestFullscreen();
+  }
+});
+document.addEventListener("fullscreenchange", () => {
+  const viewportPanel = sceneShell.closest(".viewport-panel");
+  fullscreenButton.textContent = document.fullscreenElement === viewportPanel ? "Exit Fullscreen" : "Fullscreen";
+  resizeRenderer();
+});
+viewModeButton.addEventListener("click", () => {
+  setViewMode(!firstPersonMode);
+});
+
+resizeRenderer();
+render();
+syncViewModeUi();
+
+const clock = new THREE.Clock();
+
+function animate() {
+  const delta = clock.getDelta();
+  const elapsed = clock.elapsedTime;
+  updatePlayerMovement(delta);
+  worldGroup.rotation.y = Math.sin(elapsed * 0.15) * 0.025;
+  playerGroup.position.copy(playerState.position);
+  playerGroup.rotation.y = playerState.heading;
+  const walkBob = playerState.moving && playerState.position.y <= FLOOR_HEIGHT + 0.001 ? Math.sin(elapsed * 10) * 0.08 : 0;
+  playerBody.position.y = 1.4 + walkBob;
+  if (playerState.position.y > FLOOR_HEIGHT + 0.02) {
+    if (playerState.verticalVelocity > 0) {
+      playerGroup.scale.set(0.92, 1.1, 0.92);
+    } else {
+      playerGroup.scale.set(1.08, 0.9, 1.08);
+    }
+  } else {
+    const squash = playerState.landingTimer > 0 ? 1 + playerState.landingTimer * 0.25 : 1;
+    playerGroup.scale.set(1 / squash, squash, 1 / squash);
+  }
+
+  if (playerState.landingTimer > 0 && !insideHouse && !firstPersonMode) {
+    playerState.landingTimer = Math.max(0, playerState.landingTimer - delta);
+    landingRing.visible = true;
+    landingRing.position.set(playerState.position.x, 0.05, playerState.position.z);
+    const pulse = 1 + (0.35 - playerState.landingTimer) * 4.2;
+    landingRing.scale.setScalar(pulse);
+    landingRingMaterial.opacity = playerState.landingTimer / 0.35;
+  } else {
+    landingRing.visible = false;
+    landingRingMaterial.opacity = 0;
+    if (playerState.landingTimer > 0) {
+      playerState.landingTimer = Math.max(0, playerState.landingTimer - delta);
+    }
+  }
+
+  if (firstPersonMode) {
+    updateFirstPersonCamera();
+  }
+
+  updateReticle();
+
+  for (const [plotId, mesh] of plotMeshes) {
+    const plot = findPlotById(plotId);
+    if (!plot) continue;
+
+    if (plot.state === "ready") {
+      mesh.position.y = 0.55 + Math.sin(elapsed * 2.4 + mesh.position.x) * 0.08;
+    } else {
+      mesh.position.y = 0.5;
+    }
+  }
+
+  if (!firstPersonMode) {
+    controls.update();
+  }
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+animate();

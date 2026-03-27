@@ -1,709 +1,568 @@
-export const STAGE = {
-  width: 960,
-  height: 540,
-  blastPadding: 180,
-  platforms: [
-    { x: 270, y: 420, width: 420, height: 48, solid: true, topInset: 22 },
-    { x: 142, y: 315, width: 142, height: 15 },
-    { x: 676, y: 315, width: 142, height: 15 },
-    { x: 412, y: 228, width: 135, height: 14 },
-  ],
+export const BEANS = {
+  green: {
+    id: "green",
+    name: "Green Bean",
+    rarity: "Common",
+    seedCost: 4,
+    sellValue: 9,
+    growthHours: 6,
+    waterNeed: 1,
+    yield: 2,
+    unlockCredits: 0,
+    description: "A reliable starter crop with steady returns.",
+  },
+  wax: {
+    id: "wax",
+    name: "Wax Bean",
+    rarity: "Common",
+    seedCost: 9,
+    sellValue: 18,
+    growthHours: 10,
+    waterNeed: 2,
+    yield: 2,
+    unlockCredits: 50,
+    description: "Slower to raise, but worth more at market.",
+  },
+  scarlet: {
+    id: "scarlet",
+    name: "Scarlet Runner",
+    rarity: "Rare",
+    seedCost: 18,
+    sellValue: 34,
+    growthHours: 14,
+    waterNeed: 3,
+    yield: 3,
+    unlockCredits: 140,
+    description: "A vivid climbing bean prized by quest givers.",
+  },
+  butter: {
+    id: "butter",
+    name: "Butter Bean",
+    rarity: "Common",
+    seedCost: 14,
+    sellValue: 24,
+    growthHours: 11,
+    waterNeed: 2,
+    yield: 3,
+    unlockCredits: 90,
+    description: "A plump market favorite with dependable multi-bean harvests.",
+  },
+  blackeye: {
+    id: "blackeye",
+    name: "Black-Eyed Bean",
+    rarity: "Uncommon",
+    seedCost: 20,
+    sellValue: 32,
+    growthHours: 13,
+    waterNeed: 2,
+    yield: 3,
+    unlockCredits: 170,
+    description: "A hardy bean that sells well once the farm starts scaling.",
+  },
+  frost: {
+    id: "frost",
+    name: "Frost Pod",
+    rarity: "Rare",
+    seedCost: 28,
+    sellValue: 48,
+    growthHours: 16,
+    waterNeed: 3,
+    yield: 2,
+    unlockCredits: 260,
+    description: "A pale crystal bean that takes patience and careful watering.",
+  },
+  ember: {
+    id: "ember",
+    name: "Ember Bean",
+    rarity: "Rare",
+    seedCost: 34,
+    sellValue: 60,
+    growthHours: 17,
+    waterNeed: 3,
+    yield: 2,
+    unlockCredits: 340,
+    description: "A hot red bean grown for high-end orders and festival stalls.",
+  },
+  giant: {
+    id: "giant",
+    name: "Giant Pod",
+    rarity: "Special",
+    seedCost: 46,
+    sellValue: 82,
+    growthHours: 20,
+    waterNeed: 4,
+    yield: 4,
+    unlockCredits: 460,
+    description: "A massive prestige crop that turns a single plot into a payday.",
+  },
+  starlight: {
+    id: "starlight",
+    name: "Starlight Bean",
+    rarity: "Special",
+    seedCost: 0,
+    sellValue: 90,
+    growthHours: 18,
+    waterNeed: 2,
+    yield: 1,
+    unlockCredits: 0,
+    description: "A special quest and challenge bean with huge value.",
+  },
 };
 
-export const PHYSICS = {
-  gravity: 1.28,
-  maxFall: 30,
-  runSpeed: 2.5,
-  airDrift: 1.55,
-  jumpPower: 18.5,
-  groundFriction: 0.84,
-  airFriction: 0.988,
-  maxJumps: 2,
-};
-
-export const ATTACKS = {
-  jab: {
-    startup: 2,
-    active: 3,
-    recovery: 4,
-    damage: 7,
-    baseKnockback: 5.5,
-    scale: 0.11,
-    xReach: 44,
-    yReach: 18,
+export const UPGRADES = {
+  watering_can: {
+    id: "watering_can",
+    name: "Copper Watering Can Rack",
+    cost: 70,
+    oreCost: 3,
+    category: "house",
+    description: "A farmhouse tool rack that upgrades watering by +1 hydration.",
+    apply(modifiers) {
+      modifiers.extraWater = 1;
+    },
   },
-  smash: {
-    startup: 6,
-    active: 5,
-    recovery: 8,
-    damage: 16,
-    baseKnockback: 8.8,
-    scale: 0.18,
-    xReach: 72,
-    yReach: 24,
+  field_notes: {
+    id: "field_notes",
+    name: "Field Notes Library",
+    cost: 120,
+    oreCost: 5,
+    category: "house",
+    description: "Install better notes and shelves in the house. Common harvests gain +1 yield.",
+    apply(modifiers) {
+      modifiers.commonYieldBonus = 1;
+    },
   },
-  charge: {
-    startup: 8,
-    active: 6,
-    recovery: 12,
-    damage: 40,
-    baseKnockback: 17.5,
-    scale: 0.32,
-    xReach: 108,
-    yReach: 40,
-  },
-  sideSpecial: {
-    startup: 4,
-    active: 8,
-    recovery: 12,
-    damage: 18,
-    baseKnockback: 10.5,
-    scale: 0.22,
-    xReach: 88,
-    yReach: 30,
-  },
-  upSpecial: {
-    startup: 3,
-    active: 10,
-    recovery: 14,
-    damage: 16,
-    baseKnockback: 9.6,
-    scale: 0.2,
-    xReach: 34,
-    yReach: 74,
-  },
-  blast: {
-    startup: 5,
-    active: 6,
-    recovery: 14,
-    damage: 24,
-    baseKnockback: 13.5,
-    scale: 0.26,
-    xReach: 360,
-    yReach: 280,
-  },
-  shot: {
-    startup: 0,
-    active: 1,
-    recovery: 1,
-    damage: 13,
-    baseKnockback: 8.5,
-    scale: 0.16,
-    xReach: 42,
-    yReach: 20,
-    projectileSpeed: 32,
-    projectileSize: 24,
-    projectileLifetime: 56,
+  miner_boots: {
+    id: "miner_boots",
+    name: "Ore Furnace Workshop",
+    cost: 150,
+    oreCost: 8,
+    category: "house",
+    description: "A reinforced workshop inside the house. Mining grants +1 guaranteed ore.",
+    apply(modifiers) {
+      modifiers.extraOre = 1;
+    },
   },
 };
 
-export const DIFFICULTY = {
-  playerStocks: 4,
-  cpuStocks: 4,
-  playerDamageMultiplier: 1.15,
-  cpuDamageMultiplier: 0.78,
-  playerKnockbackMultiplier: 1.15,
-  cpuKnockbackMultiplier: 0.72,
-  playerHitboxBonus: 14,
-  cpuReactionFrames: 3,
-  playerInfiniteJumps: true,
+export const PARCELS = [
+  {
+    id: "home",
+    name: "Home Patch",
+    unlockCost: 0,
+    plotCount: 6,
+    soilBonus: 1,
+  },
+  {
+    id: "creek",
+    name: "Creekside Beds",
+    unlockCost: 120,
+    plotCount: 4,
+    soilBonus: 1.08,
+  },
+  {
+    id: "ridge",
+    name: "Sunridge Terrace",
+    unlockCost: 320,
+    plotCount: 6,
+    soilBonus: 1.18,
+  },
+];
+
+export const QUESTS = [
+  {
+    id: "first_sale",
+    name: "Market Debut",
+    description: "Sell 12 beans.",
+    type: "sellBeans",
+    target: 12,
+    rewards: { credits: 35, seeds: { wax: 3 } },
+  },
+  {
+    id: "expand_farm",
+    name: "Room To Grow",
+    description: "Unlock Creekside Beds.",
+    type: "unlockParcel",
+    target: "creek",
+    rewards: { credits: 60, seeds: { scarlet: 2 } },
+  },
+  {
+    id: "rare_harvest",
+    name: "Festival Delivery",
+    description: "Harvest 4 Scarlet Runner beans.",
+    type: "harvestBean",
+    beanId: "scarlet",
+    target: 4,
+    rewards: { credits: 90, seeds: { starlight: 1 } },
+  },
+];
+
+export const STARTER_SEEDS = {
+  green: 6,
 };
 
-export function createFighter(options) {
+const START_HOUR = 8;
+
+function createPlot(parcelId, index) {
   return {
-    isPlayer: options.isPlayer ?? false,
-    name: options.name,
-    color: options.color,
-    accent: options.accent,
-    x: options.x,
-    y: options.y,
-    spawnX: options.x,
-    spawnY: options.y,
-    vx: 0,
-    vy: 0,
-    width: 48,
-    height: 78,
-    face: options.face ?? 1,
-    grounded: false,
-    jumpsLeft: PHYSICS.maxJumps,
-    damage: 0,
-    stocks: options.stocks ?? 3,
-    attackCooldown: 0,
-    hitstun: 0,
-    invuln: 0,
-    shielding: false,
-    attack: null,
-    cpuCooldown: 0,
-    impact: null,
+    id: `${parcelId}-${index}`,
+    parcelId,
+    state: "empty",
+    beanId: null,
+    plantedAtHour: null,
+    hydration: 0,
+    growthHours: 0,
+    ready: false,
+  };
+}
+
+function createParcelState(definition) {
+  return {
+    id: definition.id,
+    unlocked: definition.unlockCost === 0,
+    plots: Array.from({ length: definition.plotCount }, (_, index) => createPlot(definition.id, index)),
   };
 }
 
 export function createInitialState() {
   return {
-    running: false,
-    winner: null,
-    projectiles: [],
-    fighters: [
-      createFighter({
-        isPlayer: true,
-        name: "Nova",
-        color: "#fb923c",
-        accent: "#fed7aa",
-        x: 322,
-        y: 120,
-        face: 1,
-        stocks: DIFFICULTY.playerStocks,
-      }),
-      createFighter({
-        isPlayer: false,
-        name: "Volt",
-        color: "#22d3ee",
-        accent: "#a5f3fc",
-        x: 638,
-        y: 120,
-        face: -1,
-        stocks: DIFFICULTY.cpuStocks,
-      }),
-    ],
-  };
-}
-
-export function getAttackHitbox(fighter, attackData, bonusReach = 0) {
-  if (fighter.attack?.type === "blast") {
-    const reach = attackData.xReach + bonusReach;
-    return {
-      x: fighter.x + fighter.width / 2 - reach,
-      y: fighter.y + fighter.height / 2 - attackData.yReach,
-      width: reach * 2,
-      height: attackData.yReach * 2,
-    };
-  }
-
-  if (fighter.attack?.type === "upSpecial") {
-    return {
-      x: fighter.x + fighter.width / 2 - (attackData.xReach + bonusReach),
-      y: fighter.y - attackData.yReach + 8,
-      width: (attackData.xReach + bonusReach) * 2,
-      height: attackData.yReach + fighter.height / 2,
-    };
-  }
-
-  return {
-    x:
-      fighter.face === 1
-        ? fighter.x + fighter.width - 6
-        : fighter.x - (attackData.xReach + bonusReach) + 6,
-    y: fighter.y + fighter.height / 2 - attackData.yReach,
-    width: attackData.xReach + bonusReach,
-    height: attackData.yReach * 2,
-  };
-}
-
-export function intersects(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
-}
-
-export function startAttack(fighter, type) {
-  if (fighter.attackCooldown > 0 || fighter.hitstun > 0 || fighter.attack) {
-    return fighter;
-  }
-
-  return {
-    ...fighter,
-    attack: {
-      type,
-      frame: 0,
-      didHit: false,
+    clock: {
+      day: 1,
+      hour: START_HOUR,
+      totalHours: 0,
     },
-  };
-}
-
-export function applyInput(fighter, input) {
-  const next = { ...fighter };
-  const fighterIsPlayer = next.isPlayer;
-  const canInfiniteJump = fighterIsPlayer && DIFFICULTY.playerInfiniteJumps;
-
-  if (next.hitstun > 0) {
-    next.shielding = false;
-    return next;
-  }
-
-  next.shielding = Boolean(input.shield) && !next.attack;
-
-  if (input.left) {
-    next.vx -= next.grounded ? PHYSICS.runSpeed : PHYSICS.airDrift;
-    next.face = -1;
-  }
-
-  if (input.right) {
-    next.vx += next.grounded ? PHYSICS.runSpeed : PHYSICS.airDrift;
-    next.face = 1;
-  }
-
-  if (input.jump && (next.jumpsLeft > 0 || canInfiniteJump)) {
-    next.vy = -PHYSICS.jumpPower;
-    if (!canInfiniteJump) {
-      next.jumpsLeft -= 1;
-    }
-    next.grounded = false;
-  }
-
-  if (next.shielding) {
-    next.vx *= 0.6;
-    return next;
-  }
-
-  if (input.attack) {
-    if (input.attack === "sideSpecial" && input.specialFace) {
-      next.face = input.specialFace;
-    }
-
-    const attacked = startAttack(next, input.attack);
-    if (attacked === next) {
-      return next;
-    }
-
-    if (input.attack === "sideSpecial") {
-      attacked.vx = attacked.face * 15;
-      attacked.vy = Math.min(attacked.vy, -3.5);
-      attacked.grounded = false;
-    }
-
-    if (input.attack === "upSpecial") {
-      attacked.vx *= 0.35;
-      attacked.vy = -24;
-      attacked.grounded = false;
-    }
-
-    return attacked;
-  }
-
-  return next;
-}
-
-export function resolveAttack(attacker, defender) {
-  if (!attacker.attack) {
-    return { attacker, defender, spawnedProjectile: null };
-  }
-
-  const nextAttacker = {
-    ...attacker,
-    attack: {
-      ...attacker.attack,
-      frame: attacker.attack.frame + 1,
+    credits: 40,
+    ore: 0,
+    soldBeans: 0,
+    harvestedByBean: {},
+    inventory: {
+      beans: {},
+      seeds: { ...STARTER_SEEDS },
+      specialBeans: {},
     },
+    parcels: PARCELS.map(createParcelState),
+    upgrades: [],
+    beanIndex: {},
+    selectedBeanId: "green",
+    questProgress: {},
+    completedQuestIds: [],
+    lastAction: "Welcome to The Bean Farmer.",
   };
-  let nextDefender = { ...defender };
-  let spawnedProjectile = null;
-
-  const attackData = ATTACKS[nextAttacker.attack.type];
-  const activeStart = attackData.startup;
-  const activeEnd = attackData.startup + attackData.active;
-
-  const attackerIsPlayer = attacker.isPlayer;
-  const hitboxBonus = attackerIsPlayer ? DIFFICULTY.playerHitboxBonus : 0;
-  const damageMultiplier = attackerIsPlayer ? DIFFICULTY.playerDamageMultiplier : DIFFICULTY.cpuDamageMultiplier;
-  const knockbackMultiplier = attackerIsPlayer ? DIFFICULTY.playerKnockbackMultiplier : DIFFICULTY.cpuKnockbackMultiplier;
-
-  if (
-    nextAttacker.attack.frame >= activeStart &&
-    nextAttacker.attack.frame <= activeEnd &&
-    !nextAttacker.attack.didHit &&
-    nextAttacker.attack.type === "shot"
-  ) {
-    spawnedProjectile = {
-      owner: attacker.name,
-      x: attacker.x + attacker.width / 2 + attacker.face * (attacker.width / 2 + 10),
-      y: attacker.y + attacker.height / 2 - 10,
-      vx: attacker.face * ATTACKS.shot.projectileSpeed,
-      vy: 0,
-      width: ATTACKS.shot.projectileSize,
-      height: ATTACKS.shot.projectileSize,
-      damage: ATTACKS.shot.damage * damageMultiplier,
-      baseKnockback: ATTACKS.shot.baseKnockback * knockbackMultiplier,
-      scale: ATTACKS.shot.scale * knockbackMultiplier,
-      face: attacker.face,
-      timer: ATTACKS.shot.projectileLifetime,
-    };
-    nextAttacker.attack = {
-      ...nextAttacker.attack,
-      didHit: true,
-    };
-  } else if (
-    nextAttacker.attack.frame >= activeStart &&
-    nextAttacker.attack.frame <= activeEnd &&
-    !nextAttacker.attack.didHit &&
-    nextDefender.invuln <= 0 &&
-    intersects(getAttackHitbox(nextAttacker, attackData, hitboxBonus), nextDefender)
-  ) {
-    if (nextDefender.shielding) {
-      nextDefender = {
-        ...nextDefender,
-        vx: nextAttacker.face * 1.4,
-        vy: Math.min(nextDefender.vy, -1.5),
-        impact: {
-          type: "spark",
-          timer: 10,
-          x: nextDefender.x + nextDefender.width / 2,
-          y: nextDefender.y + nextDefender.height / 2,
-          face: nextAttacker.face,
-        },
-      };
-      nextAttacker.attack = {
-        ...nextAttacker.attack,
-        didHit: true,
-      };
-      return { attacker: nextAttacker, defender: nextDefender, spawnedProjectile };
-    }
-    const scaledDamage = attackData.damage * damageMultiplier;
-    const knockback = (attackData.baseKnockback + nextDefender.damage * attackData.scale) * knockbackMultiplier;
-    nextDefender = {
-      ...nextDefender,
-      damage: nextDefender.damage + scaledDamage,
-      vx: nextAttacker.face * knockback,
-      vy: -Math.max(5, knockback * 0.72),
-      hitstun: Math.round(scaledDamage * 1.4),
-      grounded: false,
-      impact:
-        nextAttacker.attack.type === "charge"
-          ? {
-              type: "supernova",
-              timer: 30,
-              x: nextDefender.x + nextDefender.width / 2,
-              y: nextDefender.y + nextDefender.height / 2,
-            }
-          : nextAttacker.attack.type === "blast"
-          ? {
-              type: "burst",
-              timer: 20,
-              x: nextAttacker.x + nextAttacker.width / 2,
-              y: nextAttacker.y + nextAttacker.height / 2,
-            }
-          : nextAttacker.attack.type === "upSpecial" || nextAttacker.attack.type === "sideSpecial"
-          ? {
-              type: "nova",
-              timer: 22,
-              x: nextDefender.x + nextDefender.width / 2,
-              y: nextDefender.y + nextDefender.height / 2,
-            }
-          : nextAttacker.attack.type === "smash"
-          ? {
-              type: "explosion",
-              timer: 16,
-              x: nextDefender.x + nextDefender.width / 2,
-              y: nextDefender.y + nextDefender.height / 2,
-            }
-          : {
-              type: "smoke",
-              timer: 14,
-              x: nextDefender.x + nextDefender.width / 2,
-              y: nextDefender.y + nextDefender.height / 2,
-              face: nextAttacker.face,
-            },
-    };
-    nextAttacker.attack = {
-      ...nextAttacker.attack,
-      didHit: true,
-    };
-  }
-
-  const totalFrames = attackData.startup + attackData.active + attackData.recovery;
-  if (nextAttacker.attack.frame >= totalFrames) {
-    const cooldownFrames = nextAttacker.attack.type === "shot" ? 1 : 8;
-    nextAttacker.attack = null;
-    nextAttacker.attackCooldown = cooldownFrames;
-  }
-
-  return { attacker: nextAttacker, defender: nextDefender, spawnedProjectile };
 }
 
-export function updateProjectiles(projectiles, fighters) {
-  const nextProjectiles = [];
-  const nextFighters = fighters.map((fighter) => ({ ...fighter }));
+export function cloneState(state) {
+  return structuredClone(state);
+}
 
-  for (const projectile of projectiles) {
-    const nextProjectile = {
-      ...projectile,
-      x: projectile.x + projectile.vx,
-      y: projectile.y + projectile.vy,
-      timer: projectile.timer - 1,
-    };
+export function getModifiers(state) {
+  const modifiers = {
+    extraWater: 0,
+    commonYieldBonus: 0,
+    extraOre: 0,
+  };
 
-    if (
-      nextProjectile.timer <= 0 ||
-      nextProjectile.x + nextProjectile.width < -STAGE.blastPadding ||
-      nextProjectile.x > STAGE.width + STAGE.blastPadding ||
-      nextProjectile.y + nextProjectile.height < -STAGE.blastPadding ||
-      nextProjectile.y > STAGE.height + STAGE.blastPadding
-    ) {
+  for (const upgradeId of state.upgrades) {
+    UPGRADES[upgradeId]?.apply(modifiers);
+  }
+
+  return modifiers;
+}
+
+export function getUnlockedBeanIds(state) {
+  return Object.values(BEANS)
+    .filter((bean) => bean.unlockCredits === 0 || state.credits >= bean.unlockCredits || state.beanIndex[bean.id]?.discovered)
+    .map((bean) => bean.id);
+}
+
+export function getParcelDefinition(parcelId) {
+  return PARCELS.find((parcel) => parcel.id === parcelId) ?? null;
+}
+
+export function getPlot(state, plotId) {
+  for (const parcel of state.parcels) {
+    const plot = parcel.plots.find((entry) => entry.id === plotId);
+    if (plot) {
+      return plot;
+    }
+  }
+  return null;
+}
+
+function markBeanDiscovered(state, beanId) {
+  const current = state.beanIndex[beanId] ?? {
+    discovered: false,
+    planted: 0,
+    harvested: 0,
+    sold: 0,
+  };
+  state.beanIndex[beanId] = {
+    ...current,
+    discovered: true,
+  };
+}
+
+function addItem(store, itemId, amount) {
+  store[itemId] = (store[itemId] ?? 0) + amount;
+}
+
+function consumeItem(store, itemId, amount) {
+  if ((store[itemId] ?? 0) < amount) {
+    return false;
+  }
+  store[itemId] -= amount;
+  if (store[itemId] <= 0) {
+    delete store[itemId];
+  }
+  return true;
+}
+
+function applyQuestRewards(state, quest) {
+  if (quest.rewards.credits) {
+    state.credits += quest.rewards.credits;
+  }
+  if (quest.rewards.seeds) {
+    for (const [beanId, amount] of Object.entries(quest.rewards.seeds)) {
+      addItem(state.inventory.seeds, beanId, amount);
+      markBeanDiscovered(state, beanId);
+    }
+  }
+}
+
+export function evaluateQuests(state) {
+  const next = cloneState(state);
+
+  for (const quest of QUESTS) {
+    if (next.completedQuestIds.includes(quest.id)) {
       continue;
     }
 
-    let hit = false;
-    for (let i = 0; i < nextFighters.length; i += 1) {
-      const fighter = nextFighters[i];
-      if (fighter.name === nextProjectile.owner || fighter.invuln > 0) continue;
-      if (!intersects(nextProjectile, fighter)) continue;
+    let completed = false;
+    let progressValue = 0;
 
-      if (fighter.shielding) {
-        nextFighters[i] = {
-          ...fighter,
-          vx: nextProjectile.face * 1.2,
-          impact: {
-            type: "spark",
-            timer: 10,
-            x: fighter.x + fighter.width / 2,
-            y: fighter.y + fighter.height / 2,
-            face: nextProjectile.face,
-          },
-        };
-        hit = true;
-        break;
-      }
-
-      const knockback = nextProjectile.baseKnockback + fighter.damage * nextProjectile.scale;
-      nextFighters[i] = {
-        ...fighter,
-        damage: fighter.damage + nextProjectile.damage,
-        vx: nextProjectile.face * knockback,
-        vy: -Math.max(4, knockback * 0.55),
-        hitstun: Math.round(nextProjectile.damage * 1.2),
-        grounded: false,
-        impact: {
-          type: "spark",
-          timer: 14,
-          x: fighter.x + fighter.width / 2,
-          y: fighter.y + fighter.height / 2,
-          face: nextProjectile.face,
-        },
-      };
-      hit = true;
-      break;
+    if (quest.type === "sellBeans") {
+      progressValue = next.soldBeans;
+      completed = progressValue >= quest.target;
+    } else if (quest.type === "unlockParcel") {
+      progressValue = next.parcels.find((parcel) => parcel.id === quest.target)?.unlocked ? 1 : 0;
+      completed = progressValue >= 1;
+    } else if (quest.type === "harvestBean") {
+      progressValue = next.harvestedByBean[quest.beanId] ?? 0;
+      completed = progressValue >= quest.target;
     }
 
-    if (!hit) {
-      nextProjectiles.push(nextProjectile);
+    next.questProgress[quest.id] = progressValue;
+
+    if (completed) {
+      next.completedQuestIds.push(quest.id);
+      applyQuestRewards(next, quest);
+      next.lastAction = `Quest complete: ${quest.name}.`;
     }
   }
 
+  return next;
+}
+
+function updateClock(clock, hours) {
+  const totalHours = clock.totalHours + hours;
+  const absoluteHours = START_HOUR + totalHours;
+  const day = 1 + Math.floor(absoluteHours / 24);
+  const hour = absoluteHours % 24;
   return {
-    fighters: nextFighters,
-    projectiles: nextProjectiles,
+    day,
+    hour,
+    totalHours,
   };
 }
 
-export function resolvePlatformCollision(fighter, platform) {
-  const next = { ...fighter };
-  const previousLeft = next.x - next.vx;
-  const previousRight = previousLeft + next.width;
-  const previousTop = next.y - next.vy;
-  const previousBottom = previousTop + next.height;
-  const nextLeft = next.x;
-  const nextRight = next.x + next.width;
-  const nextTop = next.y;
-  const nextBottom = next.y + next.height;
+export function advanceTime(state, hours) {
+  let next = cloneState(state);
+  next.clock = updateClock(next.clock, hours);
 
-  const overlaps =
-    nextRight > platform.x &&
-    nextLeft < platform.x + platform.width &&
-    nextBottom > platform.y &&
-    nextTop < platform.y + platform.height;
-
-  if (platform.solid && overlaps) {
-    const topPenetration = nextBottom - platform.y;
-    const bottomPenetration = platform.y + platform.height - nextTop;
-    const leftPenetration = nextRight - platform.x;
-    const rightPenetration = platform.x + platform.width - nextLeft;
-
-    const resolveOnTop = () => {
-      next.y = platform.y - next.height;
-      next.vy = 0;
-      next.grounded = true;
-      next.jumpsLeft = PHYSICS.maxJumps;
-      return next;
-    };
-
-    if (previousBottom <= platform.y) {
-      return resolveOnTop();
+  for (const parcel of next.parcels) {
+    const definition = getParcelDefinition(parcel.id);
+    const soilBonus = definition?.soilBonus ?? 1;
+    for (const plot of parcel.plots) {
+      if (plot.state !== "planted" || !plot.beanId) {
+        continue;
+      }
+      const bean = BEANS[plot.beanId];
+      const hydrationBonus = Math.min(plot.hydration, bean.waterNeed) / bean.waterNeed;
+      plot.growthHours += hours * (0.35 + 0.65 * hydrationBonus) * soilBonus;
+      if (plot.growthHours >= bean.growthHours) {
+        plot.state = "ready";
+        plot.ready = true;
+      }
     }
-
-    if (previousTop >= platform.y + platform.height) {
-      next.y = platform.y + platform.height;
-      next.vy = Math.max(0, next.vy);
-      return next;
-    }
-
-    if (previousRight <= platform.x) {
-      next.x = platform.x - next.width;
-      next.vx = 0;
-      return next;
-    }
-
-    if (previousLeft >= platform.x + platform.width) {
-      next.x = platform.x + platform.width;
-      next.vx = 0;
-      return next;
-    }
-
-    const minPenetration = Math.min(topPenetration, bottomPenetration, leftPenetration, rightPenetration);
-    if (minPenetration === topPenetration) {
-      return resolveOnTop();
-    }
-
-    if (minPenetration === bottomPenetration) {
-      next.y = platform.y + platform.height;
-      next.vy = Math.max(0, next.vy);
-      return next;
-    }
-
-    if (minPenetration === leftPenetration) {
-      next.x = platform.x - next.width;
-      next.vx = 0;
-      return next;
-    }
-
-    next.x = platform.x + platform.width;
-    next.vx = 0;
-    return next;
   }
 
-  if (
-    next.vy >= 0 &&
-    nextRight > platform.x &&
-    nextLeft < platform.x + platform.width &&
-    previousBottom <= platform.y &&
-    nextBottom >= platform.y
-  ) {
-    next.y = platform.y - next.height;
-    next.vy = 0;
-    next.grounded = true;
-    next.jumpsLeft = PHYSICS.maxJumps;
-  }
-
+  next = evaluateQuests(next);
+  next.lastAction = `Advanced time by ${hours} hour${hours === 1 ? "" : "s"}.`;
   return next;
 }
 
-export function updateFighter(fighter) {
-  let next = {
-    ...fighter,
-    attackCooldown: Math.max(0, fighter.attackCooldown - 1),
-    hitstun: Math.max(0, fighter.hitstun - 1),
-    invuln: Math.max(0, fighter.invuln - 1),
-    cpuCooldown: Math.max(0, fighter.cpuCooldown - 1),
-    impact:
-      fighter.impact && fighter.impact.timer > 1
-        ? { ...fighter.impact, timer: fighter.impact.timer - 1 }
-        : null,
-    grounded: false,
-    shielding: fighter.hitstun > 0 ? false : fighter.shielding,
-  };
+export function buySeeds(state, beanId, amount = 1) {
+  const bean = BEANS[beanId];
+  if (!bean) return state;
+  const totalCost = bean.seedCost * amount;
+  if (state.credits < totalCost) return state;
 
-  next.vy = Math.min(next.vy + PHYSICS.gravity, PHYSICS.maxFall);
-  next.x += next.vx;
-  next.y += next.vy;
-
-  for (const platform of STAGE.platforms) {
-    next = resolvePlatformCollision(next, platform);
-  }
-
-  next.vx *= next.grounded ? PHYSICS.groundFriction : PHYSICS.airFriction;
-  next.vx = Math.max(-11, Math.min(11, next.vx));
-
+  const next = cloneState(state);
+  next.credits -= totalCost;
+  addItem(next.inventory.seeds, beanId, amount);
+  markBeanDiscovered(next, beanId);
+  next.lastAction = `Bought ${amount} ${bean.name} seed${amount === 1 ? "" : "s"}.`;
   return next;
 }
 
-export function handleBlastZone(state, fighterIndex) {
-  const fighter = state.fighters[fighterIndex];
-  const outOfBounds =
-    fighter.x < -STAGE.blastPadding ||
-    fighter.x > STAGE.width + STAGE.blastPadding ||
-    fighter.y < -STAGE.blastPadding ||
-    fighter.y > STAGE.height + STAGE.blastPadding;
-
-  if (!outOfBounds) {
+export function plantBean(state, plotId, beanId) {
+  const plot = getPlot(state, plotId);
+  const bean = BEANS[beanId];
+  if (!plot || !bean || plot.state !== "empty" || (state.inventory.seeds[beanId] ?? 0) <= 0) {
     return state;
   }
 
-  const fighters = state.fighters.map((entry, index) => {
-    if (index !== fighterIndex) {
-      return entry;
-    }
-
-    const stocks = entry.stocks - 1;
-    if (stocks <= 0) {
-      return {
-        ...entry,
-        stocks: 0,
-      };
-    }
-
-    return {
-      ...entry,
-      stocks,
-      x: entry.spawnX,
-      y: entry.spawnY,
-      vx: 0,
-      vy: 0,
-      damage: 0,
-      hitstun: 0,
-      attack: null,
-      invuln: 0,
-      shielding: false,
-      jumpsLeft: PHYSICS.maxJumps,
-      grounded: false,
-      impact: null,
-    };
-  });
-
-  const loser = fighters[fighterIndex];
-  if (loser.stocks > 0) {
-    return { ...state, fighters };
-  }
-
-  return {
-    ...state,
-    running: false,
-    winner: fighters[fighterIndex === 0 ? 1 : 0].name,
-    fighters,
-  };
+  const next = cloneState(state);
+  const nextPlot = getPlot(next, plotId);
+  consumeItem(next.inventory.seeds, beanId, 1);
+  nextPlot.state = "planted";
+  nextPlot.beanId = beanId;
+  nextPlot.plantedAtHour = next.clock.totalHours;
+  nextPlot.hydration = 0;
+  nextPlot.growthHours = 0;
+  nextPlot.ready = false;
+  markBeanDiscovered(next, beanId);
+  next.beanIndex[beanId].planted += 1;
+  next.lastAction = `Planted ${bean.name}.`;
+  return evaluateQuests(next);
 }
 
-export function stepState(state, inputs) {
-  let [p1, p2] = state.fighters;
-  const spawnedProjectiles = [];
-  p1 = applyInput(p1, inputs.p1);
-  p2 = applyInput(p2, inputs.p2);
-
-  {
-    const resolved = resolveAttack(p1, p2);
-    p1 = resolved.attacker;
-    p2 = resolved.defender;
-    if (resolved.spawnedProjectile) spawnedProjectiles.push(resolved.spawnedProjectile);
-  }
-  {
-    const resolved = resolveAttack(p2, p1);
-    p2 = resolved.attacker;
-    p1 = resolved.defender;
-    if (resolved.spawnedProjectile) spawnedProjectiles.push(resolved.spawnedProjectile);
+export function waterPlot(state, plotId) {
+  const plot = getPlot(state, plotId);
+  if (!plot || plot.state !== "planted") {
+    return state;
   }
 
-  p1 = updateFighter(p1);
-  p2 = updateFighter(p2);
-  const projectileState = updateProjectiles([...(state.projectiles ?? []), ...spawnedProjectiles], [p1, p2]);
-  [p1, p2] = projectileState.fighters;
+  const next = cloneState(state);
+  const modifiers = getModifiers(next);
+  const nextPlot = getPlot(next, plotId);
+  nextPlot.hydration += 1 + modifiers.extraWater;
+  next.lastAction = "Watered plot.";
+  return next;
+}
 
-  let nextState = {
-    ...state,
-    fighters: [p1, p2],
-    projectiles: projectileState.projectiles,
-  };
+export function harvestPlot(state, plotId) {
+  const plot = getPlot(state, plotId);
+  if (!plot || plot.state !== "ready" || !plot.beanId) {
+    return state;
+  }
 
-  nextState = handleBlastZone(nextState, 0);
-  nextState = handleBlastZone(nextState, 1);
-  return nextState;
+  const next = cloneState(state);
+  const modifiers = getModifiers(next);
+  const nextPlot = getPlot(next, plotId);
+  const bean = BEANS[nextPlot.beanId];
+  let yieldAmount = bean.yield;
+  if (bean.rarity === "Common") {
+    yieldAmount += modifiers.commonYieldBonus;
+  }
+
+  addItem(next.inventory.beans, bean.id, yieldAmount);
+  next.harvestedByBean[bean.id] = (next.harvestedByBean[bean.id] ?? 0) + yieldAmount;
+  markBeanDiscovered(next, bean.id);
+  next.beanIndex[bean.id].harvested += yieldAmount;
+
+  nextPlot.state = "empty";
+  nextPlot.beanId = null;
+  nextPlot.plantedAtHour = null;
+  nextPlot.hydration = 0;
+  nextPlot.growthHours = 0;
+  nextPlot.ready = false;
+
+  next.lastAction = `Harvested ${yieldAmount} ${bean.name}${yieldAmount === 1 ? "" : "s"}.`;
+  return evaluateQuests(next);
+}
+
+export function sellBeans(state) {
+  const beanInventory = state.inventory.beans;
+  const beanIds = Object.keys(beanInventory);
+  if (beanIds.length === 0) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  let creditsEarned = 0;
+  let beansSold = 0;
+
+  for (const beanId of Object.keys(next.inventory.beans)) {
+    const count = next.inventory.beans[beanId];
+    const bean = BEANS[beanId];
+    creditsEarned += count * bean.sellValue;
+    beansSold += count;
+    next.beanIndex[beanId] = next.beanIndex[beanId] ?? { discovered: true, planted: 0, harvested: 0, sold: 0 };
+    next.beanIndex[beanId].sold = (next.beanIndex[beanId].sold ?? 0) + count;
+  }
+
+  next.inventory.beans = {};
+  next.credits += creditsEarned;
+  next.soldBeans += beansSold;
+  next.lastAction = `Sold ${beansSold} beans for ${creditsEarned} credits.`;
+  return evaluateQuests(next);
+}
+
+export function buyUpgrade(state, upgradeId) {
+  const upgrade = UPGRADES[upgradeId];
+  const oreCost = upgrade?.oreCost ?? 0;
+  if (!upgrade || state.upgrades.includes(upgradeId) || state.credits < upgrade.cost || state.ore < oreCost) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.credits -= upgrade.cost;
+  next.ore -= oreCost;
+  next.upgrades.push(upgradeId);
+  next.lastAction = `Upgraded the farmhouse with ${upgrade.name}.`;
+  return next;
+}
+
+export function unlockParcel(state, parcelId) {
+  const definition = getParcelDefinition(parcelId);
+  const parcel = state.parcels.find((entry) => entry.id === parcelId);
+  if (!definition || !parcel || parcel.unlocked || state.credits < definition.unlockCost) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  const nextParcel = next.parcels.find((entry) => entry.id === parcelId);
+  next.credits -= definition.unlockCost;
+  nextParcel.unlocked = true;
+  next.lastAction = `Unlocked ${definition.name}.`;
+  return evaluateQuests(next);
+}
+
+export function performMining(state) {
+  const next = cloneState(state);
+  const modifiers = getModifiers(next);
+  const oreFound = 2 + modifiers.extraOre + (next.clock.day % 2);
+  next.ore += oreFound;
+
+  if (next.clock.day >= 3 && !next.inventory.seeds.starlight) {
+    addItem(next.inventory.seeds, "starlight", 1);
+    markBeanDiscovered(next, "starlight");
+    next.lastAction = `Mining found ${oreFound} ore and a Starlight Bean seed.`;
+  } else {
+    const beanReward = next.clock.day >= 2 ? "scarlet" : "green";
+    addItem(next.inventory.seeds, beanReward, 1);
+    markBeanDiscovered(next, beanReward);
+    next.lastAction = `Mining found ${oreFound} ore and a ${BEANS[beanReward].name} seed.`;
+  }
+
+  return evaluateQuests(next);
+}
+
+export function serializeState(state) {
+  return JSON.stringify(state);
+}
+
+export function deserializeState(serialized) {
+  const parsed = JSON.parse(serialized);
+  return parsed;
 }

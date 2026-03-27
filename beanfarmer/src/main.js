@@ -281,8 +281,8 @@ function exitHouse() {
 
 function updatePlayerMovement(deltaSeconds) {
   if (firstPersonMode) {
-    const lookHorizontal = (movementKeys.ArrowRight ? 1 : 0) - (movementKeys.ArrowLeft ? 1 : 0);
-    const lookVertical = (movementKeys.ArrowDown ? 1 : 0) - (movementKeys.ArrowUp ? 1 : 0);
+    const lookHorizontal = (movementKeys.ArrowLeft ? 1 : 0) - (movementKeys.ArrowRight ? 1 : 0);
+    const lookVertical = (movementKeys.ArrowUp ? 1 : 0) - (movementKeys.ArrowDown ? 1 : 0);
     if (lookHorizontal) {
       playerState.heading += lookHorizontal * deltaSeconds * 2.2;
     }
@@ -1291,7 +1291,7 @@ function interactWithTarget(target) {
   }
 }
 
-function handleCanvasPick(event) {
+function getPointerTarget(event) {
   const rect = canvas.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1304,10 +1304,18 @@ function handleCanvasPick(event) {
     : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
   if (hits.length === 0) {
+    return null;
+  }
+
+  return hits.map((hit) => getTaggedInteractive(hit.object)).find(Boolean) ?? null;
+}
+
+function handleCanvasPick(event) {
+  if (firstPersonMode) {
     return;
   }
-  const taggedHit = hits.map((hit) => getTaggedInteractive(hit.object)).find(Boolean);
-  interactWithTarget(taggedHit);
+
+  interactWithTarget(getPointerTarget(event));
 }
 
 canvas.addEventListener("pointerdown", handleCanvasPick);

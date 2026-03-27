@@ -3,127 +3,136 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GameTime Clash</title>
+    <title>The Bean Farmer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles.css?v=20260308-7" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css?v=20260325-5" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
   </head>
   <body>
     <main class="shell">
-      <section class="topbar">
-        <div class="brand">
-          <p class="eyebrow">GameTime Prototype</p>
-          <h1>GameTime Clash</h1>
-          <p class="lede">A browser-based platform fighter prototype.</p>
-          <div class="dev-access">
-            <button id="dev-login-button" type="button">Dev Login</button>
-            <span id="dev-login-status">FX locked</span>
-          </div>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">3D Farm Slice</p>
+          <h1>The Bean Farmer</h1>
+          <p class="lede">Grow beans, sell the harvest, unlock new land, finish quests, mine for rare seeds, and build a ridiculous bean empire.</p>
         </div>
-        <div class="scoreboards">
-          <article class="scorecard scorecard-player">
-            <p class="label">Player 1</p>
-            <h2>Nova</h2>
-            <p>Damage <strong id="p1-damage">0%</strong></p>
-            <p>Stocks <strong id="p1-stocks">4</strong></p>
-            <p>Charge <strong id="p1-charge">Building</strong></p>
-          </article>
-          <article class="scorecard scorecard-cpu">
-            <p class="label">CPU</p>
-            <h2>Volt</h2>
-            <p>Damage <strong id="p2-damage">0%</strong></p>
-            <p>Stocks <strong id="p2-stocks">4</strong></p>
-          </article>
+        <div class="hero-actions">
+          <button id="viewmode-button" type="button" class="secondary">First Person</button>
+          <button id="fullscreen-button" type="button">Fullscreen</button>
+          <button id="save-button" type="button">Save Farm</button>
+          <button id="reset-button" type="button" class="secondary">New Save</button>
         </div>
       </section>
 
-      <section class="arena-shell">
-        <button class="fullscreen-button" id="fullscreen-button" type="button">Fullscreen</button>
-        <canvas id="game" width="960" height="540" aria-label="Smash-style platform fighter arena"></canvas>
-        <section class="mobile-controls" aria-label="Touch controls">
-          <div class="mobile-pad">
-            <button class="touch-button touch-move" data-touch-control="left" data-touch-mode="hold" type="button" aria-label="Move left">◀</button>
-            <button class="touch-button touch-jump" data-touch-control="jump" data-touch-mode="tap" type="button" aria-label="Jump">▲</button>
-            <button class="touch-button touch-shield" data-touch-control="shield" data-touch-mode="hold" type="button" aria-label="Shield">◌</button>
-            <button class="touch-button touch-move" data-touch-control="right" data-touch-mode="hold" type="button" aria-label="Move right">▶</button>
+      <section class="dashboard">
+        <article class="metric-card">
+          <span>Credits</span>
+          <strong id="credits-value">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Ore</span>
+          <strong id="ore-value">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Day / Hour</span>
+          <strong id="clock-value">Day 1, 08:00</strong>
+        </article>
+        <article class="metric-card">
+          <span>Action</span>
+          <strong id="action-value">Welcome to The Bean Farmer.</strong>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <section class="farm-panel panel viewport-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">3D Farm</p>
+              <h2>Playable Field</h2>
+            </div>
+            <div class="time-controls">
+              <button data-advance-hours="3" type="button">+3h</button>
+              <button data-advance-hours="6" type="button">+6h</button>
+              <button data-advance-hours="12" type="button">+12h</button>
+            </div>
           </div>
-          <div class="mobile-actions">
-            <button class="touch-button" data-touch-control="jab" data-touch-mode="tap" type="button" aria-label="Jab">J</button>
-            <button class="touch-button" data-touch-control="smash" data-touch-mode="tap" type="button" aria-label="Smash">S</button>
-            <button class="touch-button" data-touch-control="pulse" data-touch-mode="hold" type="button" aria-label="Pulse Shot">P</button>
-            <button class="touch-button" data-touch-control="charge" data-touch-mode="tap" type="button" aria-label="Charge Shot">C</button>
+          <div id="scene-shell" class="scene-shell">
+            <canvas id="farm-canvas" aria-label="3D Bean Farmer viewport"></canvas>
+            <div id="reticle" class="reticle hidden" aria-hidden="true"></div>
+            <div class="viewport-overlay">
+              <div class="hint-card">
+                <strong>Controls</strong>
+                <span>Third person still supports clicking. In first person, use E to interact with whatever the crosshair is on. WASD moves, Space jumps, and arrow keys look around. Drag to orbit. Two-finger scroll pans. Pinch or cmd-scroll zooms.</span>
+              </div>
+              <div id="selection-card" class="hint-card selection-card">
+                <strong>Selected Plot</strong>
+                <span id="selection-text">Choose a plot in the 3D field.</span>
+                <div class="selection-actions" id="selection-actions"></div>
+              </div>
+            </div>
+            <div id="interior-card" class="interior-card hidden">
+              <p class="eyebrow">Inside House</p>
+              <h3>Farmhouse</h3>
+              <p>Bed saves the game, wall notes open the Bean Index, and the round table spends ore on farmhouse upgrades.</p>
+              <button id="exit-house-button" type="button">Go Outside</button>
+            </div>
           </div>
-          <div class="mobile-specials">
-            <button class="touch-button" data-touch-control="side-left" data-touch-mode="tap" type="button" aria-label="Side special left">◁</button>
-            <button class="touch-button" data-touch-control="up-special" data-touch-mode="tap" type="button" aria-label="Up special">⬆</button>
-            <button class="touch-button" data-touch-control="down-special" data-touch-mode="tap" type="button" aria-label="Down special">⬇</button>
-            <button class="touch-button" data-touch-control="side-right" data-touch-mode="tap" type="button" aria-label="Side special right">▷</button>
-          </div>
+          <div id="farm-view" class="farm-view parcel-list"></div>
         </section>
-        <div class="overlay" id="overlay">
-          <div class="overlay-card">
-            <p class="eyebrow">Controls</p>
-            <h2>Enter The Arena</h2>
-            <p id="overlay-message">A/D move, W jump, Space jab, S smash, Q shield, hold E for Pulse Shot, Shift Charge Shot, arrow keys specials, R full reset.</p>
-            <button id="start-button" type="button">Start Match</button>
-          </div>
-        </div>
+
+        <aside class="side-column">
+          <section class="panel">
+            <p class="eyebrow">Seeds</p>
+            <h2>Planting Kit</h2>
+            <div id="bean-selector" class="bean-selector"></div>
+            <div class="shop-actions" id="shop-actions"></div>
+          </section>
+
+          <section class="panel">
+            <p class="eyebrow">Operations</p>
+            <h2>Farm Actions</h2>
+            <div class="action-grid">
+              <button id="sell-button" type="button">Sell Harvest</button>
+              <button id="mine-button" type="button" class="secondary">Go Mining</button>
+            </div>
+            <div id="land-actions" class="land-actions"></div>
+          </section>
+        </aside>
       </section>
 
       <section class="info-grid">
-        <article class="panel">
-          <p class="label">Move Set</p>
-          <ul>
-            <li>Jab is fast and reliable for stacking percent.</li>
-            <li>Smash is slower but launches hard at high damage.</li>
-            <li>Hold Q to shield and block hits.</li>
-            <li>Hold Shift for 1 second to store a Charge Shot, then tap Shift to fire it later.</li>
-            <li>Hold E for Pulse Shot. It ramps up fast, but if you hold too long you overheat, explode, and lose Pulse Shot for 2 seconds.</li>
-            <li>Left or right arrow for Nova Rush, up arrow for Skybreak, and down arrow for Burst Field.</li>
-            <li>On mobile, use the transparent touch controls on the arena for movement, attacks, shield, and specials.</li>
-            <li>You can keep jumping in the air as long as you need.</li>
-            <li>Your attacks have a little extra reach to make confirms easier.</li>
-          </ul>
-          <label class="speed-control" for="avatar-select">
-            <span>Character</span>
-            <select id="avatar-select">
-              <option value="nova">Nova</option>
-              <option value="volt">Volt</option>
-            </select>
-          </label>
-        </article>
-        <article class="panel">
-          <p class="label">Rules</p>
-          <ul>
-            <li>Percent increases knockback instead of reducing health.</li>
-            <li>Cross the blast zone and you lose a stock.</li>
-            <li>You and the CPU both have 4 stocks.</li>
-            <li>Dev mode unlocks wider dial ranges plus stronger effects and higher internal resolution.</li>
-          </ul>
-          <label class="speed-control" for="speed-dial">
-            <span>Speed Dial <strong id="speed-value">0.85x</strong></span>
-            <input id="speed-dial" type="range" min="0.50" max="1.20" step="0.01" value="0.85" />
-          </label>
-          <label class="speed-control" for="cpu-difficulty">
-            <span>CPU Dial <strong id="cpu-difficulty-value">1.00x</strong></span>
-            <input id="cpu-difficulty" type="range" min="0.40" max="1.80" step="0.05" value="1.00" />
-          </label>
-          <label class="speed-control" for="training-mode">
-            <span>Training Mode</span>
-            <input id="training-mode" type="checkbox" />
-          </label>
-          <label class="speed-control hidden-control" for="dev-fx-toggle" id="dev-fx-wrap">
-            <span>Dev FX / High Res</span>
-            <input id="dev-fx-toggle" type="checkbox" />
-          </label>
-        </article>
+        <section class="panel">
+          <p class="eyebrow">Quests</p>
+          <h2>Town Board</h2>
+          <div id="quest-list" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Upgrades</p>
+          <h2>Player & Farm</h2>
+          <div id="upgrade-list" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Bean Index</p>
+          <h2>Discovery Log</h2>
+          <div id="bean-index" class="stack-list"></div>
+        </section>
+        <section class="panel">
+          <p class="eyebrow">Inventory</p>
+          <h2>Storage</h2>
+          <div id="inventory-list" class="stack-list"></div>
+        </section>
       </section>
     </main>
 
-    <script type="module" src="./src/main.js?v=20260308-75"></script>
+    <script type="module" src="./src/main.js?v=20260325-5"></script>
   </body>
 </html>
