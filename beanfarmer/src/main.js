@@ -68,6 +68,7 @@ const upgradePanel = upgradeList.closest(".panel");
 const beanIndex = document.getElementById("bean-index");
 const beanIndexPanel = beanIndex.closest(".panel");
 const inventoryList = document.getElementById("inventory-list");
+const fullscreenButton = document.getElementById("fullscreen-button");
 const saveButton = document.getElementById("save-button");
 const resetButton = document.getElementById("reset-button");
 const sellButton = document.getElementById("sell-button");
@@ -1055,7 +1056,10 @@ function render() {
 
 function resizeRenderer() {
   const width = sceneShell.clientWidth;
-  const height = Math.max(620, Math.round(sceneShell.clientWidth * 0.56));
+  const fullscreenHeight = window.innerHeight - 170;
+  const height = document.fullscreenElement === sceneShell.closest(".viewport-panel")
+    ? Math.max(520, fullscreenHeight)
+    : Math.max(620, Math.round(sceneShell.clientWidth * 0.56));
   canvas.style.height = `${height}px`;
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
@@ -1184,6 +1188,21 @@ mineButton.addEventListener("click", () => {
 saveButton.addEventListener("click", saveState);
 resetButton.addEventListener("click", resetState);
 exitHouseButton.addEventListener("click", exitHouse);
+fullscreenButton.addEventListener("click", async () => {
+  const viewportPanel = sceneShell.closest(".viewport-panel");
+  if (!viewportPanel) return;
+
+  if (document.fullscreenElement === viewportPanel) {
+    await document.exitFullscreen();
+  } else {
+    await viewportPanel.requestFullscreen();
+  }
+});
+document.addEventListener("fullscreenchange", () => {
+  const viewportPanel = sceneShell.closest(".viewport-panel");
+  fullscreenButton.textContent = document.fullscreenElement === viewportPanel ? "Exit Fullscreen" : "Fullscreen";
+  resizeRenderer();
+});
 
 resizeRenderer();
 render();

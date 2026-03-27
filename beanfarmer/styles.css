@@ -176,6 +176,27 @@ button:disabled {
   overflow: hidden;
 }
 
+.viewport-panel:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(201, 232, 203, 0.8), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(236, 188, 101, 0.4), transparent 24%),
+    linear-gradient(180deg, #dceee2 0%, #efe1c1 48%, #e7d0a2 100%);
+}
+
+.viewport-panel:fullscreen .scene-shell {
+  min-height: calc(100vh - 170px);
+}
+
+.viewport-panel:fullscreen #farm-canvas {
+  height: calc(100vh - 170px);
+}
+
 .scene-shell {
   position: relative;
   min-height: 620px;
