@@ -276,8 +276,9 @@ function updatePlayerMovement(deltaSeconds) {
   }
 
   const moveScale = deltaSeconds * 9.5;
-  const offset = camera.position.clone().sub(controls.target);
-  const forward = controls.target.clone().sub(camera.position).setY(0).normalize();
+  const forward = firstPersonMode
+    ? new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading)).normalize()
+    : controls.target.clone().sub(camera.position).setY(0).normalize();
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
   const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
@@ -292,7 +293,9 @@ function updatePlayerMovement(deltaSeconds) {
   }
 
   playerState.position.copy(resolvedPosition);
-  playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
+  if (!firstPersonMode) {
+    playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
+  }
   playerState.moving = true;
   if (firstPersonMode) {
     updateFirstPersonCamera();
