@@ -68,13 +68,19 @@
             <div class="viewport-overlay">
               <div class="hint-card">
                 <strong>Controls</strong>
-                <span>Click a plot to plant, water, or harvest. WASD moves the farmer. Drag to orbit. Two-finger scroll pans. Pinch or cmd-scroll zooms.</span>
+                <span>Click plots to farm and click the house door to go inside. WASD moves the farmer. Drag to orbit. Two-finger scroll pans. Pinch or cmd-scroll zooms.</span>
               </div>
               <div id="selection-card" class="hint-card selection-card">
                 <strong>Selected Plot</strong>
                 <span id="selection-text">Choose a plot in the 3D field.</span>
                 <div class="selection-actions" id="selection-actions"></div>
               </div>
+            </div>
+            <div id="interior-card" class="interior-card hidden">
+              <p class="eyebrow">Inside House</p>
+              <h3>Farmhouse</h3>
+              <p>Warm lights, field notes, and a place to plan the next harvest.</p>
+              <button id="exit-house-button" type="button">Go Outside</button>
             </div>
           </div>
           <div id="farm-view" class="farm-view parcel-list"></div>

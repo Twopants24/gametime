@@ -218,6 +218,35 @@ button:disabled {
   min-width: 280px;
 }
 
+.interior-card {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  width: min(320px, calc(100% - 44px));
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 248, 235, 0.92);
+  border: 1px solid rgba(102, 79, 46, 0.14);
+  box-shadow: 0 20px 40px rgba(54, 38, 17, 0.16);
+}
+
+.interior-card.hidden {
+  display: none;
+}
+
+.interior-card h3 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 1.8rem;
+}
+
+.interior-card p:last-of-type {
+  margin: 0;
+  color: var(--muted);
+}
+
 .parcel-list {
   margin-top: 18px;
   display: grid;

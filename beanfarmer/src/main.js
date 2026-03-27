@@ -59,6 +59,8 @@ const sellButton = document.getElementById("sell-button");
 const mineButton = document.getElementById("mine-button");
 const selectionText = document.getElementById("selection-text");
 const selectionActions = document.getElementById("selection-actions");
+const interiorCard = document.getElementById("interior-card");
+const exitHouseButton = document.getElementById("exit-house-button");
 const canvas = document.getElementById("farm-canvas");
 const sceneShell = document.getElementById("scene-shell");
 const timeButtons = [...document.querySelectorAll("[data-advance-hours]")];
@@ -84,6 +86,8 @@ function loadState() {
 
 let state = loadState();
 let selectedPlotId = null;
+let insideHouse = false;
+let houseDoorMesh = null;
 const playerState = {
   position: new THREE.Vector3(-2, 0.85, 8),
   heading: 0,
@@ -149,7 +153,42 @@ function handleTrackpadPan(event) {
   controls.update();
 }
 
+function enterHouse() {
+  insideHouse = true;
+  selectedPlotId = null;
+  worldGroup.visible = false;
+  actorGroup.visible = false;
+  interiorGroup.visible = true;
+  controls.target.set(0, 1.8, -0.5);
+  camera.position.set(0, 9.5, 13);
+  controls.minDistance = 8;
+  controls.maxDistance = 22;
+  controls.update();
+  interiorCard.classList.remove("hidden");
+  actionValue.textContent = "Entered the farmhouse.";
+  renderSelection();
+}
+
+function exitHouse() {
+  insideHouse = false;
+  worldGroup.visible = true;
+  actorGroup.visible = true;
+  interiorGroup.visible = false;
+  controls.minDistance = 16;
+  controls.maxDistance = 42;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+  camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+  clampCameraToBounds();
+  controls.update();
+  interiorCard.classList.add("hidden");
+  actionValue.textContent = "Stepped back outside.";
+}
+
 function updatePlayerMovement(deltaSeconds) {
+  if (insideHouse) {
+    playerState.moving = false;
+    return;
+  }
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
   if (!horizontal && !vertical) {
@@ -191,6 +230,10 @@ scene.add(worldGroup);
 
 const actorGroup = new THREE.Group();
 scene.add(actorGroup);
+
+const interiorGroup = new THREE.Group();
+interiorGroup.visible = false;
+scene.add(interiorGroup);
 
 const skyLight = new THREE.HemisphereLight(0xf8ffe6, 0x8b6a3f, 1.7);
 scene.add(skyLight);
@@ -264,6 +307,62 @@ playerPack.castShadow = true;
 playerGroup.add(playerPack);
 
 actorGroup.add(playerGroup);
+
+const interiorFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(16, 0.6, 16),
+  new THREE.MeshStandardMaterial({ color: 0x9c7b55, roughness: 0.95 })
+);
+interiorFloor.position.set(0, -0.1, 0);
+interiorFloor.receiveShadow = true;
+interiorGroup.add(interiorFloor);
+
+const backWall = new THREE.Mesh(
+  new THREE.BoxGeometry(16, 7, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0xf4ead4, roughness: 0.95 })
+);
+backWall.position.set(0, 3.2, -8);
+interiorGroup.add(backWall);
+
+const leftWall = new THREE.Mesh(
+  new THREE.BoxGeometry(0.5, 7, 16),
+  new THREE.MeshStandardMaterial({ color: 0xead9b6, roughness: 0.95 })
+);
+leftWall.position.set(-8, 3.2, 0);
+interiorGroup.add(leftWall);
+
+const rightWall = leftWall.clone();
+rightWall.position.x = 8;
+interiorGroup.add(rightWall);
+
+const table = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.5, 1.7, 1, 20),
+  new THREE.MeshStandardMaterial({ color: 0x7b4d2d, roughness: 0.88 })
+);
+table.position.set(0, 0.6, -1.2);
+table.castShadow = true;
+interiorGroup.add(table);
+
+const bed = new THREE.Mesh(
+  new THREE.BoxGeometry(4, 1.1, 7),
+  new THREE.MeshStandardMaterial({ color: 0x6f57d9, roughness: 0.72 })
+);
+bed.position.set(4.6, 0.6, 1.6);
+bed.castShadow = true;
+interiorGroup.add(bed);
+
+const notesBoard = new THREE.Mesh(
+  new THREE.BoxGeometry(3.8, 2.6, 0.16),
+  new THREE.MeshStandardMaterial({ color: 0xd9bf84, roughness: 0.9 })
+);
+notesBoard.position.set(-4.4, 3.2, -7.65);
+interiorGroup.add(notesBoard);
+
+const lantern = new THREE.Mesh(
+  new THREE.SphereGeometry(0.45, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xffd878, emissive: 0xa55a10, emissiveIntensity: 0.85 })
+);
+lantern.position.set(0, 5.4, -1.5);
+interiorGroup.add(lantern);
 
 function setState(nextState) {
   state = nextState;
@@ -407,7 +506,7 @@ function renderInventory() {
 
 function describePlot(plot) {
   if (!plot) {
-    return "Choose a plot in the 3D field.";
+    return insideHouse ? "You are inside the farmhouse." : "Choose a plot in the 3D field.";
   }
   if (plot.state === "empty") {
     return `Open soil in ${plot.parcelId}. Plant ${BEANS[state.selectedBeanId].name} here.`;
@@ -420,6 +519,11 @@ function describePlot(plot) {
 }
 
 function renderSelection() {
+  if (insideHouse) {
+    selectionText.textContent = "Inside the farmhouse. Use the button below to go outside.";
+    selectionActions.innerHTML = "";
+    return;
+  }
   const plot = selectedPlotId ? findPlotById(selectedPlotId) : null;
   selectionText.textContent = describePlot(plot);
   selectionActions.innerHTML = "";
@@ -607,6 +711,7 @@ function rebuildScene() {
   plotMeshes.clear();
   worldColliders.length = 0;
   worldGroup.clear();
+  houseDoorMesh = null;
 
   for (const parcel of state.parcels) {
     const definition = PARCELS.find((entry) => entry.id === parcel.id);
@@ -672,6 +777,15 @@ function rebuildScene() {
   roof.position.set(-18, 6.1, -10);
   roof.castShadow = true;
   barn.add(roof);
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 2.8, 0.18),
+    new THREE.MeshStandardMaterial({ color: 0x4f2f1d, roughness: 0.78 })
+  );
+  door.position.set(-18, 1.55, -7.16);
+  door.userData.kind = "houseDoor";
+  door.castShadow = true;
+  barn.add(door);
+  houseDoorMesh = door;
   worldGroup.add(barn);
   addCircleCollider(base.position.x, base.position.z, 4.8);
 
@@ -732,17 +846,28 @@ function resizeRenderer() {
 }
 
 function handleCanvasPick(event) {
+  if (insideHouse) {
+    return;
+  }
   const rect = canvas.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects([...plotMeshes.values()], false);
+  const candidates = houseDoorMesh ? [...plotMeshes.values(), houseDoorMesh] : [...plotMeshes.values()];
+  const hits = raycaster.intersectObjects(candidates, true);
   if (hits.length === 0) {
     return;
   }
 
-  const plotId = hits[0].object.userData.plotId;
+  const doorHit = hits.find((hit) => hit.object.userData.kind === "houseDoor");
+  if (doorHit) {
+    enterHouse();
+    return;
+  }
+
+  const plotHit = hits.find((hit) => hit.object.userData.plotId);
+  const plotId = plotHit?.object.userData.plotId;
   if (!plotId) {
     return;
   }
@@ -820,6 +945,7 @@ mineButton.addEventListener("click", () => {
 
 saveButton.addEventListener("click", saveState);
 resetButton.addEventListener("click", resetState);
+exitHouseButton.addEventListener("click", exitHouse);
 
 resizeRenderer();
 render();
