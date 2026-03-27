@@ -163,13 +163,20 @@ function updatePlayerMovement(deltaSeconds) {
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
   const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
-  playerState.position.add(movement);
-  playerState.position.x = THREE.MathUtils.clamp(playerState.position.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
-  playerState.position.z = THREE.MathUtils.clamp(playerState.position.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
-  playerState.heading = Math.atan2(movement.x, movement.z);
+  const desiredPosition = playerState.position.clone().add(movement);
+  const resolvedPosition = resolvePlayerCollision(desiredPosition);
+  const actualMovement = resolvedPosition.clone().sub(playerState.position);
+
+  if (actualMovement.lengthSq() <= 0.0001) {
+    playerState.moving = false;
+    return;
+  }
+
+  playerState.position.copy(resolvedPosition);
+  playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
   playerState.moving = true;
-  camera.position.add(movement);
-  controls.target.add(movement);
+  camera.position.add(actualMovement);
+  controls.target.add(actualMovement);
   clampCameraToBounds();
   controls.update();
 }
@@ -177,6 +184,7 @@ function updatePlayerMovement(deltaSeconds) {
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const plotMeshes = new Map();
+const worldColliders = [];
 
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
@@ -554,6 +562,40 @@ function createPlotMesh(plot, selected) {
   return mesh;
 }
 
+function addCircleCollider(x, z, radius) {
+  worldColliders.push({ x, z, radius });
+}
+
+function resolvePlayerCollision(nextPosition) {
+  const resolved = nextPosition.clone();
+
+  resolved.x = THREE.MathUtils.clamp(resolved.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
+
+  for (const collider of worldColliders) {
+    const dx = resolved.x - collider.x;
+    const dz = resolved.z - collider.z;
+    const distanceSq = dx * dx + dz * dz;
+    const minDistance = collider.radius;
+
+    if (distanceSq === 0) {
+      resolved.x += minDistance;
+      continue;
+    }
+
+    if (distanceSq < minDistance * minDistance) {
+      const distance = Math.sqrt(distanceSq);
+      const push = (minDistance - distance) / distance;
+      resolved.x += dx * push;
+      resolved.z += dz * push;
+    }
+  }
+
+  resolved.x = THREE.MathUtils.clamp(resolved.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
+  return resolved;
+}
+
 function parcelWorldPosition(parcelId, plotIndex) {
   const layout = PLOT_LAYOUTS[parcelId];
   const col = plotIndex % layout.cols;
@@ -563,6 +605,7 @@ function parcelWorldPosition(parcelId, plotIndex) {
 
 function rebuildScene() {
   plotMeshes.clear();
+  worldColliders.length = 0;
   worldGroup.clear();
 
   for (const parcel of state.parcels) {
@@ -591,6 +634,7 @@ function rebuildScene() {
       beacon.position.y = 2;
       beacon.castShadow = true;
       worldGroup.add(beacon);
+      addCircleCollider(beacon.position.x, beacon.position.z, 2.4);
       continue;
     }
 
@@ -600,6 +644,7 @@ function rebuildScene() {
       mesh.position.copy(parcelWorldPosition(parcel.id, index));
       worldGroup.add(mesh);
       plotMeshes.set(plot.id, mesh);
+      addCircleCollider(mesh.position.x, mesh.position.z, 2.45);
     });
 
     const sign = new THREE.Mesh(
@@ -628,6 +673,7 @@ function rebuildScene() {
   roof.castShadow = true;
   barn.add(roof);
   worldGroup.add(barn);
+  addCircleCollider(base.position.x, base.position.z, 4.8);
 
   const pond = new THREE.Mesh(
     new THREE.CircleGeometry(4.6, 36),
@@ -636,6 +682,7 @@ function rebuildScene() {
   pond.rotation.x = -Math.PI / 2;
   pond.position.set(18, 0.02, 14);
   worldGroup.add(pond);
+  addCircleCollider(pond.position.x, pond.position.z, 4.9);
 }
 
 function findPlotById(plotId) {
