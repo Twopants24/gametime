@@ -151,7 +151,7 @@ function handleTrackpadPan(event) {
 
 function updatePlayerMovement(deltaSeconds) {
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
-  const vertical = (movementKeys.KeyS ? 1 : 0) - (movementKeys.KeyW ? 1 : 0);
+  const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
   if (!horizontal && !vertical) {
     playerState.moving = false;
     return;
