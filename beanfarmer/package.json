@@ -1,0 +1,12 @@
+{
+  "name": "beanfarmer",
+  "version": "1.0.0",
+  "description": "Browser prototype for the Bean Farmer vertical slice described in [GDD.md](/Users/logan/Documents/New%20Project/GDD.md) and [TDD.md](/Users/logan/Documents/New%20Project/TDD.md).",
+  "scripts": {
+    "test": "node --test tests/gameLogic.test.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "three": "^0.180.0"
+  }
+}

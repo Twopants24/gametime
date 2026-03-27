@@ -1,16 +1,13 @@
 :root {
-  --bg: #f3ead5;
+  --bg: #efe1c1;
   --ink: #2f2416;
   --muted: #6e5d49;
-  --card: rgba(255, 248, 235, 0.8);
+  --card: rgba(255, 250, 239, 0.82);
   --card-border: rgba(95, 70, 35, 0.16);
-  --bean: #658536;
-  --soil: #7a5130;
   --gold: #d4a746;
   --leaf: #91bd63;
-  --sky: #d6efe2;
   --special: #6f57d9;
-  --danger: #c85c3b;
+  --shadow: rgba(97, 70, 39, 0.14);
 }
 
 * {
@@ -27,15 +24,15 @@ body {
   font-family: "Manrope", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(201, 232, 203, 0.85), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(236, 188, 101, 0.35), transparent 25%),
-    linear-gradient(180deg, #e6f4ec 0%, var(--bg) 48%, #ead9bb 100%);
+    radial-gradient(circle at top left, rgba(201, 232, 203, 0.8), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(236, 188, 101, 0.4), transparent 24%),
+    linear-gradient(180deg, #dceee2 0%, #efe1c1 48%, #e7d0a2 100%);
 }
 
 .shell {
-  width: min(1440px, calc(100vw - 32px));
+  width: min(1480px, calc(100vw - 28px));
   margin: 0 auto;
-  padding: 28px 0 42px;
+  padding: 24px 0 40px;
 }
 
 .hero,
@@ -47,7 +44,7 @@ body {
 }
 
 .hero {
-  grid-template-columns: 1.5fr auto;
+  grid-template-columns: 1.4fr auto;
   align-items: end;
   margin-bottom: 18px;
 }
@@ -82,10 +79,15 @@ h2 {
   font-size: 1.04rem;
 }
 
-.hero-actions {
+.hero-actions,
+.time-controls,
+.action-grid,
+.shop-actions,
+.land-actions,
+.selection-actions {
   display: flex;
-  gap: 12px;
-  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -120,8 +122,8 @@ button:disabled {
 .panel {
   background: var(--card);
   border: 1px solid var(--card-border);
-  box-shadow: 0 24px 50px rgba(97, 70, 39, 0.12);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 24px 50px var(--shadow);
+  backdrop-filter: blur(12px);
 }
 
 .metric-card {
@@ -138,12 +140,17 @@ button:disabled {
 }
 
 .metric-card strong {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
 }
 
 .main-grid {
-  grid-template-columns: 1.5fr 0.8fr;
+  grid-template-columns: 1.55fr 0.85fr;
   align-items: start;
+}
+
+.info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
 }
 
 .panel {
@@ -154,150 +161,70 @@ button:disabled {
 .panel-header {
   display: flex;
   justify-content: space-between;
-  align-items: start;
   gap: 16px;
+  align-items: start;
   margin-bottom: 18px;
 }
 
-.time-controls,
-.action-grid,
-.shop-actions,
-.land-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.farm-view {
-  display: grid;
-  gap: 18px;
-}
-
-.parcel {
-  display: grid;
-  gap: 12px;
-  padding: 18px;
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(240, 255, 244, 0.88), rgba(230, 215, 184, 0.8)),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
-  border: 1px solid rgba(116, 94, 57, 0.12);
-}
-
-.parcel.locked {
-  opacity: 0.7;
-}
-
-.parcel-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: center;
-}
-
-.plot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 12px;
-}
-
-.plot-card {
-  position: relative;
-  min-height: 124px;
-  padding: 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(82, 56, 29, 0.12);
-  background: linear-gradient(180deg, rgba(228, 246, 223, 0.95), rgba(214, 224, 184, 0.9));
+.viewport-panel {
   overflow: hidden;
 }
 
-.plot-card::before {
-  content: "";
-  position: absolute;
-  left: 15%;
-  right: 15%;
-  bottom: 18px;
-  height: 40px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #8e6239 0%, #6f452a 100%);
-  box-shadow: inset 0 10px 0 rgba(255, 230, 189, 0.12);
-  transform: skew(-22deg);
-}
-
-.plot-card.empty::after,
-.plot-card.planted::after,
-.plot-card.ready::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-}
-
-.plot-card.planted::after {
-  width: 36px;
-  height: 58px;
-  left: calc(50% - 18px);
-  bottom: 34px;
+.scene-shell {
+  position: relative;
+  min-height: 620px;
+  border-radius: 30px;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 18px 12px, var(--leaf) 0 8px, transparent 9px),
-    radial-gradient(circle at 10px 26px, #76a53d 0 7px, transparent 8px),
-    radial-gradient(circle at 26px 28px, #87b84a 0 7px, transparent 8px),
-    linear-gradient(180deg, #4f8a2b, #426f24);
-  clip-path: polygon(46% 0%, 55% 0%, 62% 100%, 38% 100%);
+    radial-gradient(circle at 20% 16%, rgba(255, 255, 255, 0.7), transparent 22%),
+    linear-gradient(180deg, #c9ecdf 0%, #9ecf90 32%, #8eb26a 52%, #735c36 100%);
+  border: 1px solid rgba(90, 71, 35, 0.12);
 }
 
-.plot-card.ready::after {
-  width: 58px;
-  height: 72px;
-  left: calc(50% - 29px);
-  bottom: 28px;
-  background:
-    radial-gradient(circle at 15px 18px, #89c445 0 10px, transparent 11px),
-    radial-gradient(circle at 43px 18px, #7db63c 0 10px, transparent 11px),
-    radial-gradient(circle at 20px 44px, #6f9f31 0 11px, transparent 12px),
-    radial-gradient(circle at 40px 44px, #88c15b 0 11px, transparent 12px);
+#farm-canvas {
+  display: block;
+  width: 100%;
+  height: 620px;
 }
 
-.plot-title,
-.parcel-title {
-  position: relative;
-  z-index: 2;
-  font-weight: 800;
-}
-
-.plot-meta,
-.mini-copy {
-  position: relative;
-  z-index: 2;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-.plot-actions {
-  position: relative;
-  z-index: 2;
+.viewport-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px;
 }
 
-.plot-actions button {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-}
-
-.side-column,
-.info-grid {
+.hint-card {
+  max-width: 280px;
   display: grid;
-  gap: 18px;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 249, 239, 0.84);
+  border: 1px solid rgba(102, 79, 46, 0.12);
+  box-shadow: 0 16px 32px rgba(54, 38, 17, 0.12);
+  pointer-events: auto;
 }
 
-.bean-selector,
-.stack-list {
+.hint-card span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.selection-card {
+  min-width: 280px;
+}
+
+.parcel-list {
+  margin-top: 18px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
+.parcel-summary,
 .bean-chip,
 .stack-item {
   display: grid;
@@ -308,22 +235,41 @@ button:disabled {
   background: rgba(255, 249, 239, 0.86);
 }
 
+.parcel-summary.locked {
+  opacity: 0.72;
+}
+
+.side-column {
+  display: grid;
+  gap: 18px;
+}
+
+.bean-selector,
+.stack-list {
+  display: grid;
+  gap: 12px;
+}
+
 .bean-chip.active {
   border-color: rgba(108, 147, 53, 0.45);
   background: linear-gradient(135deg, rgba(237, 246, 213, 0.95), rgba(255, 247, 230, 0.92));
 }
 
-.bean-chip button {
+.bean-chip button,
+.stack-item button,
+.selection-actions button {
   justify-self: start;
   padding: 8px 12px;
   font-size: 0.82rem;
 }
 
-.stack-item strong {
+.stack-item strong,
+.parcel-summary strong {
   font-size: 1rem;
 }
 
-.stack-item span {
+.stack-item span,
+.parcel-summary span {
   color: var(--muted);
   font-size: 0.88rem;
 }
@@ -337,17 +283,20 @@ button:disabled {
   color: var(--special);
 }
 
-.inventory-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-@media (max-width: 1080px) {
+@media (max-width: 1180px) {
+  .hero,
   .dashboard,
   .main-grid,
-  .info-grid,
-  .hero {
+  .info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .viewport-overlay {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .selection-card {
+    min-width: 0;
   }
 }

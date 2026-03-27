@@ -7,7 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260325-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260325-3" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
   </head>
   <body>
     <main class="shell">
@@ -43,11 +51,11 @@
       </section>
 
       <section class="main-grid">
-        <section class="farm-panel panel">
+        <section class="farm-panel panel viewport-panel">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Farm</p>
-              <h2>Bean Parcels</h2>
+              <p class="eyebrow">3D Farm</p>
+              <h2>Playable Field</h2>
             </div>
             <div class="time-controls">
               <button data-advance-hours="3" type="button">+3h</button>
@@ -55,7 +63,21 @@
               <button data-advance-hours="12" type="button">+12h</button>
             </div>
           </div>
-          <div id="farm-view" class="farm-view"></div>
+          <div id="scene-shell" class="scene-shell">
+            <canvas id="farm-canvas" aria-label="3D Bean Farmer viewport"></canvas>
+            <div class="viewport-overlay">
+              <div class="hint-card">
+                <strong>Controls</strong>
+                <span>Click a plot to plant, water, or harvest. Drag to orbit. Scroll to zoom.</span>
+              </div>
+              <div id="selection-card" class="hint-card selection-card">
+                <strong>Selected Plot</strong>
+                <span id="selection-text">Choose a plot in the 3D field.</span>
+                <div class="selection-actions" id="selection-actions"></div>
+              </div>
+            </div>
+          </div>
+          <div id="farm-view" class="farm-view parcel-list"></div>
         </section>
 
         <aside class="side-column">
@@ -102,6 +124,6 @@
       </section>
     </main>
 
-    <script type="module" src="./src/main.js?v=20260325-1"></script>
+    <script type="module" src="./src/main.js?v=20260325-3"></script>
   </body>
 </html>
