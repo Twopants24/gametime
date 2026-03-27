@@ -28,6 +28,12 @@ const CAMERA_BOUNDS = {
   minZ: -16,
   maxZ: 24,
 };
+const PLAYER_BOUNDS = {
+  minX: -18,
+  maxX: 20,
+  minZ: -12,
+  maxZ: 20,
+};
 
 const PLOT_LAYOUTS = {
   home: { originX: -8, originZ: -2, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
@@ -78,6 +84,11 @@ function loadState() {
 
 let state = loadState();
 let selectedPlotId = null;
+const playerState = {
+  position: new THREE.Vector3(-2, 0.85, 8),
+  heading: 0,
+  moving: false,
+};
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -138,19 +149,25 @@ function handleTrackpadPan(event) {
   controls.update();
 }
 
-function updateKeyboardPan(deltaSeconds) {
+function updatePlayerMovement(deltaSeconds) {
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyS ? 1 : 0) - (movementKeys.KeyW ? 1 : 0);
   if (!horizontal && !vertical) {
+    playerState.moving = false;
     return;
   }
 
-  const panScale = deltaSeconds * 14;
+  const moveScale = deltaSeconds * 9.5;
   const offset = camera.position.clone().sub(controls.target);
   const forward = offset.clone().setY(0).normalize().negate();
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
-  const movement = right.multiplyScalar(horizontal * panScale).add(forward.multiplyScalar(vertical * panScale));
+  const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
+  playerState.position.add(movement);
+  playerState.position.x = THREE.MathUtils.clamp(playerState.position.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
+  playerState.position.z = THREE.MathUtils.clamp(playerState.position.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
+  playerState.heading = Math.atan2(movement.x, movement.z);
+  playerState.moving = true;
   camera.position.add(movement);
   controls.target.add(movement);
   clampCameraToBounds();
@@ -163,6 +180,9 @@ const plotMeshes = new Map();
 
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
+
+const actorGroup = new THREE.Group();
+scene.add(actorGroup);
 
 const skyLight = new THREE.HemisphereLight(0xf8ffe6, 0x8b6a3f, 1.7);
 scene.add(skyLight);
@@ -209,6 +229,33 @@ centerStone.position.set(4, 0.45, 6);
 centerStone.receiveShadow = true;
 centerStone.castShadow = true;
 scene.add(centerStone);
+
+const playerGroup = new THREE.Group();
+const playerBody = new THREE.Mesh(
+  new THREE.CapsuleGeometry(0.65, 1.4, 5, 12),
+  new THREE.MeshStandardMaterial({ color: 0xf0c45a, roughness: 0.62 })
+);
+playerBody.position.y = 1.4;
+playerBody.castShadow = true;
+playerGroup.add(playerBody);
+
+const playerHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.52, 18, 18),
+  new THREE.MeshStandardMaterial({ color: 0x2f2416, roughness: 0.82 })
+);
+playerHead.position.y = 2.6;
+playerHead.castShadow = true;
+playerGroup.add(playerHead);
+
+const playerPack = new THREE.Mesh(
+  new THREE.BoxGeometry(0.75, 0.9, 0.4),
+  new THREE.MeshStandardMaterial({ color: 0x6f57d9, roughness: 0.7 })
+);
+playerPack.position.set(0, 1.5, -0.5);
+playerPack.castShadow = true;
+playerGroup.add(playerPack);
+
+actorGroup.add(playerGroup);
 
 function setState(nextState) {
   state = nextState;
@@ -662,11 +709,13 @@ canvas.addEventListener("wheel", handleTrackpadPan, { passive: false });
 window.addEventListener("resize", resizeRenderer);
 window.addEventListener("keydown", (event) => {
   if (event.code in movementKeys) {
+    event.preventDefault();
     movementKeys[event.code] = true;
   }
 });
 window.addEventListener("keyup", (event) => {
   if (event.code in movementKeys) {
+    event.preventDefault();
     movementKeys[event.code] = false;
   }
 });
@@ -733,8 +782,11 @@ const clock = new THREE.Clock();
 function animate() {
   const delta = clock.getDelta();
   const elapsed = clock.elapsedTime;
-  updateKeyboardPan(delta);
+  updatePlayerMovement(delta);
   worldGroup.rotation.y = Math.sin(elapsed * 0.15) * 0.025;
+  playerGroup.position.copy(playerState.position);
+  playerGroup.rotation.y = playerState.heading;
+  playerBody.position.y = 1.4 + (playerState.moving ? Math.sin(elapsed * 10) * 0.08 : 0);
 
   for (const [plotId, mesh] of plotMeshes) {
     const plot = findPlotById(plotId);
