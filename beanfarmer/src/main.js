@@ -28,12 +28,25 @@ const CAMERA_BOUNDS = {
   minZ: -16,
   maxZ: 24,
 };
+const INTERIOR_CAMERA_BOUNDS = {
+  minX: -4.5,
+  maxX: 4.5,
+  minZ: -5.5,
+  maxZ: 5.5,
+};
 const PLAYER_BOUNDS = {
   minX: -18,
   maxX: 20,
   minZ: -12,
   maxZ: 20,
 };
+const INTERIOR_PLAYER_BOUNDS = {
+  minX: -5.8,
+  maxX: 5.8,
+  minZ: -4.8,
+  maxZ: 5.8,
+};
+const INTERACT_DISTANCE = 4.25;
 
 const PLOT_LAYOUTS = {
   home: { originX: -8, originZ: -2, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
@@ -51,7 +64,9 @@ const shopActions = document.getElementById("shop-actions");
 const landActions = document.getElementById("land-actions");
 const questList = document.getElementById("quest-list");
 const upgradeList = document.getElementById("upgrade-list");
+const upgradePanel = upgradeList.closest(".panel");
 const beanIndex = document.getElementById("bean-index");
+const beanIndexPanel = beanIndex.closest(".panel");
 const inventoryList = document.getElementById("inventory-list");
 const saveButton = document.getElementById("save-button");
 const resetButton = document.getElementById("reset-button");
@@ -88,8 +103,10 @@ let state = loadState();
 let selectedPlotId = null;
 let insideHouse = false;
 let houseDoorMesh = null;
+const interiorInteractiveMeshes = [];
 const playerState = {
   position: new THREE.Vector3(-2, 0.85, 8),
+  exteriorPosition: new THREE.Vector3(-2, 0.85, 8),
   heading: 0,
   moving: false,
 };
@@ -120,8 +137,9 @@ controls.update();
 
 function clampCameraToBounds() {
   const offset = camera.position.clone().sub(controls.target);
-  controls.target.x = THREE.MathUtils.clamp(controls.target.x, CAMERA_BOUNDS.minX, CAMERA_BOUNDS.maxX);
-  controls.target.z = THREE.MathUtils.clamp(controls.target.z, CAMERA_BOUNDS.minZ, CAMERA_BOUNDS.maxZ);
+  const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : CAMERA_BOUNDS;
+  controls.target.x = THREE.MathUtils.clamp(controls.target.x, bounds.minX, bounds.maxX);
+  controls.target.z = THREE.MathUtils.clamp(controls.target.z, bounds.minZ, bounds.maxZ);
   camera.position.copy(controls.target).add(offset);
 }
 
@@ -155,14 +173,16 @@ function handleTrackpadPan(event) {
 
 function enterHouse() {
   insideHouse = true;
+  playerState.exteriorPosition.copy(playerState.position);
+  playerState.position.set(0, 0.85, 4.2);
   selectedPlotId = null;
   worldGroup.visible = false;
-  actorGroup.visible = false;
   interiorGroup.visible = true;
-  controls.target.set(0, 1.8, -0.5);
-  camera.position.set(0, 9.5, 13);
+  controls.target.set(0, 0.8, 2.2);
+  camera.position.set(0, 8.5, 11.5);
   controls.minDistance = 8;
   controls.maxDistance = 22;
+  clampCameraToBounds();
   controls.update();
   interiorCard.classList.remove("hidden");
   actionValue.textContent = "Entered the farmhouse.";
@@ -172,8 +192,8 @@ function enterHouse() {
 function exitHouse() {
   insideHouse = false;
   worldGroup.visible = true;
-  actorGroup.visible = true;
   interiorGroup.visible = false;
+  playerState.position.copy(playerState.exteriorPosition);
   controls.minDistance = 16;
   controls.maxDistance = 42;
   controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
@@ -185,10 +205,6 @@ function exitHouse() {
 }
 
 function updatePlayerMovement(deltaSeconds) {
-  if (insideHouse) {
-    playerState.moving = false;
-    return;
-  }
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
   if (!horizontal && !vertical) {
@@ -203,7 +219,7 @@ function updatePlayerMovement(deltaSeconds) {
   const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
   const desiredPosition = playerState.position.clone().add(movement);
-  const resolvedPosition = resolvePlayerCollision(desiredPosition);
+  const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse);
   const actualMovement = resolvedPosition.clone().sub(playerState.position);
 
   if (actualMovement.lengthSq() <= 0.0001) {
@@ -224,6 +240,7 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const plotMeshes = new Map();
 const worldColliders = [];
+const interiorColliders = [];
 
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
@@ -355,6 +372,7 @@ const notesBoard = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xd9bf84, roughness: 0.9 })
 );
 notesBoard.position.set(-4.4, 3.2, -7.65);
+notesBoard.userData.kind = "indexBoard";
 interiorGroup.add(notesBoard);
 
 const lantern = new THREE.Mesh(
@@ -363,6 +381,10 @@ const lantern = new THREE.Mesh(
 );
 lantern.position.set(0, 5.4, -1.5);
 interiorGroup.add(lantern);
+
+table.userData.kind = "upgradeTable";
+bed.userData.kind = "bed";
+interiorInteractiveMeshes.push(table, bed, notesBoard);
 
 function setState(nextState) {
   state = nextState;
@@ -520,7 +542,7 @@ function describePlot(plot) {
 
 function renderSelection() {
   if (insideHouse) {
-    selectionText.textContent = "Inside the farmhouse. Use the button below to go outside.";
+    selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to buy upgrades.";
     selectionActions.innerHTML = "";
     return;
   }
@@ -670,13 +692,19 @@ function addCircleCollider(x, z, radius) {
   worldColliders.push({ x, z, radius });
 }
 
-function resolvePlayerCollision(nextPosition) {
+function addInteriorCircleCollider(x, z, radius) {
+  interiorColliders.push({ x, z, radius });
+}
+
+function resolvePlayerCollision(nextPosition, useInterior = false) {
   const resolved = nextPosition.clone();
+  const bounds = useInterior ? INTERIOR_PLAYER_BOUNDS : PLAYER_BOUNDS;
+  const colliders = useInterior ? interiorColliders : worldColliders;
 
-  resolved.x = THREE.MathUtils.clamp(resolved.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
-  resolved.z = THREE.MathUtils.clamp(resolved.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
+  resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
 
-  for (const collider of worldColliders) {
+  for (const collider of colliders) {
     const dx = resolved.x - collider.x;
     const dz = resolved.z - collider.z;
     const distanceSq = dx * dx + dz * dz;
@@ -695,8 +723,8 @@ function resolvePlayerCollision(nextPosition) {
     }
   }
 
-  resolved.x = THREE.MathUtils.clamp(resolved.x, PLAYER_BOUNDS.minX, PLAYER_BOUNDS.maxX);
-  resolved.z = THREE.MathUtils.clamp(resolved.z, PLAYER_BOUNDS.minZ, PLAYER_BOUNDS.maxZ);
+  resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
+  resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
   return resolved;
 }
 
@@ -710,6 +738,7 @@ function parcelWorldPosition(parcelId, plotIndex) {
 function rebuildScene() {
   plotMeshes.clear();
   worldColliders.length = 0;
+  interiorColliders.length = 0;
   worldGroup.clear();
   houseDoorMesh = null;
 
@@ -797,6 +826,9 @@ function rebuildScene() {
   pond.position.set(18, 0.02, 14);
   worldGroup.add(pond);
   addCircleCollider(pond.position.x, pond.position.z, 4.9);
+
+  addInteriorCircleCollider(0, -1.2, 2.2);
+  addInteriorCircleCollider(4.6, 1.6, 3.2);
 }
 
 function findPlotById(plotId) {
@@ -823,6 +855,37 @@ function performSelectedPlotAction(action) {
   }
 }
 
+function focusPanel(panel) {
+  panel?.scrollIntoView({ behavior: "smooth", block: "center" });
+  panel?.classList.add("panel-flash");
+  window.setTimeout(() => panel?.classList.remove("panel-flash"), 1200);
+}
+
+function handleInteriorInteraction(kind) {
+  if (kind === "bed") {
+    saveState();
+    actionValue.textContent = "You rested for a moment and saved the farmhouse.";
+    return;
+  }
+
+  if (kind === "indexBoard") {
+    focusPanel(beanIndexPanel);
+    actionValue.textContent = "Opened your Bean Index notes.";
+    return;
+  }
+
+  if (kind === "upgradeTable") {
+    const candidate = Object.values(UPGRADES).find((upgrade) => !state.upgrades.includes(upgrade.id) && state.credits >= upgrade.cost);
+    if (candidate) {
+      setState(buyUpgrade(state, candidate.id));
+      focusPanel(upgradePanel);
+      return;
+    }
+    focusPanel(upgradePanel);
+    actionValue.textContent = "No affordable upgrades right now. Check the upgrade board.";
+  }
+}
+
 function render() {
   renderHeader();
   renderBeanSelector();
@@ -846,22 +909,43 @@ function resizeRenderer() {
 }
 
 function handleCanvasPick(event) {
-  if (insideHouse) {
-    return;
-  }
   const rect = canvas.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(pointer, camera);
-  const candidates = houseDoorMesh ? [...plotMeshes.values(), houseDoorMesh] : [...plotMeshes.values()];
+  const candidates = insideHouse
+    ? interiorInteractiveMeshes
+    : houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh]
+    : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
   if (hits.length === 0) {
     return;
   }
 
+  if (insideHouse) {
+    const interiorHit = hits.find((hit) => hit.object.userData.kind);
+    const kind = interiorHit?.object.userData.kind;
+    if (!kind) return;
+    const worldPosition = new THREE.Vector3();
+    interiorHit.object.getWorldPosition(worldPosition);
+    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
+      actionValue.textContent = "Move closer to use that furniture.";
+      return;
+    }
+    handleInteriorInteraction(kind);
+    return;
+  }
+
   const doorHit = hits.find((hit) => hit.object.userData.kind === "houseDoor");
   if (doorHit) {
+    const worldPosition = new THREE.Vector3();
+    doorHit.object.getWorldPosition(worldPosition);
+    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
+      actionValue.textContent = "Walk closer to the house door.";
+      return;
+    }
     enterHouse();
     return;
   }

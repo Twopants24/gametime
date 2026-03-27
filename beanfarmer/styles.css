@@ -158,6 +158,12 @@ button:disabled {
   padding: 22px;
 }
 
+.panel.panel-flash {
+  box-shadow:
+    0 0 0 3px rgba(212, 167, 70, 0.45),
+    0 24px 50px var(--shadow);
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
