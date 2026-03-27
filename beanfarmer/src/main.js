@@ -602,20 +602,29 @@ function beanColor(beanId) {
 function createCropVisual(plot) {
   const bean = BEANS[plot.beanId];
   const group = new THREE.Group();
+  const isGiantPod = plot.beanId === "giant";
+  const isFrostPod = plot.beanId === "frost";
   const stem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.12, plot.state === "ready" ? 2.2 : 1.5, 12),
+    new THREE.CylinderGeometry(
+      isGiantPod ? 0.16 : 0.09,
+      isGiantPod ? 0.22 : 0.12,
+      plot.state === "ready" ? (isGiantPod ? 3.8 : 2.2) : isGiantPod ? 2.2 : 1.5,
+      12
+    ),
     new THREE.MeshStandardMaterial({ color: 0x4f8b2a, roughness: 0.8 })
   );
-  stem.position.y = plot.state === "ready" ? 1.1 : 0.75;
+  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : 1.1) : isGiantPod ? 1.1 : 0.75;
   stem.castShadow = true;
   group.add(stem);
 
   const leafMaterial = new THREE.MeshStandardMaterial({
-    color: beanColor(plot.beanId),
+    color: isFrostPod ? 0x89c8ff : beanColor(plot.beanId),
     roughness: 0.7,
+    emissive: isFrostPod ? 0x17365f : 0x000000,
+    emissiveIntensity: isFrostPod ? 0.28 : 0,
   });
 
-  const leafScale = plot.state === "ready" ? 1.2 : 0.8;
+  const leafScale = plot.state === "ready" ? (isGiantPod ? 1.95 : 1.2) : isGiantPod ? 1.2 : 0.8;
   for (const offset of [
     [-0.55, 1.1, 0.25],
     [0.45, 1.35, -0.18],
@@ -630,23 +639,56 @@ function createCropVisual(plot) {
 
   if (plot.state === "ready") {
     const podMaterial = new THREE.MeshStandardMaterial({
-      color: bean.rarity === "Special" ? 0x8f7fff : bean.rarity === "Rare" ? 0xda5841 : 0xe2d56b,
+      color: isFrostPod ? 0x9fdbff : bean.rarity === "Special" ? 0x8f7fff : bean.rarity === "Rare" ? 0xda5841 : 0xe2d56b,
       roughness: 0.45,
-      metalness: bean.rarity === "Special" ? 0.2 : 0.05,
-      emissive: bean.rarity === "Special" ? 0x29145b : 0x000000,
-      emissiveIntensity: bean.rarity === "Special" ? 0.55 : 0,
+      metalness: isFrostPod ? 0.22 : bean.rarity === "Special" ? 0.2 : 0.05,
+      emissive: isFrostPod ? 0x215fb0 : bean.rarity === "Special" ? 0x29145b : 0x000000,
+      emissiveIntensity: isFrostPod ? 0.48 : bean.rarity === "Special" ? 0.55 : 0,
     });
     for (const offset of [
       [-0.45, 1.5, 0],
       [0.18, 1.68, -0.26],
       [0.42, 1.22, 0.22],
     ]) {
-      const pod = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.5, 4, 10), podMaterial);
-      pod.position.set(offset[0], offset[1], offset[2]);
+      const pod = new THREE.Mesh(
+        new THREE.CapsuleGeometry(isGiantPod ? 0.28 : 0.14, isGiantPod ? 1.1 : 0.5, 4, 10),
+        podMaterial
+      );
+      pod.position.set(
+        offset[0] * (isGiantPod ? 1.55 : 1),
+        offset[1] * (isGiantPod ? 1.55 : 1),
+        offset[2] * (isGiantPod ? 1.55 : 1)
+      );
       pod.rotation.z = Math.PI / 2.8;
       pod.castShadow = true;
       group.add(pod);
     }
+
+    if (isFrostPod) {
+      const frostMaterial = new THREE.MeshStandardMaterial({
+        color: 0xc9efff,
+        emissive: 0x7cc8ff,
+        emissiveIntensity: 0.6,
+        roughness: 0.25,
+        metalness: 0.15,
+      });
+      for (const offset of [
+        [-0.9, 1.8, 0.4],
+        [0.95, 1.6, -0.3],
+        [-0.2, 2.1, -0.75],
+        [0.35, 1.25, 0.95],
+        [0, 2.35, 0.15],
+      ]) {
+        const flake = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), frostMaterial);
+        flake.position.set(offset[0], offset[1], offset[2]);
+        flake.rotation.set(offset[1], offset[2] * 2, offset[0] * 2);
+        group.add(flake);
+      }
+    }
+  }
+
+  if (isGiantPod) {
+    group.scale.setScalar(plot.state === "ready" ? 1.38 : 1.1);
   }
 
   return group;
