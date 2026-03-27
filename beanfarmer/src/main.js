@@ -68,6 +68,7 @@ const upgradePanel = upgradeList.closest(".panel");
 const beanIndex = document.getElementById("bean-index");
 const beanIndexPanel = beanIndex.closest(".panel");
 const inventoryList = document.getElementById("inventory-list");
+const viewModeButton = document.getElementById("viewmode-button");
 const fullscreenButton = document.getElementById("fullscreen-button");
 const saveButton = document.getElementById("save-button");
 const resetButton = document.getElementById("reset-button");
@@ -103,6 +104,7 @@ function loadState() {
 let state = loadState();
 let selectedPlotId = null;
 let insideHouse = false;
+let firstPersonMode = false;
 let houseDoorMesh = null;
 const interiorInteractiveMeshes = [];
 const playerState = {
@@ -137,6 +139,9 @@ clampCameraToBounds();
 controls.update();
 
 function clampCameraToBounds() {
+  if (firstPersonMode) {
+    return;
+  }
   const offset = camera.position.clone().sub(controls.target);
   const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : CAMERA_BOUNDS;
   controls.target.x = THREE.MathUtils.clamp(controls.target.x, bounds.minX, bounds.maxX);
@@ -144,8 +149,63 @@ function clampCameraToBounds() {
   camera.position.copy(controls.target).add(offset);
 }
 
+function syncViewModeUi() {
+  viewModeButton.textContent = firstPersonMode ? "Third Person" : "First Person";
+  playerGroup.visible = !firstPersonMode;
+}
+
+function updateFirstPersonCamera() {
+  if (!firstPersonMode) {
+    return;
+  }
+
+  const headHeight = insideHouse ? 2.35 : 2.55;
+  const eye = playerState.position.clone().add(new THREE.Vector3(0, headHeight, 0));
+  const facing = new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading));
+  const lookTarget = eye.clone().add(facing.multiplyScalar(8));
+  if (insideHouse) {
+    lookTarget.y = headHeight - 0.15;
+  } else {
+    lookTarget.y = headHeight - 0.2;
+  }
+
+  camera.position.copy(eye);
+  camera.lookAt(lookTarget);
+}
+
+function setViewMode(nextFirstPerson) {
+  firstPersonMode = nextFirstPerson;
+  controls.enabled = !firstPersonMode;
+  syncViewModeUi();
+
+  if (!firstPersonMode) {
+    if (insideHouse) {
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+      camera.position.set(playerState.position.x, 8.5, playerState.position.z + 7.3);
+      controls.minDistance = 8;
+      controls.maxDistance = 22;
+    } else {
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+      camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+      controls.minDistance = 16;
+      controls.maxDistance = 42;
+    }
+    clampCameraToBounds();
+    controls.update();
+    return;
+  }
+
+  updateFirstPersonCamera();
+}
+
 function handleTrackpadPan(event) {
   event.preventDefault();
+
+  if (firstPersonMode) {
+    const turnStep = event.deltaX * 0.0035;
+    playerState.heading += turnStep;
+    return;
+  }
 
   const zoomIntent = event.ctrlKey || event.metaKey;
   if (zoomIntent) {
@@ -185,6 +245,7 @@ function enterHouse() {
   controls.maxDistance = 22;
   clampCameraToBounds();
   controls.update();
+  updateFirstPersonCamera();
   interiorCard.classList.remove("hidden");
   actionValue.textContent = "Entered the farmhouse.";
   renderSelection();
@@ -201,6 +262,7 @@ function exitHouse() {
   camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
   clampCameraToBounds();
   controls.update();
+  updateFirstPersonCamera();
   interiorCard.classList.add("hidden");
   actionValue.textContent = "Stepped back outside.";
 }
@@ -225,16 +287,21 @@ function updatePlayerMovement(deltaSeconds) {
 
   if (actualMovement.lengthSq() <= 0.0001) {
     playerState.moving = false;
+    updateFirstPersonCamera();
     return;
   }
 
   playerState.position.copy(resolvedPosition);
   playerState.heading = Math.atan2(actualMovement.x, actualMovement.z);
   playerState.moving = true;
-  camera.position.add(actualMovement);
-  controls.target.add(actualMovement);
-  clampCameraToBounds();
-  controls.update();
+  if (firstPersonMode) {
+    updateFirstPersonCamera();
+  } else {
+    camera.position.add(actualMovement);
+    controls.target.add(actualMovement);
+    clampCameraToBounds();
+    controls.update();
+  }
 }
 
 const raycaster = new THREE.Raycaster();
@@ -1203,9 +1270,13 @@ document.addEventListener("fullscreenchange", () => {
   fullscreenButton.textContent = document.fullscreenElement === viewportPanel ? "Exit Fullscreen" : "Fullscreen";
   resizeRenderer();
 });
+viewModeButton.addEventListener("click", () => {
+  setViewMode(!firstPersonMode);
+});
 
 resizeRenderer();
 render();
+syncViewModeUi();
 
 const clock = new THREE.Clock();
 
@@ -1217,6 +1288,9 @@ function animate() {
   playerGroup.position.copy(playerState.position);
   playerGroup.rotation.y = playerState.heading;
   playerBody.position.y = 1.4 + (playerState.moving ? Math.sin(elapsed * 10) * 0.08 : 0);
+  if (firstPersonMode) {
+    updateFirstPersonCamera();
+  }
 
   for (const [plotId, mesh] of plotMeshes) {
     const plot = findPlotById(plotId);
@@ -1229,7 +1303,9 @@ function animate() {
     }
   }
 
-  controls.update();
+  if (!firstPersonMode) {
+    controls.update();
+  }
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
