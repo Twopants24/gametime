@@ -56,6 +56,12 @@ const selectionActions = document.getElementById("selection-actions");
 const canvas = document.getElementById("farm-canvas");
 const sceneShell = document.getElementById("scene-shell");
 const timeButtons = [...document.querySelectorAll("[data-advance-hours]")];
+const movementKeys = {
+  KeyW: false,
+  KeyA: false,
+  KeyS: false,
+  KeyD: false,
+};
 
 function loadState() {
   const serialized = window.localStorage.getItem(STORAGE_KEY);
@@ -125,6 +131,25 @@ function handleTrackpadPan(event) {
   const forward = offset.clone().setY(0).normalize().negate();
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
   const movement = right.multiplyScalar(event.deltaX * panScale).add(forward.multiplyScalar(event.deltaY * panScale));
+
+  camera.position.add(movement);
+  controls.target.add(movement);
+  clampCameraToBounds();
+  controls.update();
+}
+
+function updateKeyboardPan(deltaSeconds) {
+  const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
+  const vertical = (movementKeys.KeyS ? 1 : 0) - (movementKeys.KeyW ? 1 : 0);
+  if (!horizontal && !vertical) {
+    return;
+  }
+
+  const panScale = deltaSeconds * 14;
+  const offset = camera.position.clone().sub(controls.target);
+  const forward = offset.clone().setY(0).normalize().negate();
+  const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+  const movement = right.multiplyScalar(horizontal * panScale).add(forward.multiplyScalar(vertical * panScale));
 
   camera.position.add(movement);
   controls.target.add(movement);
@@ -635,6 +660,16 @@ function handleCanvasPick(event) {
 canvas.addEventListener("pointerdown", handleCanvasPick);
 canvas.addEventListener("wheel", handleTrackpadPan, { passive: false });
 window.addEventListener("resize", resizeRenderer);
+window.addEventListener("keydown", (event) => {
+  if (event.code in movementKeys) {
+    movementKeys[event.code] = true;
+  }
+});
+window.addEventListener("keyup", (event) => {
+  if (event.code in movementKeys) {
+    movementKeys[event.code] = false;
+  }
+});
 
 document.addEventListener("click", (event) => {
   const target = event.target;
@@ -696,7 +731,9 @@ render();
 const clock = new THREE.Clock();
 
 function animate() {
-  const elapsed = clock.getElapsedTime();
+  const delta = clock.getDelta();
+  const elapsed = clock.elapsedTime;
+  updateKeyboardPan(delta);
   worldGroup.rotation.y = Math.sin(elapsed * 0.15) * 0.025;
 
   for (const [plotId, mesh] of plotMeshes) {
