@@ -52,27 +52,33 @@ export const BEANS = {
 export const UPGRADES = {
   watering_can: {
     id: "watering_can",
-    name: "Copper Watering Can",
+    name: "Copper Watering Can Rack",
     cost: 70,
-    description: "Watering gives +1 extra hydration.",
+    oreCost: 3,
+    category: "house",
+    description: "A farmhouse tool rack that upgrades watering by +1 hydration.",
     apply(modifiers) {
       modifiers.extraWater = 1;
     },
   },
   field_notes: {
     id: "field_notes",
-    name: "Field Notes",
+    name: "Field Notes Library",
     cost: 120,
-    description: "Harvests gain +1 yield on common beans.",
+    oreCost: 5,
+    category: "house",
+    description: "Install better notes and shelves in the house. Common harvests gain +1 yield.",
     apply(modifiers) {
       modifiers.commonYieldBonus = 1;
     },
   },
   miner_boots: {
     id: "miner_boots",
-    name: "Miner Boots",
+    name: "Ore Furnace Workshop",
     cost: 150,
-    description: "Mining grants +1 guaranteed ore.",
+    oreCost: 8,
+    category: "house",
+    description: "A reinforced workshop inside the house. Mining grants +1 guaranteed ore.",
     apply(modifiers) {
       modifiers.extraOre = 1;
     },
@@ -444,14 +450,16 @@ export function sellBeans(state) {
 
 export function buyUpgrade(state, upgradeId) {
   const upgrade = UPGRADES[upgradeId];
-  if (!upgrade || state.upgrades.includes(upgradeId) || state.credits < upgrade.cost) {
+  const oreCost = upgrade?.oreCost ?? 0;
+  if (!upgrade || state.upgrades.includes(upgradeId) || state.credits < upgrade.cost || state.ore < oreCost) {
     return state;
   }
 
   const next = cloneState(state);
   next.credits -= upgrade.cost;
+  next.ore -= oreCost;
   next.upgrades.push(upgradeId);
-  next.lastAction = `Purchased upgrade: ${upgrade.name}.`;
+  next.lastAction = `Upgraded the farmhouse with ${upgrade.name}.`;
   return next;
 }
 

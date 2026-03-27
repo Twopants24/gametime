@@ -476,11 +476,13 @@ function renderUpgrades() {
   upgradeList.innerHTML = Object.values(UPGRADES)
     .map((upgrade) => {
       const owned = state.upgrades.includes(upgrade.id);
+      const oreCost = upgrade.oreCost ?? 0;
+      const costText = oreCost > 0 ? `${upgrade.cost} credits · ${oreCost} ore` : `${upgrade.cost} credits`;
       return `
         <article class="stack-item">
           <strong>${upgrade.name}</strong>
           <span>${upgrade.description}</span>
-          <span>${owned ? "Owned" : `${upgrade.cost} credits`}</span>
+          <span>${owned ? "Installed in farmhouse" : costText}</span>
           <button type="button" data-buy-upgrade="${upgrade.id}" ${owned ? "disabled" : ""}>${owned ? "Installed" : "Buy Upgrade"}</button>
         </article>
       `;
@@ -542,7 +544,7 @@ function describePlot(plot) {
 
 function renderSelection() {
   if (insideHouse) {
-    selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to buy upgrades.";
+    selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to spend ore on house upgrades.";
     selectionActions.innerHTML = "";
     return;
   }
@@ -875,14 +877,16 @@ function handleInteriorInteraction(kind) {
   }
 
   if (kind === "upgradeTable") {
-    const candidate = Object.values(UPGRADES).find((upgrade) => !state.upgrades.includes(upgrade.id) && state.credits >= upgrade.cost);
+    const candidate = Object.values(UPGRADES).find(
+      (upgrade) => !state.upgrades.includes(upgrade.id) && state.credits >= upgrade.cost && state.ore >= (upgrade.oreCost ?? 0)
+    );
     if (candidate) {
       setState(buyUpgrade(state, candidate.id));
       focusPanel(upgradePanel);
       return;
     }
     focusPanel(upgradePanel);
-    actionValue.textContent = "No affordable upgrades right now. Check the upgrade board.";
+    actionValue.textContent = "You need more credits or ore for the next farmhouse upgrade.";
   }
 }
 

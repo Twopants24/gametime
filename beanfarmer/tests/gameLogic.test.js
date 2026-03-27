@@ -69,6 +69,7 @@ test("common bean yield upgrade increases harvest output", () => {
   let state = createInitialState();
   const plotId = getFirstPlotId(state);
   state.credits = 200;
+  state.ore = 10;
 
   state = buyUpgrade(state, "field_notes");
   state = buySeeds(state, "green", 1);
@@ -78,6 +79,16 @@ test("common bean yield upgrade increases harvest output", () => {
   state = harvestPlot(state, plotId);
 
   assert.equal(state.inventory.beans.green, BEANS.green.yield + 1);
+});
+
+test("house upgrades require ore as well as credits", () => {
+  let state = createInitialState();
+  state.credits = 999;
+  state.ore = 0;
+
+  const next = buyUpgrade(state, "watering_can");
+
+  assert.equal(next.upgrades.includes("watering_can"), false);
 });
 
 test("mining produces ore and later special seed rewards", () => {
