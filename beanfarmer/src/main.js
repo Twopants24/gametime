@@ -159,7 +159,7 @@ function updatePlayerMovement(deltaSeconds) {
 
   const moveScale = deltaSeconds * 9.5;
   const offset = camera.position.clone().sub(controls.target);
-  const forward = offset.clone().setY(0).normalize().negate();
+  const forward = controls.target.clone().sub(camera.position).setY(0).normalize();
   const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
   const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
