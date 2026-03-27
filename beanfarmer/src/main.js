@@ -22,6 +22,13 @@ import {
 } from "./gameLogic.js?v=20260325-3";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
+const CAMERA_BOUNDS = {
+  minX: -22,
+  maxX: 24,
+  minZ: -16,
+  maxZ: 24,
+};
+
 const PLOT_LAYOUTS = {
   home: { originX: -8, originZ: -2, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
   creek: { originX: 10, originZ: -2, cols: 2, spacingX: 5.5, spacingZ: 5.5 },
@@ -87,7 +94,15 @@ controls.maxPolarAngle = Math.PI * 0.45;
 controls.minDistance = 16;
 controls.maxDistance = 42;
 controls.target.set(4, 0.8, 6);
+clampCameraToBounds();
 controls.update();
+
+function clampCameraToBounds() {
+  const offset = camera.position.clone().sub(controls.target);
+  controls.target.x = THREE.MathUtils.clamp(controls.target.x, CAMERA_BOUNDS.minX, CAMERA_BOUNDS.maxX);
+  controls.target.z = THREE.MathUtils.clamp(controls.target.z, CAMERA_BOUNDS.minZ, CAMERA_BOUNDS.maxZ);
+  camera.position.copy(controls.target).add(offset);
+}
 
 function handleTrackpadPan(event) {
   event.preventDefault();
@@ -100,6 +115,7 @@ function handleTrackpadPan(event) {
     const nextDistance = THREE.MathUtils.clamp(distance + zoomStep, controls.minDistance, controls.maxDistance);
     offset.setLength(nextDistance);
     camera.position.copy(controls.target).add(offset);
+    clampCameraToBounds();
     controls.update();
     return;
   }
@@ -112,6 +128,7 @@ function handleTrackpadPan(event) {
 
   camera.position.add(movement);
   controls.target.add(movement);
+  clampCameraToBounds();
   controls.update();
 }
 
