@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260325-6";
+} from "./gameLogic.js?v=20260325-7";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
@@ -1284,18 +1284,19 @@ function rebuildScene() {
   seaInteractiveMeshes.push(returnPool);
 
   const kelpNode = new THREE.Group();
+  kelpNode.position.set(-6.5, 0, 0.5);
   const kelpRock = new THREE.Mesh(
     new THREE.DodecahedronGeometry(1.8, 0),
     new THREE.MeshStandardMaterial({ color: 0x557780, roughness: 0.95 })
   );
-  kelpRock.position.set(-6.5, 1, 0.5);
+  kelpRock.position.set(0, 1, 0);
   kelpNode.add(kelpRock);
   for (const xOffset of [-0.5, 0, 0.55]) {
     const frond = new THREE.Mesh(
       new THREE.CapsuleGeometry(0.14, 2.8, 4, 8),
       new THREE.MeshStandardMaterial({ color: 0x4ec5ad, roughness: 0.7, emissive: 0x11413f, emissiveIntensity: 0.25 })
     );
-    frond.position.set(-6.5 + xOffset, 2.2, 0.4 + xOffset * 0.2);
+    frond.position.set(xOffset, 2.2, -0.1 + xOffset * 0.2);
     frond.rotation.z = xOffset * 0.35;
     kelpNode.add(frond);
   }
@@ -1303,14 +1304,15 @@ function rebuildScene() {
   kelpNode.userData.beanId = "kelp";
   seaGroup.add(kelpNode);
   seaInteractiveMeshes.push(kelpNode);
-  addSeaCircleCollider(-6.5, 0.5, 2.1);
+  addSeaCircleCollider(-6.5, 0.5, 1.45);
 
   const coralNode = new THREE.Group();
+  coralNode.position.set(6.2, 0, 1.5);
   const coralBase = new THREE.Mesh(
     new THREE.CylinderGeometry(1.4, 1.9, 1.3, 10),
     new THREE.MeshStandardMaterial({ color: 0x6b7d8e, roughness: 0.9 })
   );
-  coralBase.position.set(6.2, 0.7, 1.5);
+  coralBase.position.set(0, 0.7, 0);
   coralNode.add(coralBase);
   for (const offset of [
     [0, 2.2, 0],
@@ -1322,41 +1324,42 @@ function rebuildScene() {
       new THREE.DodecahedronGeometry(0.48, 0),
       new THREE.MeshStandardMaterial({ color: 0xff8da2, roughness: 0.55, emissive: 0x612a37, emissiveIntensity: 0.35 })
     );
-    branch.position.set(6.2 + offset[0], offset[1], 1.5 + offset[2]);
+    branch.position.set(offset[0], offset[1], offset[2]);
     coralNode.add(branch);
   }
   coralNode.userData.kind = "seaBean";
   coralNode.userData.beanId = "coral";
   seaGroup.add(coralNode);
   seaInteractiveMeshes.push(coralNode);
-  addSeaCircleCollider(6.2, 1.5, 2.05);
+  addSeaCircleCollider(6.2, 1.5, 1.4);
 
   const pearlNode = new THREE.Group();
+  pearlNode.position.set(0.2, 0, -5.5);
   const clamBase = new THREE.Mesh(
     new THREE.SphereGeometry(1.1, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0xdcc3db, roughness: 0.55, metalness: 0.08 })
   );
-  clamBase.position.set(0.2, 0.65, -5.5);
+  clamBase.position.set(0, 0.65, 0);
   clamBase.rotation.x = Math.PI;
   pearlNode.add(clamBase);
   const clamTop = new THREE.Mesh(
     new THREE.SphereGeometry(1.1, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0xf1deec, roughness: 0.45, metalness: 0.08 })
   );
-  clamTop.position.set(0.2, 1.15, -5.2);
+  clamTop.position.set(0, 1.15, 0.3);
   clamTop.rotation.x = Math.PI * 0.55;
   pearlNode.add(clamTop);
   const pearlCore = new THREE.Mesh(
     new THREE.SphereGeometry(0.38, 16, 16),
     new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x8bb3cc, emissiveIntensity: 0.75, roughness: 0.15, metalness: 0.25 })
   );
-  pearlCore.position.set(0.2, 1.2, -4.92);
+  pearlCore.position.set(0, 1.2, 0.58);
   pearlNode.add(pearlCore);
   pearlNode.userData.kind = "seaBean";
   pearlNode.userData.beanId = "pearl";
   seaGroup.add(pearlNode);
   seaInteractiveMeshes.push(pearlNode);
-  addSeaCircleCollider(0.2, -5.4, 1.95);
+  addSeaCircleCollider(0.2, -5.5, 1.25);
 
   addInteriorCircleCollider(0, -1.2, 2.2);
   addInteriorCircleCollider(4.6, 1.6, 3.2);
@@ -1507,7 +1510,7 @@ function getReticleTarget() {
     if (tagged.userData.kind) {
       const worldPosition = new THREE.Vector3();
       tagged.getWorldPosition(worldPosition);
-      if (worldPosition.distanceTo(playerState.position) <= INTERACT_DISTANCE) {
+      if (worldPosition.distanceTo(playerState.position) <= getInteractionDistance(tagged.userData.kind)) {
         return tagged;
       }
       continue;
@@ -1536,6 +1539,9 @@ function getInteractionDistance(kind) {
   }
   if (kind === "returnPond") {
     return Number.POSITIVE_INFINITY;
+  }
+  if (kind === "seaBean") {
+    return 5.25;
   }
   return INTERACT_DISTANCE;
 }
