@@ -66,6 +66,17 @@ test("unlocking a parcel completes the expansion quest", () => {
   assert.ok(state.completedQuestIds.includes("expand_farm"));
 });
 
+test("late-game parcel unlock adds more farm space", () => {
+  let state = createInitialState();
+  state.credits = 1000;
+
+  state = unlockParcel(state, "lowland");
+
+  const lowland = state.parcels.find((parcel) => parcel.id === "lowland");
+  assert.equal(lowland?.unlocked, true);
+  assert.equal(lowland?.plots.length, 8);
+});
+
 test("common bean yield upgrade increases harvest output", () => {
   let state = createInitialState();
   const plotId = getFirstPlotId(state);
