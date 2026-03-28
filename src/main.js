@@ -422,12 +422,65 @@ playerHead.position.y = 2.6;
 playerHead.castShadow = true;
 playerGroup.add(playerHead);
 
-const playerPack = new THREE.Mesh(
-  new THREE.BoxGeometry(0.75, 0.9, 0.4),
-  new THREE.MeshStandardMaterial({ color: 0x6f57d9, roughness: 0.7 })
+const packMaterial = new THREE.MeshStandardMaterial({
+  color: 0x7b4b2a,
+  roughness: 0.9,
+  metalness: 0.03,
+});
+const strapMaterial = new THREE.MeshStandardMaterial({
+  color: 0x4a2b18,
+  roughness: 0.95,
+});
+
+const playerPack = new THREE.Group();
+
+const packBody = new THREE.Mesh(
+  new THREE.BoxGeometry(0.82, 0.98, 0.46),
+  packMaterial
 );
+packBody.castShadow = true;
+playerPack.add(packBody);
+
+const packTop = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.28, 0.3, 0.84, 16),
+  packMaterial
+);
+packTop.rotation.z = Math.PI / 2;
+packTop.position.set(0, 0.42, -0.02);
+packTop.castShadow = true;
+playerPack.add(packTop);
+
+const packFlap = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 0.16, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x9a6a3b, roughness: 0.88 })
+);
+packFlap.position.set(0, 0.3, 0.08);
+packFlap.rotation.x = -0.12;
+packFlap.castShadow = true;
+playerPack.add(packFlap);
+
+const leftStrap = new THREE.Mesh(
+  new THREE.BoxGeometry(0.11, 0.95, 0.09),
+  strapMaterial
+);
+leftStrap.position.set(-0.23, -0.02, 0.2);
+leftStrap.castShadow = true;
+playerPack.add(leftStrap);
+
+const rightStrap = leftStrap.clone();
+rightStrap.position.x = 0.23;
+playerPack.add(rightStrap);
+
+const bedroll = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.11, 0.11, 0.62, 14),
+  new THREE.MeshStandardMaterial({ color: 0xc7b28a, roughness: 0.92 })
+);
+bedroll.rotation.z = Math.PI / 2;
+bedroll.position.set(0, -0.48, 0.03);
+bedroll.castShadow = true;
+playerPack.add(bedroll);
+
 playerPack.position.set(0, 1.5, -0.5);
-playerPack.castShadow = true;
 playerGroup.add(playerPack);
 
 const landingRingMaterial = new THREE.MeshBasicMaterial({
