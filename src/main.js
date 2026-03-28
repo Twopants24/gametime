@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260325-5";
+} from "./gameLogic.js?v=20260325-6";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
@@ -1532,10 +1532,10 @@ function updateReticle() {
 
 function getInteractionDistance(kind) {
   if (kind === "seaPortal") {
-    return 7.5;
+    return Number.POSITIVE_INFINITY;
   }
   if (kind === "returnPond") {
-    return 5.5;
+    return Number.POSITIVE_INFINITY;
   }
   return INTERACT_DISTANCE;
 }
