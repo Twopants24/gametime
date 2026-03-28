@@ -77,6 +77,15 @@ test("late-game parcel unlock adds more farm space", () => {
   assert.equal(lowland?.plots.length, 8);
 });
 
+test("parcel unlock failure explains missing credits", () => {
+  const state = createInitialState();
+
+  const next = unlockParcel(state, "lowland");
+
+  assert.equal(next.parcels.find((parcel) => parcel.id === "lowland")?.unlocked, false);
+  assert.match(next.lastAction, /Need .* credits to unlock Lowland Rows\./);
+});
+
 test("common bean yield upgrade increases harvest output", () => {
   let state = createInitialState();
   const plotId = getFirstPlotId(state);

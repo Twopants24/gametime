@@ -593,8 +593,23 @@ export function buyUpgrade(state, upgradeId) {
 export function unlockParcel(state, parcelId) {
   const definition = getParcelDefinition(parcelId);
   const parcel = state.parcels.find((entry) => entry.id === parcelId);
-  if (!definition || !parcel || parcel.unlocked || state.credits < definition.unlockCost) {
+  if (!definition || !parcel) {
     return state;
+  }
+
+  if (parcel.unlocked) {
+    return {
+      ...state,
+      lastAction: `${definition.name} is already unlocked.`,
+    };
+  }
+
+  if (state.credits < definition.unlockCost) {
+    const needed = definition.unlockCost - state.credits;
+    return {
+      ...state,
+      lastAction: `Need ${needed} more credits to unlock ${definition.name}.`,
+    };
   }
 
   const next = cloneState(state);
