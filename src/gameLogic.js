@@ -209,7 +209,7 @@ export const PARCELS = [
   {
     id: "lowland",
     name: "Lowland Rows",
-    unlockCost: 540,
+    unlockCost: 380,
     plotCount: 8,
     soilBonus: 1.24,
   },
