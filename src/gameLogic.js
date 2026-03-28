@@ -95,6 +95,45 @@ export const BEANS = {
     unlockCredits: 460,
     description: "A massive prestige crop that turns a single plot into a payday.",
   },
+  kelp: {
+    id: "kelp",
+    name: "Kelp Curl Bean",
+    rarity: "Uncommon",
+    seedCost: 26,
+    sellValue: 38,
+    growthHours: 12,
+    waterNeed: 2,
+    yield: 3,
+    unlockCredits: 0,
+    seaForage: true,
+    description: "A sea-green bean discovered in drifting kelp beds.",
+  },
+  coral: {
+    id: "coral",
+    name: "Coral Cluster Bean",
+    rarity: "Rare",
+    seedCost: 32,
+    sellValue: 56,
+    growthHours: 15,
+    waterNeed: 3,
+    yield: 2,
+    unlockCredits: 0,
+    seaForage: true,
+    description: "A bright reef bean that grows in branching clusters.",
+  },
+  pearl: {
+    id: "pearl",
+    name: "Pearl Tide Bean",
+    rarity: "Special",
+    seedCost: 44,
+    sellValue: 78,
+    growthHours: 18,
+    waterNeed: 3,
+    yield: 2,
+    unlockCredits: 0,
+    seaForage: true,
+    description: "A glossy undersea prize bean found inside giant clams.",
+  },
   starlight: {
     id: "starlight",
     name: "Starlight Bean",
@@ -246,6 +285,7 @@ export function createInitialState() {
     selectedBeanId: "green",
     questProgress: {},
     completedQuestIds: [],
+    seaForageDays: {},
     lastAction: "Welcome to The Bean Farmer.",
   };
 }
@@ -506,6 +546,26 @@ export function sellBeans(state) {
   next.soldBeans += beansSold;
   next.lastAction = `Sold ${beansSold} beans for ${creditsEarned} credits.`;
   return evaluateQuests(next);
+}
+
+export function forageSeaBean(state, beanId) {
+  const bean = BEANS[beanId];
+  if (!bean?.seaForage) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.seaForageDays ??= {};
+  if (next.seaForageDays[beanId] === next.clock.day) {
+    next.lastAction = `${bean.name} has already been foraged today. Come back tomorrow.`;
+    return next;
+  }
+
+  addItem(next.inventory.seeds, beanId, 1);
+  markBeanDiscovered(next, beanId);
+  next.seaForageDays[beanId] = next.clock.day;
+  next.lastAction = `Found a ${bean.name} seed in the sea garden.`;
+  return next;
 }
 
 export function buyUpgrade(state, upgradeId) {

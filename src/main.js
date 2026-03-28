@@ -11,6 +11,7 @@ import {
   createInitialState,
   deserializeState,
   evaluateQuests,
+  forageSeaBean,
   getUnlockedBeanIds,
   harvestPlot,
   performMining,
@@ -19,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260325-3";
+} from "./gameLogic.js?v=20260325-4";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
@@ -34,6 +35,12 @@ const INTERIOR_CAMERA_BOUNDS = {
   minZ: -5.5,
   maxZ: 5.5,
 };
+const SEA_CAMERA_BOUNDS = {
+  minX: -12,
+  maxX: 12,
+  minZ: -14,
+  maxZ: 14,
+};
 const PLAYER_BOUNDS = {
   minX: -18,
   maxX: 20,
@@ -47,6 +54,13 @@ const INTERIOR_PLAYER_BOUNDS = {
   maxZ: 5.8,
 };
 const INTERACT_DISTANCE = 4.25;
+const SEA_PLAYER_BOUNDS = {
+  minX: -11.5,
+  maxX: 11.5,
+  minZ: -13.5,
+  maxZ: 13.5,
+};
+const SEA_BEAN_IDS = ["kelp", "coral", "pearl"];
 
 const PLOT_LAYOUTS = {
   home: { originX: -8, originZ: -2, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
@@ -110,12 +124,16 @@ function loadState() {
 let state = loadState();
 let selectedPlotId = null;
 let insideHouse = false;
+let atSea = false;
 let firstPersonMode = false;
 let houseDoorMesh = null;
+let pondMesh = null;
 const interiorInteractiveMeshes = [];
+const seaInteractiveMeshes = [];
 const playerState = {
   position: new THREE.Vector3(-2, 0.85, 8),
   exteriorPosition: new THREE.Vector3(-2, 0.85, 8),
+  seaPosition: new THREE.Vector3(0, 0.85, 7.5),
   heading: 0,
   lookPitch: -0.04,
   moving: false,
@@ -156,7 +174,7 @@ function clampCameraToBounds() {
     return;
   }
   const offset = camera.position.clone().sub(controls.target);
-  const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : CAMERA_BOUNDS;
+  const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : atSea ? SEA_CAMERA_BOUNDS : CAMERA_BOUNDS;
   controls.target.x = THREE.MathUtils.clamp(controls.target.x, bounds.minX, bounds.maxX);
   controls.target.z = THREE.MathUtils.clamp(controls.target.z, bounds.minZ, bounds.maxZ);
   camera.position.copy(controls.target).add(offset);
@@ -194,6 +212,11 @@ function setViewMode(nextFirstPerson) {
       camera.position.set(playerState.position.x, 8.5, playerState.position.z + 7.3);
       controls.minDistance = 8;
       controls.maxDistance = 22;
+    } else if (atSea) {
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 1.5);
+      camera.position.set(playerState.position.x - 2, 15, playerState.position.z + 13);
+      controls.minDistance = 12;
+      controls.maxDistance = 28;
     } else {
       controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
       camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
@@ -244,6 +267,7 @@ function handleTrackpadPan(event) {
 
 function enterHouse() {
   insideHouse = true;
+  atSea = false;
   playerState.exteriorPosition.copy(playerState.position);
   playerState.position.set(0, 0.85, 4.2);
   playerState.verticalVelocity = 0;
@@ -279,6 +303,47 @@ function exitHouse() {
   actionValue.textContent = "Stepped back outside.";
 }
 
+function enterSea() {
+  atSea = true;
+  insideHouse = false;
+  playerState.exteriorPosition.copy(playerState.position);
+  playerState.position.copy(playerState.seaPosition);
+  playerState.verticalVelocity = 0;
+  selectedPlotId = null;
+  worldGroup.visible = false;
+  interiorGroup.visible = false;
+  seaGroup.visible = true;
+  controls.minDistance = 12;
+  controls.maxDistance = 28;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 1.5);
+  camera.position.set(playerState.position.x - 2, 15, playerState.position.z + 13);
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  interiorCard.classList.add("hidden");
+  actionValue.textContent = "You slipped through the pond into the sea garden.";
+  renderSelection();
+  renderParcelSummaries();
+}
+
+function exitSea() {
+  atSea = false;
+  seaGroup.visible = false;
+  worldGroup.visible = true;
+  playerState.position.copy(playerState.exteriorPosition);
+  playerState.verticalVelocity = 0;
+  controls.minDistance = 16;
+  controls.maxDistance = 42;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+  camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  actionValue.textContent = "You climbed back out of the pond.";
+  renderSelection();
+  renderParcelSummaries();
+}
+
 function updatePlayerMovement(deltaSeconds) {
   if (firstPersonMode) {
     const lookHorizontal = (movementKeys.ArrowLeft ? 1 : 0) - (movementKeys.ArrowRight ? 1 : 0);
@@ -294,7 +359,7 @@ function updatePlayerMovement(deltaSeconds) {
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
   const wasGrounded = playerState.position.y <= FLOOR_HEIGHT + 0.001;
-  const wantsJump = !insideHouse && movementKeys.Space && wasGrounded;
+  const wantsJump = !insideHouse && !atSea && movementKeys.Space && wasGrounded;
   if (wantsJump) {
     playerState.verticalVelocity = JUMP_VELOCITY;
   }
@@ -309,7 +374,7 @@ function updatePlayerMovement(deltaSeconds) {
     const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
     const desiredPosition = playerState.position.clone().add(movement);
-    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse);
+    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse ? "interior" : atSea ? "sea" : "farm");
     actualMovement = resolvedPosition.clone().sub(playerState.position);
 
     if (actualMovement.lengthSq() > 0.0001) {
@@ -323,7 +388,7 @@ function updatePlayerMovement(deltaSeconds) {
   playerState.verticalVelocity -= GRAVITY * deltaSeconds;
   playerState.position.y += playerState.verticalVelocity * deltaSeconds;
   if (playerState.position.y < FLOOR_HEIGHT) {
-    if (!insideHouse && !wasGrounded) {
+    if (!insideHouse && !atSea && !wasGrounded) {
       playerState.landingTimer = 0.35;
     }
     playerState.position.y = FLOOR_HEIGHT;
@@ -348,6 +413,7 @@ const pointer = new THREE.Vector2();
 const plotMeshes = new Map();
 const worldColliders = [];
 const interiorColliders = [];
+const seaColliders = [];
 
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
@@ -358,6 +424,10 @@ scene.add(actorGroup);
 const interiorGroup = new THREE.Group();
 interiorGroup.visible = false;
 scene.add(interiorGroup);
+
+const seaGroup = new THREE.Group();
+seaGroup.visible = false;
+scene.add(seaGroup);
 
 const skyLight = new THREE.HemisphereLight(0xf8ffe6, 0x8b6a3f, 1.7);
 scene.add(skyLight);
@@ -701,7 +771,13 @@ function renderInventory() {
 
 function describePlot(plot) {
   if (!plot) {
-    return insideHouse ? "You are inside the farmhouse." : "Choose a plot in the 3D field.";
+    if (insideHouse) {
+      return "You are inside the farmhouse.";
+    }
+    if (atSea) {
+      return "The sea garden hides underwater-themed beans. Search the reef nodes for seeds.";
+    }
+    return "Choose a plot in the 3D field.";
   }
   if (plot.state === "empty") {
     return `Open soil in ${plot.parcelId}. Plant ${BEANS[state.selectedBeanId].name} here.`;
@@ -716,6 +792,11 @@ function describePlot(plot) {
 function renderSelection() {
   if (insideHouse) {
     selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to spend ore on house upgrades.";
+    selectionActions.innerHTML = "";
+    return;
+  }
+  if (atSea) {
+    selectionText.textContent = "The kelp bed, coral reef, and giant clam each give one sea bean seed per day. Use the glowing ring to go back.";
     selectionActions.innerHTML = "";
     return;
   }
@@ -747,6 +828,20 @@ function renderSelection() {
 }
 
 function renderParcelSummaries() {
+  if (atSea) {
+    farmView.innerHTML = SEA_BEAN_IDS.map((beanId) => {
+      const bean = BEANS[beanId];
+      const claimedToday = state.seaForageDays?.[beanId] === state.clock.day;
+      return `
+        <article class="parcel-summary ${claimedToday ? "locked" : ""}">
+          <strong>${bean.name}</strong>
+          <span>${claimedToday ? "Foraged today" : "Ready to forage"} · ${bean.sellValue} credits · ${bean.growthHours}h grow time</span>
+        </article>
+      `;
+    }).join("");
+    return;
+  }
+
   farmView.innerHTML = state.parcels
     .map((parcel) => {
       const definition = PARCELS.find((entry) => entry.id === parcel.id);
@@ -766,6 +861,9 @@ function beanColor(beanId) {
   if (beanId === "green") return 0x76b84f;
   if (beanId === "wax") return 0xe2c15c;
   if (beanId === "scarlet") return 0xc74339;
+  if (beanId === "kelp") return 0x48a78e;
+  if (beanId === "coral") return 0xff7d8b;
+  if (beanId === "pearl") return 0xe7f4ff;
   if (beanId === "starlight") return 0x7c68f0;
   return 0x6aa54a;
 }
@@ -1019,10 +1117,14 @@ function addInteriorCircleCollider(x, z, radius) {
   interiorColliders.push({ x, z, radius });
 }
 
-function resolvePlayerCollision(nextPosition, useInterior = false) {
+function addSeaCircleCollider(x, z, radius) {
+  seaColliders.push({ x, z, radius });
+}
+
+function resolvePlayerCollision(nextPosition, zone = "farm") {
   const resolved = nextPosition.clone();
-  const bounds = useInterior ? INTERIOR_PLAYER_BOUNDS : PLAYER_BOUNDS;
-  const colliders = useInterior ? interiorColliders : worldColliders;
+  const bounds = zone === "interior" ? INTERIOR_PLAYER_BOUNDS : zone === "sea" ? SEA_PLAYER_BOUNDS : PLAYER_BOUNDS;
+  const colliders = zone === "interior" ? interiorColliders : zone === "sea" ? seaColliders : worldColliders;
 
   resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
   resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
@@ -1062,8 +1164,12 @@ function rebuildScene() {
   plotMeshes.clear();
   worldColliders.length = 0;
   interiorColliders.length = 0;
+  seaColliders.length = 0;
   worldGroup.clear();
+  seaGroup.clear();
+  seaInteractiveMeshes.length = 0;
   houseDoorMesh = null;
+  pondMesh = null;
 
   for (const parcel of state.parcels) {
     const definition = PARCELS.find((entry) => entry.id === parcel.id);
@@ -1147,8 +1253,110 @@ function rebuildScene() {
   );
   pond.rotation.x = -Math.PI / 2;
   pond.position.set(18, 0.02, 14);
+  pond.userData.kind = "seaPortal";
   worldGroup.add(pond);
+  pondMesh = pond;
   addCircleCollider(pond.position.x, pond.position.z, 4.9);
+
+  const seaFloor = new THREE.Mesh(
+    new THREE.CircleGeometry(30, 48),
+    new THREE.MeshStandardMaterial({ color: 0x355f6b, roughness: 1 })
+  );
+  seaFloor.rotation.x = -Math.PI / 2;
+  seaFloor.position.y = -0.1;
+  seaGroup.add(seaFloor);
+
+  const seaHaze = new THREE.Mesh(
+    new THREE.CylinderGeometry(10, 16, 14, 32, 1, true),
+    new THREE.MeshStandardMaterial({ color: 0x6dc7d7, transparent: true, opacity: 0.12, side: THREE.BackSide })
+  );
+  seaHaze.position.y = 6;
+  seaGroup.add(seaHaze);
+
+  const returnPool = new THREE.Mesh(
+    new THREE.TorusGeometry(2.2, 0.35, 16, 42),
+    new THREE.MeshStandardMaterial({ color: 0x91e3ff, emissive: 0x3f9fcf, emissiveIntensity: 0.65, roughness: 0.22 })
+  );
+  returnPool.rotation.x = Math.PI / 2;
+  returnPool.position.set(0, 0.18, 10.5);
+  returnPool.userData.kind = "returnPond";
+  seaGroup.add(returnPool);
+  seaInteractiveMeshes.push(returnPool);
+
+  const kelpNode = new THREE.Group();
+  const kelpRock = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(1.8, 0),
+    new THREE.MeshStandardMaterial({ color: 0x557780, roughness: 0.95 })
+  );
+  kelpRock.position.set(-6.5, 1, 0.5);
+  kelpNode.add(kelpRock);
+  for (const xOffset of [-0.5, 0, 0.55]) {
+    const frond = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.14, 2.8, 4, 8),
+      new THREE.MeshStandardMaterial({ color: 0x4ec5ad, roughness: 0.7, emissive: 0x11413f, emissiveIntensity: 0.25 })
+    );
+    frond.position.set(-6.5 + xOffset, 2.2, 0.4 + xOffset * 0.2);
+    frond.rotation.z = xOffset * 0.35;
+    kelpNode.add(frond);
+  }
+  kelpNode.userData.kind = "seaBean";
+  kelpNode.userData.beanId = "kelp";
+  seaGroup.add(kelpNode);
+  seaInteractiveMeshes.push(kelpNode);
+  addSeaCircleCollider(-6.5, 0.5, 2.1);
+
+  const coralNode = new THREE.Group();
+  const coralBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.4, 1.9, 1.3, 10),
+    new THREE.MeshStandardMaterial({ color: 0x6b7d8e, roughness: 0.9 })
+  );
+  coralBase.position.set(6.2, 0.7, 1.5);
+  coralNode.add(coralBase);
+  for (const offset of [
+    [0, 2.2, 0],
+    [-0.45, 1.8, 0.18],
+    [0.52, 1.7, -0.12],
+    [0.24, 2.4, 0.26],
+  ]) {
+    const branch = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.48, 0),
+      new THREE.MeshStandardMaterial({ color: 0xff8da2, roughness: 0.55, emissive: 0x612a37, emissiveIntensity: 0.35 })
+    );
+    branch.position.set(6.2 + offset[0], offset[1], 1.5 + offset[2]);
+    coralNode.add(branch);
+  }
+  coralNode.userData.kind = "seaBean";
+  coralNode.userData.beanId = "coral";
+  seaGroup.add(coralNode);
+  seaInteractiveMeshes.push(coralNode);
+  addSeaCircleCollider(6.2, 1.5, 2.05);
+
+  const pearlNode = new THREE.Group();
+  const clamBase = new THREE.Mesh(
+    new THREE.SphereGeometry(1.1, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xdcc3db, roughness: 0.55, metalness: 0.08 })
+  );
+  clamBase.position.set(0.2, 0.65, -5.5);
+  clamBase.rotation.x = Math.PI;
+  pearlNode.add(clamBase);
+  const clamTop = new THREE.Mesh(
+    new THREE.SphereGeometry(1.1, 18, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0xf1deec, roughness: 0.45, metalness: 0.08 })
+  );
+  clamTop.position.set(0.2, 1.15, -5.2);
+  clamTop.rotation.x = Math.PI * 0.55;
+  pearlNode.add(clamTop);
+  const pearlCore = new THREE.Mesh(
+    new THREE.SphereGeometry(0.38, 16, 16),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x8bb3cc, emissiveIntensity: 0.75, roughness: 0.15, metalness: 0.25 })
+  );
+  pearlCore.position.set(0.2, 1.2, -4.92);
+  pearlNode.add(pearlCore);
+  pearlNode.userData.kind = "seaBean";
+  pearlNode.userData.beanId = "pearl";
+  seaGroup.add(pearlNode);
+  seaInteractiveMeshes.push(pearlNode);
+  addSeaCircleCollider(0.2, -5.4, 1.95);
 
   addInteriorCircleCollider(0, -1.2, 2.2);
   addInteriorCircleCollider(4.6, 1.6, 3.2);
@@ -1228,6 +1436,13 @@ function handleInteriorInteraction(kind) {
   }
 }
 
+function handleSeaInteraction(beanId) {
+  if (!beanId) {
+    return;
+  }
+  setState(forageSeaBean(state, beanId));
+}
+
 function render() {
   renderHeader();
   renderBeanSelector();
@@ -1272,8 +1487,14 @@ function getReticleTarget() {
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   const candidates = insideHouse
     ? interiorInteractiveMeshes
+    : atSea
+    ? seaInteractiveMeshes
+    : pondMesh && houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh, pondMesh]
     : houseDoorMesh
     ? [...plotMeshes.values(), houseDoorMesh]
+    : pondMesh
+    ? [...plotMeshes.values(), pondMesh]
     : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
 
@@ -1309,6 +1530,16 @@ function updateReticle() {
   reticle.classList.toggle("active", Boolean(getReticleTarget()));
 }
 
+function getInteractionDistance(kind) {
+  if (kind === "seaPortal") {
+    return 7.5;
+  }
+  if (kind === "returnPond") {
+    return 5.5;
+  }
+  return INTERACT_DISTANCE;
+}
+
 function interactWithTarget(target) {
   if (!target) {
     actionValue.textContent = firstPersonMode ? "Nothing to interact with." : actionValue.textContent;
@@ -1318,13 +1549,32 @@ function interactWithTarget(target) {
   if (target.userData.kind) {
     const worldPosition = new THREE.Vector3();
     target.getWorldPosition(worldPosition);
-    if (worldPosition.distanceTo(playerState.position) > INTERACT_DISTANCE) {
-      actionValue.textContent = insideHouse ? "Move closer to use that furniture." : "Walk closer to the house door.";
+    if (worldPosition.distanceTo(playerState.position) > getInteractionDistance(target.userData.kind)) {
+      actionValue.textContent = insideHouse
+        ? "Move closer to use that furniture."
+        : atSea
+        ? "Swim closer to the sea node."
+        : "Walk closer to the house door or pond.";
       return;
     }
 
     if (target.userData.kind === "houseDoor") {
       enterHouse();
+      return;
+    }
+
+    if (target.userData.kind === "seaPortal") {
+      enterSea();
+      return;
+    }
+
+    if (target.userData.kind === "returnPond") {
+      exitSea();
+      return;
+    }
+
+    if (target.userData.kind === "seaBean") {
+      handleSeaInteraction(target.userData.beanId);
       return;
     }
 
@@ -1352,8 +1602,14 @@ function getPointerTarget(event) {
   raycaster.setFromCamera(pointer, camera);
   const candidates = insideHouse
     ? interiorInteractiveMeshes
+    : atSea
+    ? seaInteractiveMeshes
+    : pondMesh && houseDoorMesh
+    ? [...plotMeshes.values(), houseDoorMesh, pondMesh]
     : houseDoorMesh
     ? [...plotMeshes.values(), houseDoorMesh]
+    : pondMesh
+    ? [...plotMeshes.values(), pondMesh]
     : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
   if (hits.length === 0) {

@@ -7,6 +7,7 @@ import {
   buySeeds,
   buyUpgrade,
   createInitialState,
+  forageSeaBean,
   harvestPlot,
   plantBean,
   sellBeans,
@@ -99,4 +100,19 @@ test("mining produces ore and later special seed rewards", () => {
 
   assert.ok(state.ore >= 3);
   assert.equal(state.inventory.seeds.starlight, 1);
+});
+
+test("sea beans can be foraged once per day and become discovered", () => {
+  let state = createInitialState();
+
+  state = forageSeaBean(state, "kelp");
+  assert.equal(state.inventory.seeds.kelp, 1);
+  assert.equal(state.beanIndex.kelp?.discovered, true);
+
+  const sameDay = forageSeaBean(state, "kelp");
+  assert.equal(sameDay.inventory.seeds.kelp, 1);
+
+  state = advanceTime(state, 24);
+  state = forageSeaBean(state, "kelp");
+  assert.equal(state.inventory.seeds.kelp, 2);
 });
