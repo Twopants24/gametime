@@ -183,6 +183,9 @@ function clampCameraToBounds() {
 function syncViewModeUi() {
   viewModeButton.textContent = firstPersonMode ? "Third Person" : "First Person";
   playerGroup.visible = !firstPersonMode;
+  const showInteriorRoof = insideHouse && firstPersonMode;
+  ceiling.visible = showInteriorRoof;
+  roofBeam.visible = showInteriorRoof;
   updateReticle();
 }
 
