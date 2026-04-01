@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260325-17";
+} from "./gameLogic.js?v=20260401-1";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
