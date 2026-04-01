@@ -103,6 +103,24 @@ button {
   cursor: pointer;
 }
 
+.switch-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  color: #325127;
+  background: linear-gradient(135deg, #ecf2d6, #c7d9ad);
+  box-shadow: 0 10px 24px rgba(78, 104, 42, 0.14);
+}
+
+.switch-link:hover {
+  background: linear-gradient(135deg, #f3f8e3, #d0e4b5);
+}
+
 button.secondary {
   background: linear-gradient(135deg, #f6f0e1, #ddceb0);
 }
