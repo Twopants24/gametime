@@ -7,6 +7,7 @@ import {
   buySeeds,
   buyUpgrade,
   createInitialState,
+  deserializeState,
   forageSeaBean,
   harvestPlot,
   plantBean,
@@ -135,4 +136,16 @@ test("sea beans can be foraged once per day and become discovered", () => {
   state = advanceTime(state, 24);
   state = forageSeaBean(state, "kelp");
   assert.equal(state.inventory.seeds.kelp, 2);
+});
+
+test("deserializing an old save backfills newly added parcels", () => {
+  const oldSave = createInitialState();
+  oldSave.parcels = oldSave.parcels.filter((parcel) => parcel.id !== "lowland");
+
+  const loaded = deserializeState(JSON.stringify(oldSave));
+
+  const lowland = loaded.parcels.find((parcel) => parcel.id === "lowland");
+  assert.equal(Boolean(lowland), true);
+  assert.equal(lowland?.unlocked, false);
+  assert.equal(lowland?.plots.length, 8);
 });

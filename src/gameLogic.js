@@ -646,5 +646,32 @@ export function serializeState(state) {
 
 export function deserializeState(serialized) {
   const parsed = JSON.parse(serialized);
-  return parsed;
+  const next = {
+    ...createInitialState(),
+    ...parsed,
+  };
+
+  const parcelMap = new Map((parsed.parcels ?? []).map((parcel) => [parcel.id, parcel]));
+  next.parcels = PARCELS.map((definition) => {
+    const existingParcel = parcelMap.get(definition.id);
+    if (!existingParcel) {
+      return createParcelState(definition);
+    }
+
+    const plotMap = new Map((existingParcel.plots ?? []).map((plot) => [plot.id, plot]));
+    return {
+      ...createParcelState(definition),
+      ...existingParcel,
+      plots: Array.from({ length: definition.plotCount }, (_, index) => {
+        const fallbackPlot = createPlot(definition.id, index);
+        return {
+          ...fallbackPlot,
+          ...(plotMap.get(fallbackPlot.id) ?? {}),
+        };
+      }),
+    };
+  });
+
+  next.seaForageDays ??= {};
+  return next;
 }
