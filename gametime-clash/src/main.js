@@ -41,6 +41,7 @@ let playerCharacter = avatarSelect.value;
 let trainingMode = trainingModeToggle.checked;
 let trainingDummyAnchor = null;
 let speedAccumulator = 0;
+let simulationLastTickAt = 0;
 let chargeStartedAt = null;
 let chargeReady = false;
 let blastStartedAt = null;
@@ -59,6 +60,9 @@ const PULSE_OVERHEAT_MS = 2600;
 const PULSE_LOCKOUT_MS = 2000;
 const PULSE_FIRE_INTERVAL_MAX = 220;
 const PULSE_FIRE_INTERVAL_MIN = 35;
+const FIXED_STEP_MS = 1000 / 60;
+const MAX_FRAME_MS = 100;
+const MAX_STEPS_PER_TICK = 12;
 const DEV_LOGIN_CODE = "gametime-dev";
 const DEV_UNLOCK_KEY = "gametime-dev-unlocked";
 const DEV_FX_KEY = "gametime-dev-fx";
@@ -268,6 +272,7 @@ function resetMatch() {
   configureRoster();
   trainingDummyAnchor = null;
   speedAccumulator = 0;
+  simulationLastTickAt = 0;
   pulseHeld = false;
   pulseLastFiredAt = 0;
   pulseCooldownUntil = 0;
@@ -293,6 +298,7 @@ function startMatch() {
   }
   trainingDummyAnchor = null;
   speedAccumulator = 0;
+  simulationLastTickAt = 0;
   pulseHeld = false;
   pulseLastFiredAt = 0;
   pulseCooldownUntil = 0;
@@ -1593,8 +1599,10 @@ function drawFrame() {
 function tick() {
   if (state.running) {
     const now = performance.now();
-    const elapsedSinceLastTick = pulseLastTickAt === 0 ? 16.67 : now - pulseLastTickAt;
+    const elapsedSinceLastTick = pulseLastTickAt === 0 ? FIXED_STEP_MS : Math.min(MAX_FRAME_MS, now - pulseLastTickAt);
+    const simulationElapsed = simulationLastTickAt === 0 ? FIXED_STEP_MS : Math.min(MAX_FRAME_MS, now - simulationLastTickAt);
     pulseLastTickAt = now;
+    simulationLastTickAt = now;
 
     if (pulseCooldownUntil > now) {
       pulseHeld = false;
@@ -1627,9 +1635,10 @@ function tick() {
       blastStartedAt = null;
     }
 
-    speedAccumulator += speedMultiplier;
-    const stepCount = Math.floor(speedAccumulator);
+    speedAccumulator += (simulationElapsed / FIXED_STEP_MS) * speedMultiplier;
+    const stepCount = Math.min(MAX_STEPS_PER_TICK, Math.floor(speedAccumulator));
     speedAccumulator -= stepCount;
+    speedAccumulator = Math.min(speedAccumulator, MAX_STEPS_PER_TICK);
 
     for (let i = 0; i < stepCount && state.running; i += 1) {
       const [p1, p2] = state.fighters;
@@ -1736,6 +1745,7 @@ window.addEventListener("blur", () => {
 speedDial.addEventListener("input", () => {
   speedMultiplier = Number(speedDial.value);
   speedAccumulator = 0;
+  simulationLastTickAt = 0;
   speedValue.textContent = `${speedMultiplier.toFixed(2)}x`;
 });
 
