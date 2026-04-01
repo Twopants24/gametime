@@ -141,8 +141,14 @@ button:disabled {
 }
 
 .dashboard {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 18px;
+  position: fixed;
+  top: 168px;
+  right: 18px;
+  z-index: 30;
+  width: min(240px, calc(100vw - 28px));
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .metric-card,
@@ -155,9 +161,16 @@ button:disabled {
 
 .metric-card {
   border-radius: 24px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   display: grid;
   gap: 6px;
+}
+
+.metric-card:first-child {
+  padding: 18px 20px;
+  box-shadow:
+    0 0 0 2px rgba(210, 158, 53, 0.16),
+    0 24px 50px var(--shadow);
 }
 
 .metric-card span {
@@ -168,6 +181,11 @@ button:disabled {
 
 .metric-card strong {
   font-size: 1.25rem;
+}
+
+.metric-card:first-child strong {
+  font-size: 2rem;
+  color: #5f4716;
 }
 
 .main-grid {
@@ -419,6 +437,17 @@ button:disabled {
   .main-grid,
   .info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    position: static;
+    width: auto;
+    margin-bottom: 18px;
+    gap: 18px;
+  }
+
+  .metric-card:first-child strong {
+    font-size: 1.5rem;
   }
 
   .viewport-overlay {
