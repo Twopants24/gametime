@@ -93,7 +93,6 @@ const mineButton = document.getElementById("mine-button");
 const selectionText = document.getElementById("selection-text");
 const selectionActions = document.getElementById("selection-actions");
 const interiorCard = document.getElementById("interior-card");
-const exitHouseButton = document.getElementById("exit-house-button");
 const canvas = document.getElementById("farm-canvas");
 const sceneShell = document.getElementById("scene-shell");
 const timeButtons = [...document.querySelectorAll("[data-advance-hours]")];
@@ -593,6 +592,24 @@ const rightWall = leftWall.clone();
 rightWall.position.x = 8;
 interiorGroup.add(rightWall);
 
+const frontWallLeft = new THREE.Mesh(
+  new THREE.BoxGeometry(5.2, 7, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0xead9b6, roughness: 0.95 })
+);
+frontWallLeft.position.set(-5.4, 3.2, 8);
+interiorGroup.add(frontWallLeft);
+
+const frontWallRight = frontWallLeft.clone();
+frontWallRight.position.x = 5.4;
+interiorGroup.add(frontWallRight);
+
+const frontLintel = new THREE.Mesh(
+  new THREE.BoxGeometry(5.2, 2.1, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0xf4ead4, roughness: 0.95 })
+);
+frontLintel.position.set(0, 5.45, 8);
+interiorGroup.add(frontLintel);
+
 const table = new THREE.Mesh(
   new THREE.CylinderGeometry(1.5, 1.7, 1, 20),
   new THREE.MeshStandardMaterial({ color: 0x7b4d2d, roughness: 0.88 })
@@ -624,9 +641,18 @@ const lantern = new THREE.Mesh(
 lantern.position.set(0, 5.4, -1.5);
 interiorGroup.add(lantern);
 
+const interiorDoor = new THREE.Mesh(
+  new THREE.BoxGeometry(2.2, 3.6, 0.18),
+  new THREE.MeshStandardMaterial({ color: 0x5a341f, roughness: 0.84 })
+);
+interiorDoor.position.set(0, 1.8, 7.72);
+interiorDoor.userData.kind = "interiorDoor";
+interiorDoor.castShadow = true;
+interiorGroup.add(interiorDoor);
+
 table.userData.kind = "upgradeTable";
 bed.userData.kind = "bed";
-interiorInteractiveMeshes.push(table, bed, notesBoard);
+interiorInteractiveMeshes.push(table, bed, notesBoard, interiorDoor);
 
 function setState(nextState) {
   state = nextState;
@@ -792,7 +818,7 @@ function describePlot(plot) {
 
 function renderSelection() {
   if (insideHouse) {
-    selectionText.textContent = "Inside the farmhouse. Click the bed to save, the wall board to open the Bean Index, or the round worktable to spend ore on house upgrades.";
+    selectionText.textContent = "Inside the farmhouse. Use the bed to save, the wall board to open the Bean Index, the round worktable for house upgrades, and the front door to go back outside.";
     selectionActions.innerHTML = "";
     return;
   }
@@ -1414,6 +1440,11 @@ function focusPanel(panel) {
 }
 
 function handleInteriorInteraction(kind) {
+  if (kind === "interiorDoor") {
+    exitHouse();
+    return;
+  }
+
   if (kind === "bed") {
     saveState();
     actionValue.textContent = "You rested for a moment and saved the farmhouse.";
@@ -1710,7 +1741,6 @@ mineButton.addEventListener("click", () => {
 
 saveButton.addEventListener("click", saveState);
 resetButton.addEventListener("click", resetState);
-exitHouseButton.addEventListener("click", exitHouse);
 fullscreenButton.addEventListener("click", async () => {
   const viewportPanel = sceneShell.closest(".viewport-panel");
   if (!viewportPanel) return;
