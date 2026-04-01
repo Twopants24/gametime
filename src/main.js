@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260325-14";
+} from "./gameLogic.js?v=20260325-15";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
@@ -593,22 +593,48 @@ rightWall.position.x = 8;
 interiorGroup.add(rightWall);
 
 const frontWallLeft = new THREE.Mesh(
-  new THREE.BoxGeometry(5.2, 7, 0.5),
+  new THREE.BoxGeometry(6.7, 7, 0.5),
   new THREE.MeshStandardMaterial({ color: 0xead9b6, roughness: 0.95 })
 );
-frontWallLeft.position.set(-5.4, 3.2, 8);
+frontWallLeft.position.set(-4.65, 3.2, 8);
 interiorGroup.add(frontWallLeft);
 
 const frontWallRight = frontWallLeft.clone();
-frontWallRight.position.x = 5.4;
+frontWallRight.position.x = 4.65;
 interiorGroup.add(frontWallRight);
 
 const frontLintel = new THREE.Mesh(
-  new THREE.BoxGeometry(5.2, 2.1, 0.5),
+  new THREE.BoxGeometry(2.8, 2.1, 0.5),
   new THREE.MeshStandardMaterial({ color: 0xf4ead4, roughness: 0.95 })
 );
 frontLintel.position.set(0, 5.45, 8);
 interiorGroup.add(frontLintel);
+
+const leftDoorJamb = new THREE.Mesh(
+  new THREE.BoxGeometry(0.28, 3.9, 0.4),
+  new THREE.MeshStandardMaterial({ color: 0xd3bc96, roughness: 0.9 })
+);
+leftDoorJamb.position.set(-1.38, 1.95, 7.92);
+interiorGroup.add(leftDoorJamb);
+
+const rightDoorJamb = leftDoorJamb.clone();
+rightDoorJamb.position.x = 1.38;
+interiorGroup.add(rightDoorJamb);
+
+const ceiling = new THREE.Mesh(
+  new THREE.BoxGeometry(16, 0.35, 16),
+  new THREE.MeshStandardMaterial({ color: 0xf2e6cf, roughness: 0.92 })
+);
+ceiling.position.set(0, 6.82, 0);
+ceiling.receiveShadow = true;
+interiorGroup.add(ceiling);
+
+const roofBeam = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 0.45, 15.2),
+  new THREE.MeshStandardMaterial({ color: 0x8a623f, roughness: 0.88 })
+);
+roofBeam.position.set(0, 6.45, 0);
+interiorGroup.add(roofBeam);
 
 const table = new THREE.Mesh(
   new THREE.CylinderGeometry(1.5, 1.7, 1, 20),
