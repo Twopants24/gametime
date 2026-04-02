@@ -20,13 +20,13 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-3";
+} from "./gameLogic.js?v=20260401-4";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const CAMERA_BOUNDS = {
   minX: -22,
   maxX: 34,
-  minZ: -16,
+  minZ: -30,
   maxZ: 24,
 };
 const INTERIOR_CAMERA_BOUNDS = {
@@ -44,7 +44,7 @@ const SEA_CAMERA_BOUNDS = {
 const PLAYER_BOUNDS = {
   minX: -18,
   maxX: 30,
-  minZ: -12,
+  minZ: -26,
   maxZ: 20,
 };
 const INTERIOR_PLAYER_BOUNDS = {
@@ -67,6 +67,7 @@ const PLOT_LAYOUTS = {
   creek: { originX: 10, originZ: -2, cols: 2, spacingX: 5.5, spacingZ: 5.5 },
   ridge: { originX: -2.5, originZ: 12, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
   lowland: { originX: 10, originZ: -14, cols: 4, spacingX: 5.5, spacingZ: 5.5 },
+  orchard: { originX: -8, originZ: -26, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
 };
 
 const creditsValue = document.getElementById("credits-value");

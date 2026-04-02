@@ -213,6 +213,13 @@ export const PARCELS = [
     plotCount: 8,
     soilBonus: 1.24,
   },
+  {
+    id: "orchard",
+    name: "Amber Orchard",
+    unlockCost: 620,
+    plotCount: 10,
+    soilBonus: 1.32,
+  },
 ];
 
 export const QUESTS = [

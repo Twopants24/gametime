@@ -78,6 +78,17 @@ test("late-game parcel unlock adds more farm space", () => {
   assert.equal(lowland?.plots.length, 8);
 });
 
+test("final parcel unlock adds the largest farm expansion", () => {
+  let state = createInitialState();
+  state.credits = 1200;
+
+  state = unlockParcel(state, "orchard");
+
+  const orchard = state.parcels.find((parcel) => parcel.id === "orchard");
+  assert.equal(orchard?.unlocked, true);
+  assert.equal(orchard?.plots.length, 10);
+});
+
 test("parcel unlock failure explains missing credits", () => {
   const state = createInitialState();
 
