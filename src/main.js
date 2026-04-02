@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-11";
+} from "./gameLogic.js?v=20260401-13";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const ADMIN_KEY = "beanfarmer-admin-v1";
@@ -28,7 +28,7 @@ const ADMIN_CREDITS = 99999999;
 const ADMIN_CODE = "beanfarmer-dev";
 const CAMERA_BOUNDS = {
   minX: -22,
-  maxX: 60,
+  maxX: 104,
   minZ: -40,
   maxZ: 24,
 };
@@ -46,7 +46,7 @@ const SEA_CAMERA_BOUNDS = {
 };
 const PLAYER_BOUNDS = {
   minX: -18,
-  maxX: 56,
+  maxX: 100,
   minZ: -36,
   maxZ: 20,
 };
@@ -71,7 +71,7 @@ const PLOT_LAYOUTS = {
   ridge: { originX: -2.5, originZ: 12, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
   lowland: { originX: 10, originZ: -14, cols: 4, spacingX: 5.5, spacingZ: 5.5 },
   orchard: { originX: -8, originZ: -26, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
-  admin_city: { originX: 26, originZ: -36, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
+  admin_city: { originX: 56, originZ: -36, cols: 10, spacingX: 7.4, spacingZ: 7.2 },
 };
 
 const creditsValue = document.getElementById("credits-value");
@@ -1346,7 +1346,7 @@ function rebuildScene() {
       mesh.position.copy(parcelWorldPosition(parcel.id, index));
       worldGroup.add(mesh);
       plotMeshes.set(plot.id, mesh);
-      addCircleCollider(mesh.position.x, mesh.position.z, 2.45);
+      addCircleCollider(mesh.position.x, mesh.position.z, parcel.id === "admin_city" ? 1.55 : 2.45);
     });
 
     const sign = new THREE.Mesh(
