@@ -25,6 +25,7 @@ import {
 const STORAGE_KEY = "beanfarmer-save-v1";
 const ADMIN_KEY = "beanfarmer-admin-v1";
 const ADMIN_CREDITS = 99999999;
+const ADMIN_CODE = "beanfarmer-dev";
 const CAMERA_BOUNDS = {
   minX: -22,
   maxX: 34,
@@ -198,7 +199,7 @@ function syncAdminUi() {
   if (!adminButton) {
     return;
   }
-  adminButton.textContent = adminUnlocked ? "Admin On" : "Admin Credits";
+  adminButton.textContent = adminUnlocked ? "Admin Logout" : "Admin Login";
 }
 
 function applyAdminState(nextState) {
@@ -1835,20 +1836,30 @@ mineButton.addEventListener("click", () => {
 saveButton.addEventListener("click", saveState);
 resetButton.addEventListener("click", resetState);
 adminButton.addEventListener("click", () => {
-  adminUnlocked = !adminUnlocked;
   if (adminUnlocked) {
-    window.localStorage.setItem(ADMIN_KEY, "1");
-    state = applyAdminState({
-      ...state,
-      lastAction: "Admin credits enabled.",
-    });
-  } else {
+    adminUnlocked = false;
     window.localStorage.removeItem(ADMIN_KEY);
     state = {
       ...state,
       lastAction: "Admin credits disabled.",
     };
+    syncAdminUi();
+    render();
+    return;
   }
+
+  const code = window.prompt("Enter admin code");
+  if (code !== ADMIN_CODE) {
+    window.alert("Wrong admin code.");
+    return;
+  }
+
+  adminUnlocked = true;
+  window.localStorage.setItem(ADMIN_KEY, "1");
+  state = applyAdminState({
+    ...state,
+    lastAction: "Admin credits enabled.",
+  });
   syncAdminUi();
   render();
 });
