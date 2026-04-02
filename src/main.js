@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-8";
+} from "./gameLogic.js?v=20260401-9";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const ADMIN_KEY = "beanfarmer-admin-v1";
@@ -28,8 +28,8 @@ const ADMIN_CREDITS = 99999999;
 const ADMIN_CODE = "beanfarmer-dev";
 const CAMERA_BOUNDS = {
   minX: -22,
-  maxX: 34,
-  minZ: -30,
+  maxX: 60,
+  minZ: -40,
   maxZ: 24,
 };
 const INTERIOR_CAMERA_BOUNDS = {
@@ -46,8 +46,8 @@ const SEA_CAMERA_BOUNDS = {
 };
 const PLAYER_BOUNDS = {
   minX: -18,
-  maxX: 30,
-  minZ: -26,
+  maxX: 56,
+  minZ: -36,
   maxZ: 20,
 };
 const INTERIOR_PLAYER_BOUNDS = {
@@ -71,6 +71,7 @@ const PLOT_LAYOUTS = {
   ridge: { originX: -2.5, originZ: 12, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
   lowland: { originX: 10, originZ: -14, cols: 4, spacingX: 5.5, spacingZ: 5.5 },
   orchard: { originX: -8, originZ: -26, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
+  admin_city: { originX: 26, originZ: -36, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
 };
 
 const creditsValue = document.getElementById("credits-value");
@@ -206,10 +207,26 @@ function applyAdminState(nextState) {
   if (!adminUnlocked) {
     return nextState;
   }
+  const adminParcels = nextState.parcels.map((parcel) =>
+    parcel.id === "admin_city"
+      ? {
+          ...parcel,
+          unlocked: true,
+        }
+      : parcel
+  );
   return {
     ...nextState,
     credits: ADMIN_CREDITS,
+    parcels: adminParcels,
   };
+}
+
+function getVisibleParcels() {
+  return state.parcels.filter((parcel) => {
+    const definition = PARCELS.find((entry) => entry.id === parcel.id);
+    return !definition?.adminOnly || adminUnlocked;
+  });
 }
 
 function updateFirstPersonCamera() {
@@ -761,7 +778,7 @@ function renderBeanSelector() {
 }
 
 function renderLandActions() {
-  landActions.innerHTML = PARCELS.filter((parcel) => parcel.unlockCost > 0)
+  landActions.innerHTML = PARCELS.filter((parcel) => parcel.unlockCost > 0 && (!parcel.adminOnly || adminUnlocked))
     .map((parcel) => {
       const stateParcel = state.parcels.find((entry) => entry.id === parcel.id);
       if (stateParcel?.unlocked) {
@@ -921,15 +938,16 @@ function renderParcelSummaries() {
     return;
   }
 
-  farmView.innerHTML = state.parcels
+  farmView.innerHTML = getVisibleParcels()
     .map((parcel) => {
       const definition = PARCELS.find((entry) => entry.id === parcel.id);
       const readyCount = parcel.plots.filter((plot) => plot.state === "ready").length;
       const plantedCount = parcel.plots.filter((plot) => plot.state === "planted").length;
+      const soilText = Number.isFinite(definition.soilBonus) ? definition.soilBonus.toFixed(2) : "∞";
       return `
         <article class="parcel-summary ${parcel.unlocked ? "" : "locked"}">
           <strong>${definition.name}</strong>
-          <span>${parcel.unlocked ? `${plantedCount} growing · ${readyCount} ready · soil x${definition.soilBonus.toFixed(2)}` : `Locked · ${definition.unlockCost} credits`}</span>
+          <span>${parcel.unlocked ? `${plantedCount} growing · ${readyCount} ready · soil x${soilText}` : `Locked · ${definition.unlockCost} credits`}</span>
         </article>
       `;
     })
@@ -1292,7 +1310,7 @@ function rebuildScene() {
   houseDoorMesh = null;
   pondMesh = null;
 
-  for (const parcel of state.parcels) {
+  for (const parcel of getVisibleParcels()) {
     const definition = PARCELS.find((entry) => entry.id === parcel.id);
     const layout = PLOT_LAYOUTS[parcel.id];
     const width = Math.min(layout.cols, parcel.plots.length) * layout.spacingX + 3;

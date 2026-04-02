@@ -89,6 +89,16 @@ test("final parcel unlock adds the largest farm expansion", () => {
   assert.equal(orchard?.plots.length, 10);
 });
 
+test("admin city parcel exists but starts locked in normal saves", () => {
+  const state = createInitialState();
+
+  const adminCity = state.parcels.find((parcel) => parcel.id === "admin_city");
+
+  assert.equal(Boolean(adminCity), true);
+  assert.equal(adminCity?.unlocked, false);
+  assert.equal(adminCity?.plots.length, 50);
+});
+
 test("parcel unlock failure explains missing credits", () => {
   const state = createInitialState();
 

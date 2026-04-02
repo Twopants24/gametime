@@ -232,6 +232,15 @@ export const PARCELS = [
     plotCount: 10,
     soilBonus: 1.32,
   },
+  {
+    id: "admin_city",
+    name: "Admin City",
+    unlockCost: 0,
+    plotCount: 50,
+    soilBonus: Number.POSITIVE_INFINITY,
+    startsUnlocked: false,
+    adminOnly: true,
+  },
 ];
 
 export const QUESTS = [
@@ -284,7 +293,7 @@ function createPlot(parcelId, index) {
 function createParcelState(definition) {
   return {
     id: definition.id,
-    unlocked: definition.unlockCost === 0,
+    unlocked: definition.startsUnlocked ?? definition.unlockCost === 0,
     plots: Array.from({ length: definition.plotCount }, (_, index) => createPlot(definition.id, index)),
   };
 }
