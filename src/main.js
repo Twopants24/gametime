@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-14";
+} from "./gameLogic.js?v=20260401-20";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const ADMIN_KEY = "beanfarmer-admin-v1";
@@ -44,6 +44,12 @@ const SEA_CAMERA_BOUNDS = {
   minZ: -14,
   maxZ: 14,
 };
+const ADMIN_ESTATE_CAMERA_BOUNDS = {
+  minX: -36,
+  maxX: 36,
+  minZ: -32,
+  maxZ: 28,
+};
 const PLAYER_BOUNDS = {
   minX: -18,
   maxX: 100,
@@ -63,6 +69,12 @@ const SEA_PLAYER_BOUNDS = {
   minZ: -13.5,
   maxZ: 13.5,
 };
+const ADMIN_ESTATE_PLAYER_BOUNDS = {
+  minX: -33,
+  maxX: 33,
+  minZ: -28,
+  maxZ: 24,
+};
 const SEA_BEAN_IDS = ["kelp", "coral", "pearl"];
 
 const PLOT_LAYOUTS = {
@@ -71,7 +83,7 @@ const PLOT_LAYOUTS = {
   ridge: { originX: -2.5, originZ: 12, cols: 3, spacingX: 5.5, spacingZ: 5.5 },
   lowland: { originX: 10, originZ: -14, cols: 4, spacingX: 5.5, spacingZ: 5.5 },
   orchard: { originX: -8, originZ: -26, cols: 5, spacingX: 5.5, spacingZ: 5.5 },
-  admin_city: { originX: 56, originZ: -36, cols: 10, spacingX: 7.4, spacingZ: 7.2 },
+  admin_city: { originX: -26, originZ: -16, cols: 10, spacingX: 6.2, spacingZ: 6.2 },
 };
 
 const creditsValue = document.getElementById("credits-value");
@@ -132,15 +144,19 @@ let state = applyAdminState(loadState());
 let selectedPlotId = null;
 let insideHouse = false;
 let atSea = false;
+let atAdminEstate = false;
 let firstPersonMode = false;
 let houseDoorMesh = null;
 let pondMesh = null;
+let estateDoorMesh = null;
 const interiorInteractiveMeshes = [];
 const seaInteractiveMeshes = [];
+const adminEstateInteractiveMeshes = [];
 const playerState = {
   position: new THREE.Vector3(-2, 0.85, 8),
   exteriorPosition: new THREE.Vector3(-2, 0.85, 8),
   seaPosition: new THREE.Vector3(0, 0.85, 7.5),
+  adminEstatePosition: new THREE.Vector3(0, 0.85, 18),
   heading: 0,
   lookPitch: -0.04,
   moving: false,
@@ -181,7 +197,13 @@ function clampCameraToBounds() {
     return;
   }
   const offset = camera.position.clone().sub(controls.target);
-  const bounds = insideHouse ? INTERIOR_CAMERA_BOUNDS : atSea ? SEA_CAMERA_BOUNDS : CAMERA_BOUNDS;
+  const bounds = insideHouse
+    ? INTERIOR_CAMERA_BOUNDS
+    : atSea
+    ? SEA_CAMERA_BOUNDS
+    : atAdminEstate
+    ? ADMIN_ESTATE_CAMERA_BOUNDS
+    : CAMERA_BOUNDS;
   controls.target.x = THREE.MathUtils.clamp(controls.target.x, bounds.minX, bounds.maxX);
   controls.target.z = THREE.MathUtils.clamp(controls.target.z, bounds.minZ, bounds.maxZ);
   camera.position.copy(controls.target).add(offset);
@@ -225,7 +247,14 @@ function applyAdminState(nextState) {
 function getVisibleParcels() {
   return state.parcels.filter((parcel) => {
     const definition = PARCELS.find((entry) => entry.id === parcel.id);
-    return !definition?.adminOnly || adminUnlocked;
+    return definition && !definition.adminOnly;
+  });
+}
+
+function getAdminEstateParcels() {
+  return state.parcels.filter((parcel) => {
+    const definition = PARCELS.find((entry) => entry.id === parcel.id);
+    return Boolean(definition?.adminOnly) && adminUnlocked;
   });
 }
 
@@ -234,7 +263,7 @@ function updateFirstPersonCamera() {
     return;
   }
 
-  const headHeight = insideHouse ? 2.35 : 2.55;
+  const headHeight = insideHouse ? 2.35 : atAdminEstate ? 2.6 : 2.55;
   const eye = playerState.position.clone().add(new THREE.Vector3(0, headHeight, 0));
   const facing = new THREE.Vector3(Math.sin(playerState.heading), 0, Math.cos(playerState.heading));
   const lookTarget = eye.clone().add(facing.multiplyScalar(8));
@@ -260,6 +289,11 @@ function setViewMode(nextFirstPerson) {
       camera.position.set(playerState.position.x - 2, 15, playerState.position.z + 13);
       controls.minDistance = 12;
       controls.maxDistance = 28;
+    } else if (atAdminEstate) {
+      controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+      camera.position.set(playerState.position.x - 3, 22, playerState.position.z + 18);
+      controls.minDistance = 18;
+      controls.maxDistance = 46;
     } else {
       controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
       camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
@@ -311,12 +345,15 @@ function handleTrackpadPan(event) {
 function enterHouse() {
   insideHouse = true;
   atSea = false;
+  atAdminEstate = false;
   playerState.exteriorPosition.copy(playerState.position);
   playerState.position.set(0, 0.85, 4.2);
   playerState.verticalVelocity = 0;
   selectedPlotId = null;
   worldGroup.visible = false;
   interiorGroup.visible = true;
+  seaGroup.visible = false;
+  adminEstateGroup.visible = false;
   controls.target.set(0, 0.8, 2.2);
   camera.position.set(0, 8.5, 11.5);
   controls.minDistance = 8;
@@ -333,6 +370,8 @@ function exitHouse() {
   insideHouse = false;
   worldGroup.visible = true;
   interiorGroup.visible = false;
+  seaGroup.visible = false;
+  adminEstateGroup.visible = false;
   playerState.position.copy(playerState.exteriorPosition);
   playerState.verticalVelocity = 0;
   controls.minDistance = 16;
@@ -349,6 +388,7 @@ function exitHouse() {
 function enterSea() {
   atSea = true;
   insideHouse = false;
+  atAdminEstate = false;
   playerState.exteriorPosition.copy(playerState.position);
   playerState.position.copy(playerState.seaPosition);
   playerState.verticalVelocity = 0;
@@ -356,6 +396,7 @@ function enterSea() {
   worldGroup.visible = false;
   interiorGroup.visible = false;
   seaGroup.visible = true;
+  adminEstateGroup.visible = false;
   controls.minDistance = 12;
   controls.maxDistance = 28;
   controls.target.set(playerState.position.x, 0.8, playerState.position.z - 1.5);
@@ -373,6 +414,8 @@ function exitSea() {
   atSea = false;
   seaGroup.visible = false;
   worldGroup.visible = true;
+  interiorGroup.visible = false;
+  adminEstateGroup.visible = false;
   playerState.position.copy(playerState.exteriorPosition);
   playerState.verticalVelocity = 0;
   controls.minDistance = 16;
@@ -383,6 +426,51 @@ function exitSea() {
   controls.update();
   updateFirstPersonCamera();
   actionValue.textContent = "You climbed back out of the pond.";
+  renderSelection();
+  renderParcelSummaries();
+}
+
+function enterAdminEstate() {
+  atAdminEstate = true;
+  insideHouse = false;
+  atSea = false;
+  playerState.exteriorPosition.copy(playerState.position);
+  playerState.position.copy(playerState.adminEstatePosition);
+  playerState.verticalVelocity = 0;
+  selectedPlotId = null;
+  worldGroup.visible = false;
+  interiorGroup.visible = false;
+  seaGroup.visible = false;
+  adminEstateGroup.visible = true;
+  controls.minDistance = 18;
+  controls.maxDistance = 46;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2.5);
+  camera.position.set(playerState.position.x - 3, 22, playerState.position.z + 18);
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  interiorCard.classList.add("hidden");
+  actionValue.textContent = "You stepped through the estate door into the massive admin grounds.";
+  renderSelection();
+  renderParcelSummaries();
+}
+
+function exitAdminEstate() {
+  atAdminEstate = false;
+  adminEstateGroup.visible = false;
+  worldGroup.visible = true;
+  interiorGroup.visible = false;
+  seaGroup.visible = false;
+  playerState.position.copy(playerState.exteriorPosition);
+  playerState.verticalVelocity = 0;
+  controls.minDistance = 16;
+  controls.maxDistance = 42;
+  controls.target.set(playerState.position.x, 0.8, playerState.position.z - 2);
+  camera.position.set(playerState.position.x - 2, 20, playerState.position.z + 16);
+  clampCameraToBounds();
+  controls.update();
+  updateFirstPersonCamera();
+  actionValue.textContent = "You returned from the admin estate.";
   renderSelection();
   renderParcelSummaries();
 }
@@ -402,7 +490,7 @@ function updatePlayerMovement(deltaSeconds) {
   const horizontal = (movementKeys.KeyD ? 1 : 0) - (movementKeys.KeyA ? 1 : 0);
   const vertical = (movementKeys.KeyW ? 1 : 0) - (movementKeys.KeyS ? 1 : 0);
   const wasGrounded = playerState.position.y <= FLOOR_HEIGHT + 0.001;
-  const wantsJump = !insideHouse && !atSea && movementKeys.Space && wasGrounded;
+  const wantsJump = !insideHouse && !atSea && !atAdminEstate && movementKeys.Space && wasGrounded;
   if (wantsJump) {
     playerState.verticalVelocity = JUMP_VELOCITY;
   }
@@ -417,7 +505,7 @@ function updatePlayerMovement(deltaSeconds) {
     const movement = right.multiplyScalar(horizontal * moveScale).add(forward.multiplyScalar(vertical * moveScale));
 
     const desiredPosition = playerState.position.clone().add(movement);
-    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse ? "interior" : atSea ? "sea" : "farm");
+    const resolvedPosition = resolvePlayerCollision(desiredPosition, insideHouse ? "interior" : atSea ? "sea" : atAdminEstate ? "admin" : "farm");
     actualMovement = resolvedPosition.clone().sub(playerState.position);
 
     if (actualMovement.lengthSq() > 0.0001) {
@@ -431,7 +519,7 @@ function updatePlayerMovement(deltaSeconds) {
   playerState.verticalVelocity -= GRAVITY * deltaSeconds;
   playerState.position.y += playerState.verticalVelocity * deltaSeconds;
   if (playerState.position.y < FLOOR_HEIGHT) {
-    if (!insideHouse && !atSea && !wasGrounded) {
+    if (!insideHouse && !atSea && !atAdminEstate && !wasGrounded) {
       playerState.landingTimer = 0.35;
     }
     playerState.position.y = FLOOR_HEIGHT;
@@ -457,6 +545,7 @@ const plotMeshes = new Map();
 const worldColliders = [];
 const interiorColliders = [];
 const seaColliders = [];
+const adminColliders = [];
 
 const worldGroup = new THREE.Group();
 scene.add(worldGroup);
@@ -471,6 +560,10 @@ scene.add(interiorGroup);
 const seaGroup = new THREE.Group();
 seaGroup.visible = false;
 scene.add(seaGroup);
+
+const adminEstateGroup = new THREE.Group();
+adminEstateGroup.visible = false;
+scene.add(adminEstateGroup);
 
 const skyLight = new THREE.HemisphereLight(0xf8ffe6, 0x8b6a3f, 1.7);
 scene.add(skyLight);
@@ -778,7 +871,7 @@ function renderBeanSelector() {
 }
 
 function renderLandActions() {
-  landActions.innerHTML = PARCELS.filter((parcel) => parcel.unlockCost > 0 && (!parcel.adminOnly || adminUnlocked))
+  landActions.innerHTML = PARCELS.filter((parcel) => parcel.unlockCost > 0 && !parcel.adminOnly)
     .map((parcel) => {
       const stateParcel = state.parcels.find((entry) => entry.id === parcel.id);
       if (stateParcel?.unlocked) {
@@ -873,6 +966,9 @@ function describePlot(plot) {
     if (atSea) {
       return "The sea garden hides underwater-themed beans. Search the reef nodes for seeds.";
     }
+    if (atAdminEstate) {
+      return "You are in the admin estate. Admin City has its own massive grounds here.";
+    }
     return "Choose a plot in the 3D field.";
   }
   if (plot.state === "empty") {
@@ -893,6 +989,11 @@ function renderSelection() {
   }
   if (atSea) {
     selectionText.textContent = "The kelp bed, coral reef, and giant clam each give one sea bean seed per day. Use the glowing ring to go back.";
+    selectionActions.innerHTML = "";
+    return;
+  }
+  if (atAdminEstate && !selectedPlotId) {
+    selectionText.textContent = "The admin estate is the big overflow zone. Use the giant manor door to return to the main farm.";
     selectionActions.innerHTML = "";
     return;
   }
@@ -935,6 +1036,23 @@ function renderParcelSummaries() {
         </article>
       `;
     }).join("");
+    return;
+  }
+
+  if (atAdminEstate) {
+    farmView.innerHTML = getAdminEstateParcels()
+      .map((parcel) => {
+        const definition = PARCELS.find((entry) => entry.id === parcel.id);
+        const readyCount = parcel.plots.filter((plot) => plot.state === "ready").length;
+        const plantedCount = parcel.plots.filter((plot) => plot.state === "planted").length;
+        return `
+          <article class="parcel-summary">
+            <strong>${definition.name}</strong>
+            <span>${plantedCount} growing · ${readyCount} ready · soil x∞</span>
+          </article>
+        `;
+      })
+      .join("");
     return;
   }
 
@@ -1260,10 +1378,28 @@ function addSeaCircleCollider(x, z, radius) {
   seaColliders.push({ x, z, radius });
 }
 
+function addAdminCircleCollider(x, z, radius) {
+  adminColliders.push({ x, z, radius });
+}
+
 function resolvePlayerCollision(nextPosition, zone = "farm") {
   const resolved = nextPosition.clone();
-  const bounds = zone === "interior" ? INTERIOR_PLAYER_BOUNDS : zone === "sea" ? SEA_PLAYER_BOUNDS : PLAYER_BOUNDS;
-  const colliders = zone === "interior" ? interiorColliders : zone === "sea" ? seaColliders : worldColliders;
+  const bounds =
+    zone === "interior"
+      ? INTERIOR_PLAYER_BOUNDS
+      : zone === "sea"
+      ? SEA_PLAYER_BOUNDS
+      : zone === "admin"
+      ? ADMIN_ESTATE_PLAYER_BOUNDS
+      : PLAYER_BOUNDS;
+  const colliders =
+    zone === "interior"
+      ? interiorColliders
+      : zone === "sea"
+      ? seaColliders
+      : zone === "admin"
+      ? adminColliders
+      : worldColliders;
 
   resolved.x = THREE.MathUtils.clamp(resolved.x, bounds.minX, bounds.maxX);
   resolved.z = THREE.MathUtils.clamp(resolved.z, bounds.minZ, bounds.maxZ);
@@ -1304,11 +1440,15 @@ function rebuildScene() {
   worldColliders.length = 0;
   interiorColliders.length = 0;
   seaColliders.length = 0;
+  adminColliders.length = 0;
   worldGroup.clear();
   seaGroup.clear();
+  adminEstateGroup.clear();
   seaInteractiveMeshes.length = 0;
+  adminEstateInteractiveMeshes.length = 0;
   houseDoorMesh = null;
   pondMesh = null;
+  estateDoorMesh = null;
 
   for (const parcel of getVisibleParcels()) {
     const definition = PARCELS.find((entry) => entry.id === parcel.id);
@@ -1346,7 +1486,7 @@ function rebuildScene() {
       mesh.position.copy(parcelWorldPosition(parcel.id, index));
       worldGroup.add(mesh);
       plotMeshes.set(plot.id, mesh);
-      addCircleCollider(mesh.position.x, mesh.position.z, parcel.id === "admin_city" ? 1.55 : 2.45);
+      addCircleCollider(mesh.position.x, mesh.position.z, 2.45);
     });
 
     const sign = new THREE.Mesh(
@@ -1385,6 +1525,50 @@ function rebuildScene() {
   houseDoorMesh = door;
   worldGroup.add(barn);
   addCircleCollider(base.position.x, base.position.z, 4.8);
+
+  if (adminUnlocked) {
+    const estate = new THREE.Group();
+    const manorBase = new THREE.Mesh(
+      new THREE.BoxGeometry(12.5, 6.4, 8.8),
+      new THREE.MeshStandardMaterial({ color: 0xd9c8a0, roughness: 0.92 })
+    );
+    manorBase.position.set(28, 3.2, -9);
+    manorBase.castShadow = true;
+    manorBase.receiveShadow = true;
+    estate.add(manorBase);
+
+    const wingMaterial = new THREE.MeshStandardMaterial({ color: 0xcdb88a, roughness: 0.94 });
+    const manorWingLeft = new THREE.Mesh(new THREE.BoxGeometry(4.6, 4.8, 5.8), wingMaterial);
+    manorWingLeft.position.set(19.6, 2.4, -9.2);
+    manorWingLeft.castShadow = true;
+    estate.add(manorWingLeft);
+
+    const manorWingRight = manorWingLeft.clone();
+    manorWingRight.position.x = 36.4;
+    estate.add(manorWingRight);
+
+    const manorRoof = new THREE.Mesh(
+      new THREE.ConeGeometry(8.2, 4.8, 4),
+      new THREE.MeshStandardMaterial({ color: 0x6b4733, roughness: 0.86 })
+    );
+    manorRoof.position.set(28, 8.8, -9);
+    manorRoof.rotation.y = Math.PI / 4;
+    manorRoof.castShadow = true;
+    estate.add(manorRoof);
+
+    const estateDoor = new THREE.Mesh(
+      new THREE.BoxGeometry(2.6, 4.2, 0.24),
+      new THREE.MeshStandardMaterial({ color: 0x4d2f1f, roughness: 0.8 })
+    );
+    estateDoor.position.set(28, 2.1, -4.48);
+    estateDoor.userData.kind = "adminEstateDoor";
+    estateDoor.castShadow = true;
+    estate.add(estateDoor);
+    estateDoorMesh = estateDoor;
+
+    worldGroup.add(estate);
+    addCircleCollider(28, -9, 7.4);
+  }
 
   const pond = new THREE.Mesh(
     new THREE.CircleGeometry(4.6, 36),
@@ -1499,6 +1683,92 @@ function rebuildScene() {
   seaGroup.add(pearlNode);
   seaInteractiveMeshes.push(pearlNode);
   addSeaCircleCollider(0.2, -5.5, 1.25);
+
+  const estateGround = new THREE.Mesh(
+    new THREE.CircleGeometry(46, 56),
+    new THREE.MeshStandardMaterial({ color: 0x88a76a, roughness: 1 })
+  );
+  estateGround.rotation.x = -Math.PI / 2;
+  estateGround.position.y = -0.12;
+  adminEstateGroup.add(estateGround);
+
+  const estateCourt = new THREE.Mesh(
+    new THREE.CircleGeometry(10, 40),
+    new THREE.MeshStandardMaterial({ color: 0xbca06d, roughness: 0.96 })
+  );
+  estateCourt.rotation.x = -Math.PI / 2;
+  estateCourt.position.set(0, -0.02, 16);
+  adminEstateGroup.add(estateCourt);
+
+  const estateManor = new THREE.Group();
+  const estateHall = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 9, 12),
+    new THREE.MeshStandardMaterial({ color: 0xe7d8b7, roughness: 0.92 })
+  );
+  estateHall.position.set(0, 4.5, 26);
+  estateHall.castShadow = true;
+  estateHall.receiveShadow = true;
+  estateManor.add(estateHall);
+
+  const estateRoof = new THREE.Mesh(
+    new THREE.ConeGeometry(12.5, 6.2, 4),
+    new THREE.MeshStandardMaterial({ color: 0x6f4630, roughness: 0.84 })
+  );
+  estateRoof.position.set(0, 11.2, 26);
+  estateRoof.rotation.y = Math.PI / 4;
+  estateRoof.castShadow = true;
+  estateManor.add(estateRoof);
+
+  const estatePorch = new THREE.Mesh(
+    new THREE.BoxGeometry(5.6, 0.8, 3.2),
+    new THREE.MeshStandardMaterial({ color: 0xc8b086, roughness: 0.94 })
+  );
+  estatePorch.position.set(0, 0.35, 18.6);
+  estateManor.add(estatePorch);
+
+  const estateReturnDoor = new THREE.Mesh(
+    new THREE.BoxGeometry(2.6, 4.2, 0.24),
+    new THREE.MeshStandardMaterial({ color: 0x55331f, roughness: 0.82 })
+  );
+  estateReturnDoor.position.set(0, 2.1, 19.9);
+  estateReturnDoor.userData.kind = "adminEstateExit";
+  estateReturnDoor.castShadow = true;
+  estateManor.add(estateReturnDoor);
+  adminEstateInteractiveMeshes.push(estateReturnDoor);
+  addAdminCircleCollider(0, 26, 8.4);
+  adminEstateGroup.add(estateManor);
+
+  for (const parcel of getAdminEstateParcels()) {
+    const definition = PARCELS.find((entry) => entry.id === parcel.id);
+    const layout = PLOT_LAYOUTS[parcel.id];
+    const width = Math.min(layout.cols, parcel.plots.length) * layout.spacingX + 4;
+    const depth = Math.ceil(parcel.plots.length / layout.cols) * layout.spacingZ + 4;
+
+    const parcelPad = new THREE.Mesh(
+      new THREE.BoxGeometry(width, 0.65, depth),
+      new THREE.MeshStandardMaterial({ color: 0x7a9660, roughness: 1 })
+    );
+    parcelPad.position.set(layout.originX + (width - layout.spacingX) / 2 - 2, -0.08, layout.originZ + (depth - layout.spacingZ) / 2 - 2);
+    parcelPad.receiveShadow = true;
+    adminEstateGroup.add(parcelPad);
+
+    parcel.plots.forEach((plot, index) => {
+      const selected = plot.id === selectedPlotId;
+      const mesh = createPlotMesh(plot, selected);
+      mesh.position.copy(parcelWorldPosition(parcel.id, index));
+      adminEstateGroup.add(mesh);
+      plotMeshes.set(plot.id, mesh);
+      addAdminCircleCollider(mesh.position.x, mesh.position.z, 1.55);
+    });
+
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(2.8, 1.4, 0.22),
+      new THREE.MeshStandardMaterial({ color: definition.id === "admin_city" ? 0xf3deaf : 0xf1e5c2, roughness: 0.9 })
+    );
+    sign.position.set(layout.originX - 5, 1.4, layout.originZ + 2.2);
+    sign.castShadow = true;
+    adminEstateGroup.add(sign);
+  }
 
   addInteriorCircleCollider(0, -1.2, 2.2);
   addInteriorCircleCollider(4.6, 1.6, 3.2);
@@ -1636,12 +1906,14 @@ function getReticleTarget() {
     ? interiorInteractiveMeshes
     : atSea
     ? seaInteractiveMeshes
+    : atAdminEstate
+    ? [...plotMeshes.values(), ...adminEstateInteractiveMeshes]
     : pondMesh && houseDoorMesh
-    ? [...plotMeshes.values(), houseDoorMesh, pondMesh]
+    ? [...plotMeshes.values(), houseDoorMesh, pondMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : houseDoorMesh
-    ? [...plotMeshes.values(), houseDoorMesh]
+    ? [...plotMeshes.values(), houseDoorMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : pondMesh
-    ? [...plotMeshes.values(), pondMesh]
+    ? [...plotMeshes.values(), pondMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
 
@@ -1684,6 +1956,9 @@ function getInteractionDistance(kind) {
   if (kind === "returnPond") {
     return Number.POSITIVE_INFINITY;
   }
+  if (kind === "adminEstateDoor" || kind === "adminEstateExit") {
+    return Number.POSITIVE_INFINITY;
+  }
   if (kind === "seaBean") {
     return 5.25;
   }
@@ -1704,6 +1979,8 @@ function interactWithTarget(target) {
         ? "Move closer to use that furniture."
         : atSea
         ? "Swim closer to the sea node."
+        : atAdminEstate
+        ? "Move closer to the estate door."
         : "Walk closer to the house door or pond.";
       return;
     }
@@ -1718,8 +1995,18 @@ function interactWithTarget(target) {
       return;
     }
 
+    if (target.userData.kind === "adminEstateDoor") {
+      enterAdminEstate();
+      return;
+    }
+
     if (target.userData.kind === "returnPond") {
       exitSea();
+      return;
+    }
+
+    if (target.userData.kind === "adminEstateExit") {
+      exitAdminEstate();
       return;
     }
 
@@ -1754,12 +2041,14 @@ function getPointerTarget(event) {
     ? interiorInteractiveMeshes
     : atSea
     ? seaInteractiveMeshes
+    : atAdminEstate
+    ? [...plotMeshes.values(), ...adminEstateInteractiveMeshes]
     : pondMesh && houseDoorMesh
-    ? [...plotMeshes.values(), houseDoorMesh, pondMesh]
+    ? [...plotMeshes.values(), houseDoorMesh, pondMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : houseDoorMesh
-    ? [...plotMeshes.values(), houseDoorMesh]
+    ? [...plotMeshes.values(), houseDoorMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : pondMesh
-    ? [...plotMeshes.values(), pondMesh]
+    ? [...plotMeshes.values(), pondMesh, ...(estateDoorMesh ? [estateDoorMesh] : [])]
     : [...plotMeshes.values()];
   const hits = raycaster.intersectObjects(candidates, true);
   if (hits.length === 0) {
