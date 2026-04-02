@@ -918,6 +918,7 @@ function beanColor(beanId) {
   if (beanId === "green") return 0x76b84f;
   if (beanId === "wax") return 0xe2c15c;
   if (beanId === "scarlet") return 0xc74339;
+  if (beanId === "dusk") return 0x8a74d8;
   if (beanId === "kelp") return 0x48a78e;
   if (beanId === "coral") return 0xff7d8b;
   if (beanId === "pearl") return 0xe7f4ff;
@@ -931,6 +932,7 @@ function createCropVisual(plot) {
   const isGiantPod = plot.beanId === "giant";
   const isFrostPod = plot.beanId === "frost";
   const isEmberBean = plot.beanId === "ember";
+  const isDuskBean = plot.beanId === "dusk";
   const isStarlightBean = plot.beanId === "starlight";
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(
@@ -964,6 +966,12 @@ function createCropVisual(plot) {
         [0.5, 1.4, -0.12],
         [0.08, 1.1, 0.58],
       ]
+    : isDuskBean
+    ? [
+        [-0.42, 1.08, 0.28],
+        [0.38, 1.42, -0.2],
+        [0.04, 1.72, 0.08],
+      ]
     : isStarlightBean
     ? [
         [-0.38, 1.05, 0.32],
@@ -977,18 +985,20 @@ function createCropVisual(plot) {
       ];
 
   const leafMaterial = new THREE.MeshStandardMaterial({
-    color: isFrostPod ? 0x89c8ff : isEmberBean ? 0xe87b39 : isStarlightBean ? 0xd9c2ff : beanColor(plot.beanId),
+    color: isFrostPod ? 0x89c8ff : isEmberBean ? 0xe87b39 : isDuskBean ? 0xa992f0 : isStarlightBean ? 0xd9c2ff : beanColor(plot.beanId),
     roughness: 0.7,
-    emissive: isFrostPod ? 0x17365f : isEmberBean ? 0x57210b : isStarlightBean ? 0x36205d : 0x000000,
-    emissiveIntensity: isFrostPod ? 0.28 : isEmberBean ? 0.3 : isStarlightBean ? 0.42 : 0,
+    emissive: isFrostPod ? 0x17365f : isEmberBean ? 0x57210b : isDuskBean ? 0x24163f : isStarlightBean ? 0x36205d : 0x000000,
+    emissiveIntensity: isFrostPod ? 0.28 : isEmberBean ? 0.3 : isDuskBean ? 0.34 : isStarlightBean ? 0.42 : 0,
   });
 
   const leafScale = plot.state === "ready" ? (isGiantPod ? 1.95 : 1.2) : isGiantPod ? 1.2 : 0.8;
   for (const offset of leafOffsets) {
-    const leafGeometry = isStarlightBean
+      const leafGeometry = isStarlightBean
       ? new THREE.OctahedronGeometry(0.34 * leafScale, 0)
       : isEmberBean
       ? new THREE.ConeGeometry(0.28 * leafScale, 0.9 * leafScale, 8)
+      : isDuskBean
+      ? new THREE.OctahedronGeometry(0.3 * leafScale, 0)
       : new THREE.SphereGeometry(0.42 * leafScale, 14, 14);
     const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
     leaf.position.set(offset[0], offset[1], offset[2]);
@@ -1000,6 +1010,9 @@ function createCropVisual(plot) {
     if (isEmberBean) {
       leaf.rotation.x = Math.PI;
     }
+    if (isDuskBean) {
+      leaf.rotation.set(offset[2] * 2, offset[0] * 2, offset[1] * 0.6);
+    }
     leaf.castShadow = true;
     group.add(leaf);
   }
@@ -1007,11 +1020,11 @@ function createCropVisual(plot) {
   if (plot.state === "ready") {
     const podMaterial = new THREE.MeshStandardMaterial({
       color:
-        isFrostPod ? 0x9fdbff : isEmberBean ? 0xff8748 : isStarlightBean ? 0xc49bff : bean.rarity === "Special" ? 0x8f7fff : bean.rarity === "Rare" ? 0xda5841 : 0xe2d56b,
+        isFrostPod ? 0x9fdbff : isEmberBean ? 0xff8748 : isDuskBean ? 0xd1c3ff : isStarlightBean ? 0xc49bff : bean.rarity === "Special" ? 0x8f7fff : bean.rarity === "Rare" ? 0xda5841 : 0xe2d56b,
       roughness: 0.45,
-      metalness: isFrostPod ? 0.22 : isStarlightBean ? 0.28 : bean.rarity === "Special" ? 0.2 : 0.05,
-      emissive: isFrostPod ? 0x215fb0 : isEmberBean ? 0x7a2400 : isStarlightBean ? 0x4b1f8c : bean.rarity === "Special" ? 0x29145b : 0x000000,
-      emissiveIntensity: isFrostPod ? 0.48 : isEmberBean ? 0.7 : isStarlightBean ? 0.8 : bean.rarity === "Special" ? 0.55 : 0,
+      metalness: isFrostPod ? 0.22 : isDuskBean ? 0.32 : isStarlightBean ? 0.28 : bean.rarity === "Special" ? 0.2 : 0.05,
+      emissive: isFrostPod ? 0x215fb0 : isEmberBean ? 0x7a2400 : isDuskBean ? 0x38265f : isStarlightBean ? 0x4b1f8c : bean.rarity === "Special" ? 0x29145b : 0x000000,
+      emissiveIntensity: isFrostPod ? 0.48 : isEmberBean ? 0.7 : isDuskBean ? 0.72 : isStarlightBean ? 0.8 : bean.rarity === "Special" ? 0.55 : 0,
     });
     const podOffsets = isGiantPod
       ? [
@@ -1025,6 +1038,12 @@ function createCropVisual(plot) {
           [-0.3, 1.55, 0.08],
           [0.22, 1.78, -0.2],
           [0.42, 1.3, 0.26],
+        ]
+      : isDuskBean
+      ? [
+          [-0.32, 1.42, 0.02],
+          [0.18, 1.8, -0.18],
+          [0.38, 1.26, 0.22],
         ]
       : isStarlightBean
       ? [
@@ -1040,6 +1059,8 @@ function createCropVisual(plot) {
     for (const offset of podOffsets) {
       const podGeometry = isEmberBean
         ? new THREE.SphereGeometry(0.24, 14, 14)
+        : isDuskBean
+        ? new THREE.OctahedronGeometry(0.28, 0)
         : isStarlightBean
         ? new THREE.OctahedronGeometry(0.26, 0)
         : new THREE.CapsuleGeometry(isGiantPod ? 0.28 : 0.14, isGiantPod ? 1.1 : 0.5, 4, 10);
@@ -1117,6 +1138,27 @@ function createCropVisual(plot) {
         sparkle.position.set(offset[0], offset[1], offset[2]);
         sparkle.rotation.set(offset[2] * 3, offset[0] * 2, offset[1]);
         group.add(sparkle);
+      }
+    }
+
+    if (isDuskBean) {
+      const duskShardMaterial = new THREE.MeshStandardMaterial({
+        color: 0xf2dcff,
+        emissive: 0x8a63f0,
+        emissiveIntensity: 0.9,
+        roughness: 0.18,
+        metalness: 0.22,
+      });
+      for (const offset of [
+        [-0.78, 1.82, 0.18],
+        [0.72, 1.98, -0.14],
+        [0, 2.28, 0.36],
+        [0.24, 1.48, -0.55],
+      ]) {
+        const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), duskShardMaterial);
+        shard.position.set(offset[0], offset[1], offset[2]);
+        shard.rotation.set(offset[1] * 0.6, offset[0] * 2, offset[2] * 2);
+        group.add(shard);
       }
     }
   }

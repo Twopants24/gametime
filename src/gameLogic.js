@@ -134,6 +134,18 @@ export const BEANS = {
     seaForage: true,
     description: "A glossy undersea prize bean found inside giant clams.",
   },
+  dusk: {
+    id: "dusk",
+    name: "Duskglass Bean",
+    rarity: "Special",
+    seedCost: 52,
+    sellValue: 96,
+    growthHours: 19,
+    waterNeed: 3,
+    yield: 2,
+    unlockCredits: 780,
+    description: "A smoky violet glassy bean that only serious farms can afford to raise.",
+  },
   starlight: {
     id: "starlight",
     name: "Starlight Bean",
