@@ -20,9 +20,11 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-6";
+} from "./gameLogic.js?v=20260401-8";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
+const ADMIN_KEY = "beanfarmer-admin-v1";
+const ADMIN_CREDITS = 99999999;
 const CAMERA_BOUNDS = {
   minX: -22,
   maxX: 34,
@@ -85,6 +87,7 @@ const beanIndex = document.getElementById("bean-index");
 const beanIndexPanel = beanIndex.closest(".panel");
 const inventoryList = document.getElementById("inventory-list");
 const viewModeButton = document.getElementById("viewmode-button");
+const adminButton = document.getElementById("admin-button");
 const fullscreenButton = document.getElementById("fullscreen-button");
 const reticle = document.getElementById("reticle");
 const saveButton = document.getElementById("save-button");
@@ -122,7 +125,8 @@ function loadState() {
   }
 }
 
-let state = loadState();
+let adminUnlocked = window.localStorage.getItem(ADMIN_KEY) === "1";
+let state = applyAdminState(loadState());
 let selectedPlotId = null;
 let insideHouse = false;
 let atSea = false;
@@ -188,6 +192,23 @@ function syncViewModeUi() {
   ceiling.visible = showInteriorRoof;
   roofBeam.visible = showInteriorRoof;
   updateReticle();
+}
+
+function syncAdminUi() {
+  if (!adminButton) {
+    return;
+  }
+  adminButton.textContent = adminUnlocked ? "Admin On" : "Admin Credits";
+}
+
+function applyAdminState(nextState) {
+  if (!adminUnlocked) {
+    return nextState;
+  }
+  return {
+    ...nextState,
+    credits: ADMIN_CREDITS,
+  };
 }
 
 function updateFirstPersonCamera() {
@@ -685,7 +706,7 @@ bed.userData.kind = "bed";
 interiorInteractiveMeshes.push(table, bed, notesBoard, interiorDoor);
 
 function setState(nextState) {
-  state = nextState;
+  state = applyAdminState(nextState);
   render();
 }
 
@@ -705,7 +726,7 @@ function formatHour(hour) {
 }
 
 function renderHeader() {
-  creditsValue.textContent = `${state.credits}`;
+  creditsValue.textContent = adminUnlocked ? "∞" : `${state.credits}`;
   oreValue.textContent = `${state.ore}`;
   clockValue.textContent = `Day ${state.clock.day}, ${formatHour(state.clock.hour)}`;
   actionValue.textContent = state.lastAction;
@@ -1813,6 +1834,24 @@ mineButton.addEventListener("click", () => {
 
 saveButton.addEventListener("click", saveState);
 resetButton.addEventListener("click", resetState);
+adminButton.addEventListener("click", () => {
+  adminUnlocked = !adminUnlocked;
+  if (adminUnlocked) {
+    window.localStorage.setItem(ADMIN_KEY, "1");
+    state = applyAdminState({
+      ...state,
+      lastAction: "Admin credits enabled.",
+    });
+  } else {
+    window.localStorage.removeItem(ADMIN_KEY);
+    state = {
+      ...state,
+      lastAction: "Admin credits disabled.",
+    };
+  }
+  syncAdminUi();
+  render();
+});
 fullscreenButton.addEventListener("click", async () => {
   const viewportPanel = sceneShell.closest(".viewport-panel");
   if (!viewportPanel) return;
@@ -1834,6 +1873,7 @@ viewModeButton.addEventListener("click", () => {
 
 resizeRenderer();
 render();
+syncAdminUi();
 syncViewModeUi();
 
 const clock = new THREE.Clock();
