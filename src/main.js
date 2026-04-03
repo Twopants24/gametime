@@ -20,7 +20,7 @@ import {
   serializeState,
   unlockParcel,
   waterPlot,
-} from "./gameLogic.js?v=20260401-24";
+} from "./gameLogic.js?v=20260401-25";
 
 const STORAGE_KEY = "beanfarmer-save-v1";
 const ADMIN_KEY = "beanfarmer-admin-v1";
@@ -1094,125 +1094,107 @@ function createCropVisual(plot) {
   const isStarlightBean = plot.beanId === "starlight";
   if (isDuskBean) {
     const crystalBase = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(plot.state === "ready" ? 0.92 : 0.68, 0),
+      new THREE.DodecahedronGeometry(plot.state === "ready" ? 0.82 : 0.62, 0),
       new THREE.MeshStandardMaterial({
-        color: 0x26163f,
-        roughness: 0.34,
-        metalness: 0.18,
-        emissive: 0x12081f,
-        emissiveIntensity: 0.34,
+        color: 0x24143a,
+        roughness: 0.4,
+        metalness: 0.12,
+        emissive: 0x0f061b,
+        emissiveIntensity: 0.22,
       })
     );
-    crystalBase.position.y = 0.42;
-    crystalBase.scale.set(1.35, 0.78, 1.25);
+    crystalBase.position.y = 0.34;
+    crystalBase.scale.set(1.28, 0.62, 1.18);
     crystalBase.castShadow = true;
     group.add(crystalBase);
 
     const crystalMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf7eeff,
-      roughness: 0.03,
-      metalness: 0.52,
+      color: 0xf1e6ff,
+      roughness: 0.02,
+      metalness: 0.38,
       transparent: true,
-      opacity: 0.84,
-      emissive: 0x7f52ff,
-      emissiveIntensity: 1.15,
+      opacity: 0.72,
+      emissive: 0x6f43f0,
+      emissiveIntensity: 0.82,
     });
 
     const coreMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      color: 0xfaf7ff,
       roughness: 0.02,
-      metalness: 0.3,
+      metalness: 0.18,
       transparent: true,
-      opacity: 0.96,
-      emissive: 0xd2b8ff,
-      emissiveIntensity: 1.65,
+      opacity: 0.78,
+      emissive: 0xb58dff,
+      emissiveIntensity: 1.05,
     });
 
-    const clusterScale = plot.state === "ready" ? 1.72 : 1.08;
-    const spires = plot.state === "ready"
+    const clusterScale = plot.state === "ready" ? 1.18 : 0.88;
+    const crystals = plot.state === "ready"
       ? [
-          [0, 4.8, 0, 0.38, 4.8, 0, 0],
-          [-1.12, 3.75, 0.48, 0.24, 3.9, -0.22, 0.28],
-          [1.06, 4.02, -0.34, 0.26, 4.1, 0.18, -0.22],
-          [-0.46, 3.02, -1.02, 0.2, 3.2, 0.36, 0.12],
-          [0.74, 3.18, 1.1, 0.21, 3.35, -0.32, -0.2],
-          [0.22, 5.6, 0.62, 0.15, 2.8, 0.08, 0.38],
-          [-0.18, 4.92, -0.72, 0.14, 2.6, -0.12, -0.3],
+          [0, 0, 0, 0.34, 3.4, 1.15, 0, 0],
+          [-0.78, 0, 0.42, 0.22, 2.5, 0.78, -0.12, 0.18],
+          [0.84, 0, -0.34, 0.24, 2.7, 0.82, 0.1, -0.16],
+          [-0.32, 0, -0.86, 0.18, 2.1, 0.66, 0.22, 0.08],
+          [0.5, 0, 0.92, 0.19, 2.2, 0.68, -0.18, -0.12],
+          [0.18, 0, 0.28, 0.14, 1.7, 0.58, 0.08, 0.2],
         ]
       : [
-          [0, 2.6, 0, 0.22, 2.5, 0, 0],
-          [-0.58, 2.1, 0.28, 0.14, 2.0, -0.16, 0.18],
-          [0.52, 2.2, -0.22, 0.15, 2.1, 0.14, -0.16],
-          [0.14, 3.05, 0.34, 0.1, 1.55, 0.1, 0.22],
+          [0, 0, 0, 0.22, 2.1, 0.82, 0, 0],
+          [-0.46, 0, 0.24, 0.14, 1.55, 0.58, -0.1, 0.14],
+          [0.42, 0, -0.18, 0.15, 1.7, 0.62, 0.08, -0.12],
+          [0.12, 0, 0.26, 0.1, 1.15, 0.42, 0.06, 0.16],
         ];
 
-    for (const [x, y, z, radius, height, leanX, leanZ] of spires) {
-      const crystal = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.01, radius, height, 5),
+    for (const [x, y, z, radius, shaftHeight, tipHeight, leanX, leanZ] of crystals) {
+      const crystal = new THREE.Group();
+
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius * 1.04, shaftHeight, 6),
         crystalMaterial
       );
-      crystal.position.set(x, y * 0.5, z);
+      shaft.position.y = shaftHeight * 0.5;
+      shaft.castShadow = true;
+      crystal.add(shaft);
+
+      const tip = new THREE.Mesh(
+        new THREE.ConeGeometry(radius * 1.02, tipHeight, 6),
+        coreMaterial
+      );
+      tip.position.y = shaftHeight + tipHeight * 0.5 - 0.03;
+      tip.castShadow = true;
+      crystal.add(tip);
+
+      crystal.position.set(x, y, z);
       crystal.scale.setScalar(clusterScale);
-      crystal.rotation.set(leanX, x * 0.18, leanZ);
-      crystal.castShadow = true;
+      crystal.rotation.set(leanX, x * 0.1, leanZ);
       group.add(crystal);
     }
 
-    const crystalCore = new THREE.Mesh(
-      new THREE.OctahedronGeometry(plot.state === "ready" ? 0.42 : 0.28, 0),
-      coreMaterial
-    );
-    crystalCore.position.set(0, plot.state === "ready" ? 4.9 : 2.75, 0.08);
-    crystalCore.scale.set(0.8, plot.state === "ready" ? 3.1 : 2.05, 0.8);
-    crystalCore.castShadow = true;
-    group.add(crystalCore);
-
-    const strandOffsets = plot.state === "ready"
+    const shardOffsets = plot.state === "ready"
       ? [
-          [-1.42, 2.48, 0.68],
-          [1.28, 2.76, -0.62],
-          [-0.96, 3.44, -0.98],
-          [1.08, 3.66, 0.94],
-          [0.32, 4.7, -0.48],
-          [-0.18, 4.96, 0.66],
-          [0.72, 4.18, 1.12],
-          [-0.68, 4.02, -1.06],
+          [-1.08, 1.94, 0.58],
+          [1.02, 2.12, -0.54],
+          [-0.72, 2.52, -0.76],
+          [0.84, 2.64, 0.72],
+          [0.18, 3.2, -0.34],
         ]
       : [
-          [-0.72, 1.78, 0.38],
-          [0.66, 1.98, -0.34],
-          [-0.38, 2.38, -0.56],
-          [0.42, 2.56, 0.48],
+          [-0.58, 1.34, 0.28],
+          [0.52, 1.5, -0.24],
+          [-0.28, 1.82, -0.42],
         ];
 
-    for (const [x, y, z] of strandOffsets) {
-      const strand = new THREE.Mesh(
-        new THREE.OctahedronGeometry(plot.state === "ready" ? 0.18 : 0.12, 0),
+    for (const [x, y, z] of shardOffsets) {
+      const shard = new THREE.Mesh(
+        new THREE.OctahedronGeometry(plot.state === "ready" ? 0.12 : 0.09, 0),
         crystalMaterial
       );
-      strand.position.set(x, y, z);
-      strand.rotation.set(y * 0.55, x * 1.6, z * 1.4);
-      strand.castShadow = true;
-      group.add(strand);
+      shard.position.set(x, y, z);
+      shard.rotation.set(y * 0.45, x * 1.2, z * 1.1);
+      shard.castShadow = true;
+      group.add(shard);
     }
-
-    const halo = new THREE.Mesh(
-      new THREE.TorusGeometry(plot.state === "ready" ? 1.35 : 0.92, 0.06, 10, 42),
-      new THREE.MeshStandardMaterial({
-        color: 0xdcc4ff,
-        emissive: 0x7a48ff,
-        emissiveIntensity: 0.9,
-        roughness: 0.08,
-        metalness: 0.32,
-        transparent: true,
-        opacity: 0.72,
-      })
-    );
-    halo.rotation.x = Math.PI / 2;
-    halo.position.y = plot.state === "ready" ? 0.78 : 0.62;
-    group.add(halo);
-
-    group.scale.setScalar(plot.state === "ready" ? 1.34 : 1.02);
+    group.scale.setScalar(plot.state === "ready" ? 1.46 : 1.08);
     return group;
   }
   const stem = new THREE.Mesh(
