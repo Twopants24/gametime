@@ -1092,23 +1092,119 @@ function createCropVisual(plot) {
   const isEmberBean = plot.beanId === "ember";
   const isDuskBean = plot.beanId === "dusk";
   const isStarlightBean = plot.beanId === "starlight";
-  const duskReadyHeight = plot.state === "ready" ? 4.8 : 2.9;
+  if (isDuskBean) {
+    const crystalBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.52, 0.9, 0.55, 7),
+      new THREE.MeshStandardMaterial({
+        color: 0x3c275c,
+        roughness: 0.24,
+        metalness: 0.26,
+        emissive: 0x160b28,
+        emissiveIntensity: 0.42,
+      })
+    );
+    crystalBase.position.y = 0.35;
+    crystalBase.castShadow = true;
+    group.add(crystalBase);
+
+    const crystalMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf4e8ff,
+      roughness: 0.05,
+      metalness: 0.48,
+      transparent: true,
+      opacity: 0.92,
+      emissive: 0x8658f2,
+      emissiveIntensity: 1.05,
+    });
+
+    const coreMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.02,
+      metalness: 0.3,
+      transparent: true,
+      opacity: 0.96,
+      emissive: 0xc4a6ff,
+      emissiveIntensity: 1.45,
+    });
+
+    const clusterScale = plot.state === "ready" ? 1.45 : 0.95;
+    const spires = plot.state === "ready"
+      ? [
+          [0, 3.9, 0, 0.36, 3.9, 0],
+          [-0.95, 2.95, 0.34, 0.22, 2.9, -0.28],
+          [0.88, 3.18, -0.22, 0.24, 3.15, 0.24],
+          [-0.38, 2.45, -0.82, 0.18, 2.4, 0.42],
+          [0.56, 2.68, 0.92, 0.2, 2.55, -0.38],
+          [0.18, 4.42, 0.52, 0.16, 2.15, 0.14],
+        ]
+      : [
+          [0, 2.15, 0, 0.24, 2.1, 0],
+          [-0.52, 1.72, 0.22, 0.14, 1.55, -0.2],
+          [0.46, 1.82, -0.18, 0.15, 1.7, 0.16],
+          [0.1, 2.48, 0.28, 0.11, 1.15, 0.12],
+        ];
+
+    for (const [x, y, z, radius, height, lean] of spires) {
+      const crystal = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, radius, height, 6),
+        crystalMaterial
+      );
+      crystal.position.set(x, y * 0.5, z);
+      crystal.scale.setScalar(clusterScale);
+      crystal.rotation.set(lean, x * 0.28, z * 0.2);
+      crystal.castShadow = true;
+      group.add(crystal);
+    }
+
+    const crystalCore = new THREE.Mesh(
+      new THREE.OctahedronGeometry(plot.state === "ready" ? 0.42 : 0.28, 0),
+      coreMaterial
+    );
+    crystalCore.position.set(0, plot.state === "ready" ? 3.85 : 2.15, 0.12);
+    crystalCore.scale.set(0.92, plot.state === "ready" ? 2.6 : 1.8, 0.92);
+    crystalCore.castShadow = true;
+    group.add(crystalCore);
+
+    const strandOffsets = plot.state === "ready"
+      ? [
+          [-1.25, 2.2, 0.62],
+          [1.18, 2.44, -0.54],
+          [-0.82, 3.02, -0.88],
+          [0.94, 3.18, 0.86],
+          [0.26, 4.1, -0.42],
+          [-0.12, 4.34, 0.58],
+        ]
+      : [
+          [-0.68, 1.52, 0.34],
+          [0.62, 1.7, -0.3],
+          [-0.34, 2.05, -0.52],
+          [0.38, 2.2, 0.44],
+        ];
+
+    for (const [x, y, z] of strandOffsets) {
+      const strand = new THREE.Mesh(
+        new THREE.OctahedronGeometry(plot.state === "ready" ? 0.16 : 0.11, 0),
+        crystalMaterial
+      );
+      strand.position.set(x, y, z);
+      strand.rotation.set(y * 0.55, x * 1.6, z * 1.4);
+      strand.castShadow = true;
+      group.add(strand);
+    }
+
+    group.scale.setScalar(plot.state === "ready" ? 1.2 : 0.95);
+    return group;
+  }
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(
-      isGiantPod ? 0.16 : isDuskBean ? 0.12 : 0.09,
-      isGiantPod ? 0.22 : isDuskBean ? 0.17 : 0.12,
-      plot.state === "ready" ? (isGiantPod ? 3.8 : isDuskBean ? duskReadyHeight : 2.2) : isGiantPod ? 2.2 : isDuskBean ? 2.2 : 1.5,
+      isGiantPod ? 0.16 : 0.09,
+      isGiantPod ? 0.22 : 0.12,
+      plot.state === "ready" ? (isGiantPod ? 3.8 : 2.2) : isGiantPod ? 2.2 : 1.5,
       12
     ),
-    new THREE.MeshStandardMaterial({
-      color: isDuskBean ? 0x4a2f78 : 0x4f8b2a,
-      roughness: isDuskBean ? 0.35 : 0.8,
-      metalness: isDuskBean ? 0.18 : 0,
-      emissive: isDuskBean ? 0x221136 : 0x000000,
-      emissiveIntensity: isDuskBean ? 0.45 : 0,
-    })
+    new THREE.MeshStandardMaterial({ color: 0x4f8b2a, roughness: 0.8 })
   );
-  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : isDuskBean ? duskReadyHeight * 0.5 : 1.1) : isGiantPod ? 1.1 : isDuskBean ? 1.1 : 0.75;
+  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : 1.1) : isGiantPod ? 1.1 : 0.75;
   stem.castShadow = true;
   group.add(stem);
 
@@ -1131,13 +1227,6 @@ function createCropVisual(plot) {
         [0.5, 1.4, -0.12],
         [0.08, 1.1, 0.58],
       ]
-    : isDuskBean
-    ? [
-        [-0.72, 1.58, 0.42],
-        [0.68, 2.12, -0.36],
-        [0.08, 2.78, 0.12],
-        [-0.22, 2.28, -0.62],
-      ]
     : isStarlightBean
     ? [
         [-0.38, 1.05, 0.32],
@@ -1151,10 +1240,10 @@ function createCropVisual(plot) {
       ];
 
   const leafMaterial = new THREE.MeshStandardMaterial({
-    color: isFrostPod ? 0x89c8ff : isEmberBean ? 0xe87b39 : isDuskBean ? 0xa992f0 : isStarlightBean ? 0xd9c2ff : beanColor(plot.beanId),
+    color: isFrostPod ? 0x89c8ff : isEmberBean ? 0xe87b39 : isStarlightBean ? 0xd9c2ff : beanColor(plot.beanId),
     roughness: 0.7,
-    emissive: isFrostPod ? 0x17365f : isEmberBean ? 0x57210b : isDuskBean ? 0x24163f : isStarlightBean ? 0x36205d : 0x000000,
-    emissiveIntensity: isFrostPod ? 0.28 : isEmberBean ? 0.3 : isDuskBean ? 0.34 : isStarlightBean ? 0.42 : 0,
+    emissive: isFrostPod ? 0x17365f : isEmberBean ? 0x57210b : isStarlightBean ? 0x36205d : 0x000000,
+    emissiveIntensity: isFrostPod ? 0.28 : isEmberBean ? 0.3 : isStarlightBean ? 0.42 : 0,
   });
 
   const leafScale = plot.state === "ready" ? (isGiantPod ? 1.95 : 1.2) : isGiantPod ? 1.2 : 0.8;
@@ -1163,21 +1252,16 @@ function createCropVisual(plot) {
       ? new THREE.OctahedronGeometry(0.34 * leafScale, 0)
       : isEmberBean
       ? new THREE.ConeGeometry(0.28 * leafScale, 0.9 * leafScale, 8)
-      : isDuskBean
-      ? new THREE.CylinderGeometry(0.08 * leafScale, 0.22 * leafScale, 1.45 * leafScale, 6)
       : new THREE.SphereGeometry(0.42 * leafScale, 14, 14);
     const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
     leaf.position.set(offset[0], offset[1], offset[2]);
     leaf.scale.set(
-      isEmberBean ? 1 : isDuskBean ? 1.2 : 1.25,
-      isStarlightBean ? 1 : isDuskBean ? 1.9 : 0.7,
-      isStarlightBean ? 1 : isDuskBean ? 1.2 : 0.9
+      isEmberBean ? 1 : 1.25,
+      isStarlightBean ? 1 : 0.7,
+      isStarlightBean ? 1 : 0.9
     );
     if (isEmberBean) {
       leaf.rotation.x = Math.PI;
-    }
-    if (isDuskBean) {
-      leaf.rotation.set(offset[2] * 1.35, offset[0] * 1.85, offset[1] * 0.35);
     }
     leaf.castShadow = true;
     group.add(leaf);
