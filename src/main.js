@@ -1092,16 +1092,23 @@ function createCropVisual(plot) {
   const isEmberBean = plot.beanId === "ember";
   const isDuskBean = plot.beanId === "dusk";
   const isStarlightBean = plot.beanId === "starlight";
+  const duskReadyHeight = plot.state === "ready" ? 4.8 : 2.9;
   const stem = new THREE.Mesh(
     new THREE.CylinderGeometry(
-      isGiantPod ? 0.16 : 0.09,
-      isGiantPod ? 0.22 : 0.12,
-      plot.state === "ready" ? (isGiantPod ? 3.8 : 2.2) : isGiantPod ? 2.2 : 1.5,
+      isGiantPod ? 0.16 : isDuskBean ? 0.12 : 0.09,
+      isGiantPod ? 0.22 : isDuskBean ? 0.17 : 0.12,
+      plot.state === "ready" ? (isGiantPod ? 3.8 : isDuskBean ? duskReadyHeight : 2.2) : isGiantPod ? 2.2 : isDuskBean ? 2.2 : 1.5,
       12
     ),
-    new THREE.MeshStandardMaterial({ color: 0x4f8b2a, roughness: 0.8 })
+    new THREE.MeshStandardMaterial({
+      color: isDuskBean ? 0x4a2f78 : 0x4f8b2a,
+      roughness: isDuskBean ? 0.35 : 0.8,
+      metalness: isDuskBean ? 0.18 : 0,
+      emissive: isDuskBean ? 0x221136 : 0x000000,
+      emissiveIntensity: isDuskBean ? 0.45 : 0,
+    })
   );
-  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : 1.1) : isGiantPod ? 1.1 : 0.75;
+  stem.position.y = plot.state === "ready" ? (isGiantPod ? 1.9 : isDuskBean ? duskReadyHeight * 0.5 : 1.1) : isGiantPod ? 1.1 : isDuskBean ? 1.1 : 0.75;
   stem.castShadow = true;
   group.add(stem);
 
@@ -1126,9 +1133,10 @@ function createCropVisual(plot) {
       ]
     : isDuskBean
     ? [
-        [-0.42, 1.08, 0.28],
-        [0.38, 1.42, -0.2],
-        [0.04, 1.72, 0.08],
+        [-0.72, 1.58, 0.42],
+        [0.68, 2.12, -0.36],
+        [0.08, 2.78, 0.12],
+        [-0.22, 2.28, -0.62],
       ]
     : isStarlightBean
     ? [
@@ -1156,20 +1164,20 @@ function createCropVisual(plot) {
       : isEmberBean
       ? new THREE.ConeGeometry(0.28 * leafScale, 0.9 * leafScale, 8)
       : isDuskBean
-      ? new THREE.OctahedronGeometry(0.3 * leafScale, 0)
+      ? new THREE.CylinderGeometry(0.08 * leafScale, 0.22 * leafScale, 1.45 * leafScale, 6)
       : new THREE.SphereGeometry(0.42 * leafScale, 14, 14);
     const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
     leaf.position.set(offset[0], offset[1], offset[2]);
     leaf.scale.set(
-      isEmberBean ? 1 : 1.25,
-      isStarlightBean ? 1 : 0.7,
-      isStarlightBean ? 1 : 0.9
+      isEmberBean ? 1 : isDuskBean ? 1.2 : 1.25,
+      isStarlightBean ? 1 : isDuskBean ? 1.9 : 0.7,
+      isStarlightBean ? 1 : isDuskBean ? 1.2 : 0.9
     );
     if (isEmberBean) {
       leaf.rotation.x = Math.PI;
     }
     if (isDuskBean) {
-      leaf.rotation.set(offset[2] * 2, offset[0] * 2, offset[1] * 0.6);
+      leaf.rotation.set(offset[2] * 1.35, offset[0] * 1.85, offset[1] * 0.35);
     }
     leaf.castShadow = true;
     group.add(leaf);
@@ -1199,9 +1207,10 @@ function createCropVisual(plot) {
         ]
       : isDuskBean
       ? [
-          [-0.32, 1.42, 0.02],
-          [0.18, 1.8, -0.18],
-          [0.38, 1.26, 0.22],
+          [-0.58, 2.15, 0.12],
+          [0.36, 2.9, -0.26],
+          [0.74, 1.88, 0.42],
+          [-0.14, 3.34, 0.26],
         ]
       : isStarlightBean
       ? [
@@ -1218,7 +1227,7 @@ function createCropVisual(plot) {
       const podGeometry = isEmberBean
         ? new THREE.SphereGeometry(0.24, 14, 14)
         : isDuskBean
-        ? new THREE.OctahedronGeometry(0.28, 0)
+        ? new THREE.CylinderGeometry(0.12, 0.3, 1.75, 6)
         : isStarlightBean
         ? new THREE.OctahedronGeometry(0.26, 0)
         : new THREE.CapsuleGeometry(isGiantPod ? 0.28 : 0.14, isGiantPod ? 1.1 : 0.5, 4, 10);
@@ -1227,11 +1236,15 @@ function createCropVisual(plot) {
         podMaterial
       );
       pod.position.set(
-        offset[0] * (isGiantPod ? 1.55 : 1),
-        offset[1] * (isGiantPod ? 1.55 : 1),
-        offset[2] * (isGiantPod ? 1.55 : 1)
+        offset[0] * (isGiantPod ? 1.55 : isDuskBean ? 1.18 : 1),
+        offset[1] * (isGiantPod ? 1.55 : isDuskBean ? 1.18 : 1),
+        offset[2] * (isGiantPod ? 1.55 : isDuskBean ? 1.18 : 1)
       );
-      pod.rotation.z = isEmberBean || isStarlightBean ? 0 : Math.PI / 2.8;
+      if (isDuskBean) {
+        pod.rotation.set(offset[2] * 0.55, offset[0] * 0.8, offset[1] * 0.18);
+      } else {
+        pod.rotation.z = isEmberBean || isStarlightBean ? 0 : Math.PI / 2.8;
+      }
       pod.castShadow = true;
       group.add(pod);
     }
@@ -1301,28 +1314,49 @@ function createCropVisual(plot) {
 
     if (isDuskBean) {
       const duskShardMaterial = new THREE.MeshStandardMaterial({
-        color: 0xf2dcff,
+        color: 0xf4e6ff,
         emissive: 0x8a63f0,
-        emissiveIntensity: 0.9,
-        roughness: 0.18,
-        metalness: 0.22,
+        emissiveIntensity: 1.15,
+        roughness: 0.08,
+        metalness: 0.38,
       });
       for (const offset of [
-        [-0.78, 1.82, 0.18],
-        [0.72, 1.98, -0.14],
-        [0, 2.28, 0.36],
-        [0.24, 1.48, -0.55],
+        [-1.22, 2.48, 0.28],
+        [1.08, 2.7, -0.22],
+        [0, 3.55, 0.42],
+        [0.42, 2.08, -0.88],
+        [-0.34, 3.05, -0.52],
+        [0.68, 3.22, 0.74],
       ]) {
-        const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), duskShardMaterial);
+        const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), duskShardMaterial);
         shard.position.set(offset[0], offset[1], offset[2]);
         shard.rotation.set(offset[1] * 0.6, offset[0] * 2, offset[2] * 2);
         group.add(shard);
       }
+
+      const duskCore = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.42, 0),
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          emissive: 0xb692ff,
+          emissiveIntensity: 1.2,
+          roughness: 0.05,
+          metalness: 0.24,
+        })
+      );
+      duskCore.position.set(0, 3.05, 0.18);
+      duskCore.scale.set(0.9, 1.8, 0.9);
+      duskCore.castShadow = true;
+      group.add(duskCore);
     }
   }
 
   if (isGiantPod) {
     group.scale.setScalar(plot.state === "ready" ? 1.38 : 1.1);
+  }
+
+  if (isDuskBean) {
+    group.scale.setScalar(plot.state === "ready" ? 1.42 : 1.12);
   }
 
   return group;
