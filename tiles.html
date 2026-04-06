@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Pattern Tiles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg-top: #f7f0dd;
+        --bg-bottom: #e2d5bb;
+        --ink: #1d1b1a;
+        --muted: #64584f;
+        --panel: rgba(255, 251, 243, 0.88);
+        --panel-border: rgba(70, 53, 36, 0.12);
+        --shadow: rgba(94, 68, 31, 0.18);
+        --accent: #ca6b3f;
+        --good: #3e7a5f;
+        --warn: #b6504b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: "Manrope", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 24%),
+          radial-gradient(circle at 85% 15%, rgba(231, 157, 102, 0.28), transparent 18%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      }
+
+      .page {
+        width: min(1180px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: 28px 0 48px;
+      }
+
+      .hero,
+      .layout {
+        display: grid;
+        gap: 18px;
+      }
+
+      .hero {
+        grid-template-columns: 1.3fr auto;
+        align-items: end;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow,
+      .meta-label {
+        margin: 0 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #7d604b;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+        font-family: "Fraunces", serif;
+        line-height: 0.95;
+      }
+
+      h1 {
+        font-size: clamp(3rem, 8vw, 5.4rem);
+      }
+
+      h2 {
+        font-size: 1.8rem;
+      }
+
+      .lede {
+        max-width: 48rem;
+        color: var(--muted);
+        font-size: 1.02rem;
+      }
+
+      .hero-actions,
+      .controls,
+      .legend {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      a,
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font: inherit;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      button {
+        cursor: pointer;
+        color: #fffaf5;
+        background: linear-gradient(135deg, #ca6b3f, #9c4e2a);
+        box-shadow: 0 12px 24px rgba(121, 67, 35, 0.2);
+      }
+
+      button.secondary,
+      a.back-link {
+        color: #34513e;
+        background: linear-gradient(135deg, #eef3df, #cfdbc1);
+        box-shadow: 0 12px 24px rgba(78, 104, 42, 0.14);
+      }
+
+      .layout {
+        grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 28px;
+        box-shadow: 0 24px 50px var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+
+      .board-panel {
+        padding: 22px;
+      }
+
+      .board-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .board-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 26px;
+        padding: 20px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(228, 207, 176, 0.75)),
+          repeating-linear-gradient(
+            135deg,
+            rgba(96, 73, 43, 0.05) 0,
+            rgba(96, 73, 43, 0.05) 10px,
+            transparent 10px,
+            transparent 20px
+          );
+        border: 1px solid rgba(86, 61, 30, 0.08);
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(72px, 1fr));
+        gap: 10px;
+      }
+
+      .tile {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 20px;
+        border: 0;
+        padding: 0;
+        overflow: hidden;
+        background: transparent;
+        box-shadow:
+          inset 0 0 0 2px rgba(255, 255, 255, 0.42),
+          0 14px 24px rgba(86, 60, 28, 0.18);
+        transition: transform 140ms ease, box-shadow 140ms ease, opacity 180ms ease;
+      }
+
+      .tile:hover {
+        transform: translateY(-2px);
+      }
+
+      .tile:focus-visible {
+        outline: 3px solid rgba(30, 27, 20, 0.5);
+        outline-offset: 2px;
+      }
+
+      .tile.is-selected {
+        transform: translateY(-4px) scale(1.03);
+        box-shadow:
+          inset 0 0 0 3px rgba(255, 250, 243, 0.95),
+          0 18px 28px rgba(86, 60, 28, 0.28);
+      }
+
+      .tile.is-clearing {
+        pointer-events: none;
+        opacity: 0;
+        transform: scale(0.86);
+      }
+
+      .tile-face {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      .tile-pattern-dots::before,
+      .tile-pattern-diagonal::before,
+      .tile-pattern-grid::before,
+      .tile-pattern-arc::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+      }
+
+      .tile-pattern-dots::before {
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.95) 1.5px, transparent 1.5px);
+        background-size: 15px 15px;
+      }
+
+      .tile-pattern-diagonal::before {
+        background-image: repeating-linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.95) 0,
+          rgba(255, 255, 255, 0.95) 4px,
+          transparent 4px,
+          transparent 13px
+        );
+      }
+
+      .tile-pattern-grid::before {
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.9) 2px, transparent 2px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.9) 2px, transparent 2px);
+        background-size: 18px 18px;
+      }
+
+      .tile-pattern-arc::before {
+        background-image: radial-gradient(circle at 0 100%, rgba(255, 255, 255, 0.9) 0 20%, transparent 21% 100%);
+        background-size: 22px 22px;
+      }
+
+      .tile-icon {
+        position: relative;
+        z-index: 1;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.18));
+      }
+
+      .sidebar {
+        display: grid;
+        gap: 18px;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .stat {
+        border-radius: 20px;
+        padding: 14px;
+        background: rgba(255, 247, 237, 0.92);
+        border: 1px solid rgba(85, 57, 25, 0.08);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.6rem;
+      }
+
+      .stat span,
+      .rule-list li,
+      .legend span,
+      .message {
+        color: var(--muted);
+      }
+
+      .message {
+        min-height: 2.8em;
+        margin: 14px 0 0;
+        font-weight: 700;
+      }
+
+      .legend-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: rgba(255, 247, 237, 0.92);
+        border: 1px solid rgba(85, 57, 25, 0.08);
+      }
+
+      .legend-chip strong {
+        color: var(--ink);
+      }
+
+      .rule-list {
+        margin: 14px 0 0;
+        padding-left: 18px;
+      }
+
+      .rule-list li + li {
+        margin-top: 10px;
+      }
+
+      .game-over {
+        position: absolute;
+        inset: 20px;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        border-radius: 24px;
+        background: rgba(30, 25, 20, 0.68);
+        color: #fffaf5;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms ease;
+      }
+
+      .game-over.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .game-over strong {
+        display: block;
+        font-size: 2rem;
+        font-family: "Fraunces", serif;
+      }
+
+      @media (max-width: 920px) {
+        .hero,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          width: min(100vw - 20px, 1180px);
+          padding-top: 20px;
+        }
+
+        .board-panel,
+        .card {
+          padding: 16px;
+        }
+
+        .board-wrap {
+          padding: 14px;
+        }
+
+        .board {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Local Puzzle</p>
+          <h1>Pattern Tiles</h1>
+          <p class="lede">
+            A calm, NYT Tiles-style matching game: clear the board by pairing tiles that share a color, icon, or surface pattern before the clock runs out.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <a class="back-link" href="./index.html">Back To Farm</a>
+          <button id="restart-button" type="button">New Round</button>
+        </div>
+      </section>
+
+      <section class="layout">
+        <section class="panel board-panel">
+          <div class="board-head">
+            <div>
+              <p class="eyebrow">Board</p>
+              <h2>Match Any Shared Trait</h2>
+            </div>
+            <div class="controls">
+              <button id="shuffle-button" class="secondary" type="button">Shuffle Left: <span id="shuffle-count">3</span></button>
+            </div>
+          </div>
+
+          <div class="board-wrap">
+            <div id="board" class="board" aria-label="Pattern tile board"></div>
+            <div id="game-over" class="game-over" aria-live="polite">
+              <div>
+                <strong id="game-over-title">Round Complete</strong>
+                <p id="game-over-text">You cleared the board.</p>
+                <button id="play-again-button" type="button">Play Again</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <section class="panel card">
+            <p class="eyebrow">Stats</p>
+            <h2>Round Tracker</h2>
+            <div class="stats">
+              <div class="stat">
+                <span class="meta-label">Time</span>
+                <strong id="time-value">90</strong>
+                <span>seconds</span>
+              </div>
+              <div class="stat">
+                <span class="meta-label">Score</span>
+                <strong id="score-value">0</strong>
+                <span>points</span>
+              </div>
+              <div class="stat">
+                <span class="meta-label">Streak</span>
+                <strong id="streak-value">0</strong>
+                <span>matches</span>
+              </div>
+              <div class="stat">
+                <span class="meta-label">Tiles</span>
+                <strong id="remaining-value">36</strong>
+                <span>remaining</span>
+              </div>
+            </div>
+            <p id="message" class="message" aria-live="polite">Pick any two tiles with one trait in common.</p>
+          </section>
+
+          <section class="panel card">
+            <p class="eyebrow">How To Play</p>
+            <h2>One Match Is Enough</h2>
+            <div class="legend">
+              <div class="legend-chip"><strong>Color</strong><span>same palette</span></div>
+              <div class="legend-chip"><strong>Icon</strong><span>same symbol</span></div>
+              <div class="legend-chip"><strong>Pattern</strong><span>same texture</span></div>
+            </div>
+            <ul class="rule-list">
+              <li>Select two tiles. If they share any one trait, both clear.</li>
+              <li>Consecutive matches build a streak and score multiplier.</li>
+              <li>You get three shuffles per round if the board feels stuck.</li>
+              <li>Clear everything before the timer hits zero.</li>
+            </ul>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./src/tiles.js"></script>
+  </body>
+</html>
