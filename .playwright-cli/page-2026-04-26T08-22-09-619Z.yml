@@ -1,0 +1,14 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - paragraph [ref=e5]: Prototype
+      - heading "Surfgame 3D Base" [level=1] [ref=e6]
+      - paragraph [ref=e7]: A lightweight surfable scene with board movement, ocean animation, camera follow, and space to build mechanics on top.
+    - generic [ref=e8]:
+      - paragraph [ref=e9]: Speed
+      - strong [ref=e10]: 0.2 knots
+      - generic [ref=e11]: Idle drift
+  - generic [ref=e14]:
+    - generic [ref=e15]: WASD / Arrows to steer
+    - generic [ref=e16]: Shift to boost
+    - generic [ref=e17]: Space to hop
